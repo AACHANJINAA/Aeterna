@@ -1,0 +1,153 @@
+﻿# Unreal Engine C++ project
+# Keep source assets and project files: *.uproject, Source/, Config/, Content/, Plugins/*/Source, *.uasset, *.umap
+# Ignore generated build files, local caches, IDE state, logs, packaged builds, and local captures.
+
+# Unreal build outputs and generated folders
+Binaries/
+Intermediate/
+Saved/
+DerivedDataCache/
+Script/
+
+# Plugin generated folders
+Plugins/**/Binaries/
+Plugins/**/Intermediate/
+Plugins/**/Saved/
+Plugins/**/DerivedDataCache/
+
+# Build folder: ignore generated build content, but keep useful project metadata/icons/blacklists
+Build/*
+!Build/*/
+Build/*/**
+!Build/**/*.ico
+!Build/**/PakBlacklist*.txt
+
+# Packaged builds / staged outputs
+Releases/
+Packaged/
+StagedBuilds/
+Windows/
+WindowsNoEditor/
+Linux/
+LinuxNoEditor/
+Mac/
+MacNoEditor/
+Android/
+IOS/
+
+# Unreal generated project files
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+*.xcodeproj
+*.xcworkspace
+*.code-workspace
+
+# Visual Studio / Rider / VS Code local state
+.vs/
+.vscode/
+.idea/
+.Rider/
+*.user
+*.userosscache
+*.rsuser
+*.DotSettings.user
+
+# CMake / compile database outputs
+CMakeFiles/
+CMakeCache.txt
+cmake-build-*/
+compile_commands.json
+
+# Compiler and linker outputs
+*.slo
+*.lo
+*.o
+*.obj
+*.gch
+*.pch
+*.so
+*.dylib
+*.dll
+*.mod
+*.lai
+*.la
+*.a
+*.lib
+*.exe
+*.out
+*.app
+*.ipa
+*.pdb
+*.ilk
+*.ipch
+*.iobj
+*.ipdb
+*.tlog
+*.lastbuildstate
+
+# Common local build configuration folders
+Debug/
+DebugGame/
+Development/
+Shipping/
+x64/
+x86/
+Win32/
+Win64/
+
+# .NET / Unreal Build Tool generated artifacts
+obj/
+bin/
+*.csproj
+*.vbproj
+*.fsproj
+*.nupkg
+
+# Logs, temporary files, and editor backups
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# Built data and source art exports that can be regenerated
+*_BuiltData.uasset
+SourceArt/**/*.png
+SourceArt/**/*.tga
+
+# Crash reports and profiling captures
+Crashes/
+Profiling/
+*.ue4stats
+*.uestats
+*.utrace
+*.ucas.tmp
+*.utoc.tmp
+
+# Large local-only media captures
+*.avi
+*.mp4
+*.mov
+*.mkv
+*.wav
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Explicitly keep Unreal project/source/content roots and assets
+!*.uproject
+!Source/
+!Config/
+!Content/
+!Plugins/
+!Plugins/**/Source/
+!*.uasset
+!*.umap
