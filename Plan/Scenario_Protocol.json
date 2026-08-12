@@ -1,0 +1,313 @@
+{
+  "documentType": "MuseumNightScenarioProtocol",
+  "version": "1.0.0",
+  "purpose": "박물관 야간 시나리오 8개를 동일한 진행 규칙으로 제작하기 위한 팀 공유용 프로토콜",
+  "globalRules": {
+    "gameView": "1인칭 플레이어 뷰",
+    "playerCharacter": "야간 관리 로봇 M-05",
+    "totalNightTime": {
+      "start": "01:00",
+      "end": "05:00"
+    },
+    "scenarioDurationMinutes": 30,
+    "scenarioCount": 8,
+    "fixedStartLocation": "경비실",
+    "fixedEndLocation": "경비실",
+    "failureRollback": {
+      "type": "RestartCurrentScenario",
+      "description": "조건 실패 시 전체 밤을 되돌리지 않고, 해당 시나리오의 시작 시각과 시작 상태로 복귀한다.",
+      "rollbackLocation": "경비실",
+      "resetScope": [
+        "현재 시나리오 목표 진행도",
+        "현재 시나리오 전용 이상 현상 상태",
+        "현재 시나리오 전용 오브젝트 위치",
+        "현재 시나리오 전용 조명/전원 상태",
+        "현재 시나리오 경고 단계"
+      ],
+      "keepScope": [
+        "이전 시나리오 클리어 기록",
+        "이전 시나리오에서 해금된 기본 기능",
+        "공통 플레이어 조작 설정"
+      ]
+    }
+  },
+  "coreSystems": {
+    "scenarioManager": {
+      "role": "현재 시간 슬롯에 맞는 시나리오를 로드하고 시작, 클리어, 실패 상태를 관리한다.",
+      "requiredFunctions": [
+        "LoadScenario",
+        "StartScenario",
+        "CompleteScenario",
+        "FailScenario",
+        "RestartCurrentScenario",
+        "MovePlayerToGuardRoom"
+      ]
+    },
+    "gameClock": {
+      "role": "01:00부터 05:00까지 30분 단위 시나리오 슬롯을 진행한다.",
+      "timeSlots": [
+        {
+          "slot": 1,
+          "start": "01:00",
+          "end": "01:30"
+        },
+        {
+          "slot": 2,
+          "start": "01:30",
+          "end": "02:00"
+        },
+        {
+          "slot": 3,
+          "start": "02:00",
+          "end": "02:30"
+        },
+        {
+          "slot": 4,
+          "start": "02:30",
+          "end": "03:00"
+        },
+        {
+          "slot": 5,
+          "start": "03:00",
+          "end": "03:30"
+        },
+        {
+          "slot": 6,
+          "start": "03:30",
+          "end": "04:00"
+        },
+        {
+          "slot": 7,
+          "start": "04:00",
+          "end": "04:30"
+        },
+        {
+          "slot": 8,
+          "start": "04:30",
+          "end": "05:00"
+        }
+      ]
+    },
+    "notebookRules": {
+      "role": "각 시나리오 시작 시 수첩에 해당 시나리오 규칙을 표시한다.",
+      "ruleDesign": {
+        "minimumRuleCount": 3,
+        "recommendedRuleCount": 5,
+        "mustInclude": [
+          "플레이어가 실제로 지켜야 하는 생존 규칙",
+          "행동을 제한하는 규칙",
+          "해석이 필요한 모호한 규칙"
+        ],
+        "optionalInclude": [
+          "거짓 규칙",
+          "모순 규칙",
+          "후반부 복선 규칙"
+        ]
+      }
+    },
+    "objectiveSystem": {
+      "role": "평범한 야간 업무를 목표로 제시하고, 실제로는 이상 현상 해결로 연결한다.",
+      "objectiveTypes": [
+        "순찰 체크포인트 스캔",
+        "전시물 상태 확인",
+        "조명 점검",
+        "배전반 조작",
+        "센서 박스 재부팅",
+        "분실 전시물 회수",
+        "숨겨진 단서 스캔"
+      ]
+    },
+    "failureSystem": {
+      "role": "실패 조건을 감지하고 현재 시나리오를 처음부터 다시 시작한다.",
+      "failureStyle": [
+        "전시물화",
+        "기록 오류",
+        "카메라 암전",
+        "시간 되감김",
+        "경비실 재기동"
+      ],
+      "onFailureFlow": [
+        "실패 연출 재생",
+        "현재 시나리오 상태 초기화",
+        "플레이어를 경비실로 이동",
+        "게임 시간을 현재 시나리오 시작 시각으로 복구",
+        "수첩 규칙과 목표를 다시 표시"
+      ]
+    }
+  },
+  "scenarioFlowTemplate": [
+    {
+      "step": 1,
+      "name": "ScenarioStart",
+      "location": "경비실",
+      "description": "정해진 시각이 되면 경비실에서 시나리오가 시작된다. 무전, 수첩, 시스템 로그 중 하나로 업무가 전달된다."
+    },
+    {
+      "step": 2,
+      "name": "RuleCheck",
+      "location": "경비실",
+      "description": "플레이어는 경비실에서 수첩의 새 규칙을 확인한다."
+    },
+    {
+      "step": 3,
+      "name": "MoveToTargetArea",
+      "location": "시나리오별 목표 구역",
+      "description": "플레이어는 1인칭 시점으로 목표 구역까지 이동한다."
+    },
+    {
+      "step": 4,
+      "name": "NormalTask",
+      "location": "시나리오별 목표 구역",
+      "description": "겉으로는 평범한 야간 업무를 수행한다."
+    },
+    {
+      "step": 5,
+      "name": "AnomalyTrigger",
+      "location": "시나리오별 목표 구역",
+      "description": "전시물, 조명, 소리, 그림자, 반사, 기록 중 하나가 비정상적으로 반응한다."
+    },
+    {
+      "step": 6,
+      "name": "RuleBasedPlay",
+      "location": "시나리오별 목표 구역",
+      "description": "플레이어는 수첩 규칙을 해석하고 지키면서 목표를 완료한다."
+    },
+    {
+      "step": 7,
+      "name": "ReturnToGuardRoom",
+      "location": "경비실",
+      "description": "시나리오 목표 완료 후 반드시 경비실로 복귀한다."
+    },
+    {
+      "step": 8,
+      "name": "ScenarioComplete",
+      "location": "경비실",
+      "description": "경비실에서 완료 처리, 체크포인트 저장, 다음 시나리오 슬롯 대기 상태로 전환한다."
+    }
+  ],
+  "scenarioDataTemplate": {
+    "scenarioId": "",
+    "slot": 0,
+    "title": "",
+    "author": "",
+    "time": {
+      "start": "",
+      "end": ""
+    },
+    "startLocation": "경비실",
+    "endLocation": "경비실",
+    "mainArea": "",
+    "subAreas": [],
+    "openingTrigger": {
+      "type": "Radio | Notebook | SystemLog | EnvironmentalChange",
+      "text": ""
+    },
+    "normalTask": "",
+    "rules": [],
+    "objectives": [],
+    "anomalyActors": [],
+    "clearConditions": [],
+    "failConditions": [],
+    "onClear": {
+      "returnLocation": "경비실",
+      "saveCheckpoint": true,
+      "rewardLog": "",
+      "nextScenarioId": ""
+    },
+    "onFail": {
+      "rollbackType": "RestartCurrentScenario",
+      "returnLocation": "경비실",
+      "restartAtScenarioStartTime": true
+    }
+  },
+  "scenarioSlots": [
+    {
+      "scenarioId": "S01",
+      "slot": 1,
+      "time": {
+        "start": "01:00",
+        "end": "01:30"
+      },
+      "startLocation": "경비실",
+      "endLocation": "경비실"
+    },
+    {
+      "scenarioId": "S02",
+      "slot": 2,
+      "time": {
+        "start": "01:30",
+        "end": "02:00"
+      },
+      "startLocation": "경비실",
+      "endLocation": "경비실"
+    },
+    {
+      "scenarioId": "S03",
+      "slot": 3,
+      "time": {
+        "start": "02:00",
+        "end": "02:30"
+      },
+      "startLocation": "경비실",
+      "endLocation": "경비실"
+    },
+    {
+      "scenarioId": "S04",
+      "slot": 4,
+      "time": {
+        "start": "02:30",
+        "end": "03:00"
+      },
+      "startLocation": "경비실",
+      "endLocation": "경비실"
+    },
+    {
+      "scenarioId": "S05",
+      "slot": 5,
+      "time": {
+        "start": "03:00",
+        "end": "03:30"
+      },
+      "startLocation": "경비실",
+      "endLocation": "경비실"
+    },
+    {
+      "scenarioId": "S06",
+      "slot": 6,
+      "time": {
+        "start": "03:30",
+        "end": "04:00"
+      },
+      "startLocation": "경비실",
+      "endLocation": "경비실"
+    },
+    {
+      "scenarioId": "S07",
+      "slot": 7,
+      "time": {
+        "start": "04:00",
+        "end": "04:30"
+      },
+      "startLocation": "경비실",
+      "endLocation": "경비실"
+    },
+    {
+      "scenarioId": "S08",
+      "slot": 8,
+      "time": {
+        "start": "04:30",
+        "end": "05:00"
+      },
+      "startLocation": "경비실",
+      "endLocation": "경비실"
+    }
+  ],
+  "teamNotes": [
+    "모든 시나리오는 경비실에서 시작하고 경비실에서 종료한다.",
+    "실패 시 이전 시나리오까지 되돌리지 않고 현재 시나리오만 처음부터 다시 진행한다.",
+    "각 시나리오는 30분짜리 독립 슬롯으로 제작한다.",
+    "시나리오의 겉 목표는 평범한 야간 업무여야 한다.",
+    "공포 요소는 수첩 규칙과 실제 상황의 충돌에서 발생해야 한다.",
+    "클리어 후에는 다음 시나리오로 넘어가기 전 경비실에서 짧은 정리 시간을 둔다."
+  ]
+}
