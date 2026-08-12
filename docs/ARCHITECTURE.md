@@ -1,107 +1,49 @@
 # Architecture
 
 ## 목적
-
-이 문서는 AI 에이전트가 파일을 만들거나 이동할 때 폴더 책임, 파일 배치, Aeterna 공통 시스템과 상태 소유권을 확인하는 기준 문서입니다.
+이 문서는 AI 에이전트가 파일을 만들거나 이동할 때 폴더 책임, 파일 배치, Unreal 자산 배치 규칙을 확인하는 기준 문서입니다.
 
 ## 구조 원칙
 
-- Unreal C++ 코드, Blueprint 자산, 맵, UI, 데이터, 문서 책임을 분리합니다.
-- 지금 필요한 task 범위에서만 구조를 확장하며, 계획에 있다는 이유만으로 빈 폴더나 미사용 구조를 미리 만들지 않습니다.
-- 시스템의 책임을 먼저 정하고 C++ 클래스, Actor, Component, Subsystem, Blueprint 같은 구체 구현 형태는 현재 task에서 승인된 범위로 결정합니다.
-- 프로젝트 기획 불변 조건은 `AGENTS.md`의 `Aeterna 기획 기준`을 따릅니다.
-- 파일과 자산의 이름 규칙은 `docs/STYLEGUIDE.md`를 따릅니다.
+- Unreal C++ 코드, Blueprint 자산, 맵, 문서 책임을 분리합니다.
+- 지금 필요한 범위에서만 구조를 확장합니다.
+- 파일과 자산의 이름 규칙은 `docs/STYLEGUIDE.md`의 `이름 규칙`을 따릅니다.
 
 ## 공통 폴더 책임
 
 - `docs/`: 하네스 문서와 작업 규칙
-- `Tasks/`: 개별 task 문서와 task 작성·요청 양식
+- `Tasks/`: 개별 task 문서
 - `Source/`: C++ 코드
-- `Content/`: Blueprint, 맵, UI, 애니메이션, 모델, 머티리얼, 오디오 등 Unreal 자산
+- `Content/`: Blueprint, 맵, 애니메이션, 모델, 머티리얼 등 Unreal 자산
 
-## Aeterna 초기 상태
+## 현재 프로젝트 폴더 책임과 구조
 
-하네스 초기화 시점에는 `AGENTS.md`, `docs/`, `Tasks/`만 확정되어 있습니다. Unreal 프로젝트와 실제 `Source/`, `Content/` 구조는 첫 구현 task에서 현재 저장소 상태를 확인한 뒤 기록합니다.
+<!-- 새 프로젝트 시작 시 이 구역의 항목을 초기화한다. -->
 
-<!-- 새 프로젝트 시작 시 이 구역의 실제 파일·자산 기록을 초기화한다. -->
+- `Content/Maps/`: 플레이 가능한 레벨 자산
+  - `L_BattleMap.umap`: 동작 검증용 기본 플레이 맵
+- `Content/Blueprints/`: 플레이어 등 검증용 Blueprint 자산
+  - `BP_PlayerCubeCharacter.uasset`: 현재 플레이어 조작 대상 Blueprint
+  - `BP_BossCubeCharacter.uasset`: 길찾기 추적 이동 검증용 보스 Blueprint
+- `Content/ParagonWraith/`: Paragon Wraith 모델, 애니메이션, 머티리얼 원본 에셋
+- `Source/TPSProject/`: 게임 모듈 C++ 코드
+  - `PlayerCubeCharacter.h`, `PlayerCubeCharacter.cpp`: 플레이어 입력, 카메라, 기본 사격 검증용 Character
+  - `PlayerWraithAnimInstance.h`, `PlayerWraithAnimInstance.cpp`: Wraith 이동 로코모션과 조준 애니메이션 값 제공용 AnimInstance
+  - `BossCubeCharacter.h`, `BossCubeCharacter.cpp`: 길찾기 추적 이동 검증용 보스 Character
+  - `BossCubeAIController.h`, `BossCubeAIController.cpp`: 보스가 플레이어를 길찾기 이동 대상으로 갱신하는 AIController
+  - `BossCubeAnimInstance.h`, `BossCubeAnimInstance.cpp`: 보스 FSM 상태를 AnimBP에서 읽을 값으로 제공하는 AnimInstance
+  - `BossBattleArenaActor.h`, `BossBattleArenaActor.cpp`: 원형 보스 전투장의 바닥, 외곽 Mesh, 충돌 경계를 수치 기반으로 구성하는 Actor
+  - `ComfyUIWorkflowRequestActor.h`, `ComfyUIWorkflowRequestActor.cpp`: Unreal Editor에서 로컬 ComfyUI workflow JSON을 `/prompt`로 요청하는 검증용 Actor
 
-- 현재 확정된 Unreal 코드 파일: 없음
-- 현재 확정된 Unreal 자산: 없음
-- 현재 확정된 플레이 맵: 없음
-
-## 생성 시 사용할 책임 경계
-
-아래 경로는 해당 책임이 실제 task에서 필요하고 생성 승인을 받은 뒤 사용합니다. 경로 자체를 선제 생성하라는 의미가 아닙니다.
-
-- `Source/Aeterna/`: Aeterna 게임 모듈의 C++ 코드
-- `Content/Aeterna/Maps/`: 경비실과 박물관 구역을 포함한 플레이 가능한 맵 자산
-- `Content/Aeterna/Blueprints/Core/`: 여러 시나리오가 공유하는 플레이어·상호작용·진행 제어 Blueprint
-- `Content/Aeterna/Blueprints/Scenarios/`: 특정 시나리오에서만 사용하는 Actor와 상호작용 Blueprint
-- `Content/Aeterna/UI/Notebook/`: 수첩 규칙, 업무 목표, 로그 표시 UI
-- `Content/Aeterna/Data/Scenarios/`: task에서 필요성이 검증된 경우에만 만드는 시나리오 정의 데이터
-- `Content/Aeterna/Audio/`: 무전, 환경음, 이상 현상 오디오
-
-## 공통 시스템 책임
-
-아래 이름은 책임을 설명하는 개념명입니다. 실제 Unreal 클래스 종류와 파일명은 구현 task에서 결정합니다.
-
-### ScenarioManager
-
-- 현재 시간 슬롯에 연결된 시나리오를 선택하고 시작·클리어·실패·재시작 상태를 관리합니다.
-- 경비실 시작과 복귀, 다음 슬롯 대기 상태 전환을 조정합니다.
-- 개별 이상 현상 Actor가 전체 시나리오 전환을 직접 소유하지 않게 합니다.
-
-### GameClock
-
-- 01:00부터 05:00까지의 게임 시간과 30분 슬롯 경계를 관리합니다.
-- 현재 시나리오 시작 시각 복구와 다음 슬롯 진입 시각을 한 책임에서 제공합니다.
-
-### NotebookRules
-
-- 현재 시나리오의 수첩 규칙과 업무 목표를 표시하고 재시작 시 다시 제공합니다.
-- 규칙의 문구와 순서는 승인된 시나리오 기획을 그대로 사용합니다.
-
-### FailureSystem
-
-- 현재 시나리오의 실패 조건을 감지하고 실패 연출과 재시작 요청을 연결합니다.
-- 실패 상태 감지와 전체 진행 저장을 한 책임에 섞지 않습니다.
-
-## 상태 소유권 경계
-
-### 현재 시나리오 재시작 시 초기화되는 상태
-
-- 현재 시나리오 목표 진행도
-- 현재 시나리오 전용 이상 현상 상태
-- 현재 시나리오 전용 오브젝트 위치
-- 현재 시나리오 전용 조명·전원 상태
-- 현재 시나리오 경고 단계
-- 현재 시나리오 중 획득한 임시 단서
-
-### 현재 시나리오 실패 후에도 유지되는 상태
-
-- 이전 시나리오 클리어 기록
-- 이전 시나리오에서 해금된 기본 기능
-- 공통 플레이어 조작 설정
-- 전체 게임 진행도
-
-현재 시나리오 초기화 상태와 전체 진행 유지 상태를 같은 임시 변수나 개별 시나리오 Actor에 혼합하지 않습니다. 플레이어 경비실 이동은 ScenarioManager 책임, 시각 복구는 GameClock 책임을 통해 조정하는 것을 우선합니다.
-
-## 시나리오 자산 경계
-
-- 시나리오 전용 자산은 `S01`부터 `S08`까지의 ID로 소유 범위를 구분합니다.
-- 여러 시나리오가 공유하는 기능은 특정 시나리오 폴더에 두지 않습니다.
-- 특정 시나리오 종료 또는 재시작 시 초기화되어야 하는 특수 오브젝트는 초기화 진입점을 추적할 수 있게 구성합니다.
-- S01~S08의 구체 업무, 규칙, 이상 현상, 연출은 상세 기획 승인 전 자산명이나 클래스명으로 확정하지 않습니다.
 
 ## 권장 파일 배치
 
-- 파일은 먼저 이 문서에 기록된 책임 경계를 기준으로 배치합니다.
+- 파일은 먼저 `## 현재 프로젝트 폴더 책임과 구조`에 기록된 폴더 책임을 기준으로 배치합니다.
 - 같은 성격의 파일은 기존에 정의된 책임 폴더를 우선 재사용합니다.
-- 현재 task에서 실제로 생성된 대표 파일과 한 줄 역할을 `Aeterna 초기 상태` 구역에 갱신합니다.
 
 ## 변경 원칙
 
-- 파일이 기존 책임 폴더로 배치될 수 없으면 새 폴더가 필요한 이유와 범위를 사용자에게 알리고 승인받습니다.
-- 새 폴더, 새 플러그인, 새 모듈, 대규모 리팩터링 같은 범위 밖 변경은 `docs/WORKFLOW.md`의 `진행 제약`을 따릅니다.
-- 새 폴더를 생성하면 이 문서에 해당 폴더와 역할을 추가합니다.
-- 시스템 책임 또는 시나리오 상태 소유권을 변경하면 관련 테스트 기준과 `docs/RULE_ORIGINS.md`도 함께 확인합니다.
+- 파일이 기존에 정의된 책임 폴더로 배치할 수 없으면 새 폴더를 생성한 뒤 배치합니다.
+- 새 폴더, 새 플러그인, 새 모듈, 대규모 리팩터링 같은 task 범위 밖 변경의 금지와 승인 절차는 `docs/WORKFLOW.md`의 `진행 제약`을 따릅니다.
+- 새 폴더를 생성하면 `## 현재 프로젝트 폴더 책임과 구조`에 해당 폴더와 역할을 추가합니다.
+- 기존 폴더에 현재 구조를 설명하는 데 중요한 파일이 추가되거나 대표 파일 구성이 바뀌면, `## 현재 프로젝트 폴더 책임과 구조`에 해당 폴더의 대표 파일 예시와 각 파일의 한 줄 역할을 실제 구조에 맞게 갱신한다.
