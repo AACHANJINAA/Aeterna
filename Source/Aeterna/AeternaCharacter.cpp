@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "AeternaCharacter.h"
+#include "AeternaInteractableInterface.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -69,6 +70,24 @@ void AAeternaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		{
 			EnhancedInputComponent->BindAction(BasicSprintAction, ETriggerEvent::Started, this, &AAeternaCharacter::StartBasicSprint);
 			EnhancedInputComponent->BindAction(BasicSprintAction, ETriggerEvent::Completed, this, &AAeternaCharacter::EndBasicSprint);
+		}
+
+		// Notebook
+		if (NotebookAction)
+		{
+			EnhancedInputComponent->BindAction(NotebookAction, ETriggerEvent::Started, this, &AAeternaCharacter::ToggleNotebook);
+		}
+
+		// Interaction
+		if (InteractAction)
+		{
+			EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AAeternaCharacter::TryInteract);
+		}
+
+		// Headlamp
+		if (HeadlampAction)
+		{
+			EnhancedInputComponent->BindAction(HeadlampAction, ETriggerEvent::Started, this, &AAeternaCharacter::ToggleHeadlamp);
 		}
 
 		// Looking/Aiming
@@ -149,4 +168,62 @@ void AAeternaCharacter::EndBasicSprint()
 bool AAeternaCharacter::IsSprinting() const
 {
 	return bBasicSprinting;
+}
+
+void AAeternaCharacter::ToggleNotebook()
+{
+	bNotebookOpen = !bNotebookOpen;
+	BP_NotebookStateChanged(bNotebookOpen);
+}
+
+void AAeternaCharacter::TryInteract()
+{
+	if (!FirstPersonCameraComponent)
+	{
+		BP_InteractionFailed();
+		return;
+	}
+
+	const FVector TraceStart = FirstPersonCameraComponent->GetComponentLocation();
+	const FVector TraceEnd = TraceStart + FirstPersonCameraComponent->GetForwardVector() * InteractionTraceDistance;
+
+	FHitResult HitResult;
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AeternaInteractTrace), false, this);
+
+	if (!GetWorld() || !GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, QueryParams))
+	{
+		BP_InteractionFailed();
+		return;
+	}
+
+	AActor* HitActor = HitResult.GetActor();
+	if (!HitActor || !HitActor->GetClass()->ImplementsInterface(UAeternaInteractableInterface::StaticClass()))
+	{
+		BP_InteractionFailed();
+		return;
+	}
+
+	if (!IAeternaInteractableInterface::Execute_CanInteract(HitActor, this))
+	{
+		BP_InteractionFailed();
+		return;
+	}
+
+	IAeternaInteractableInterface::Execute_Interact(HitActor, this);
+}
+
+void AAeternaCharacter::ToggleHeadlamp()
+{
+	bHeadlampOn = !bHeadlampOn;
+	BP_HeadlampStateChanged(bHeadlampOn);
+}
+
+bool AAeternaCharacter::IsNotebookOpen() const
+{
+	return bNotebookOpen;
+}
+
+bool AAeternaCharacter::IsHeadlampOn() const
+{
+	return bHeadlampOn;
 }
