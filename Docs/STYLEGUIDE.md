@@ -18,17 +18,21 @@
 
 ### Aeterna 시나리오 이름
 
-- 시나리오 ID는 `S01`부터 `S08`까지 두 자리 숫자로 표기합니다.
-- 특정 시나리오에서만 사용하는 자산은 Unreal 접두어 뒤에 시나리오 ID를 붙여 소유 범위를 드러낼 수 있습니다. 예: `BP_S01_AssetName`, `WBP_S01_AssetName`.
-- 여러 시나리오가 공유하는 자산에는 특정 시나리오 ID를 붙이지 않습니다.
+- 시나리오 ID는 `S01`부터 `S03`까지 두 자리 숫자로 표기합니다. 출시 기준 밤은 3개이며, 밤 3개 완성 전에는 ID를 늘리지 않습니다 (GDD §11-2).
+- 특정 밤에서만 사용하는 자산은 Unreal 접두어 뒤에 시나리오 ID를 붙여 소유 범위를 드러냅니다. 예: `BP_S02_FossilShadow`, `DT_S03_LightSchedule`.
+- 여러 밤이 공유하는 자산에는 특정 시나리오 ID를 붙이지 않습니다.
 - `ScenarioManager`, `GameClock`, `NotebookRules`, `FailureSystem`은 책임 개념명입니다. 실제 클래스명은 선택한 Unreal 타입의 접두어 규칙을 따릅니다.
 
 ### Unreal 자산 이름
 
 - Character와 일반 Actor Blueprint는 `BP_AssetName` 접두어를 우선 사용합니다.
 - UI는 `WBP_AssetName`, 애니메이션 Blueprint는 `ABP_AssetName`을 우선 사용합니다.
-- 맵은 `L_MapName` 형식을 우선 사용합니다.
+- 맵은 퍼시스턴트 레벨 `Museum_Persistent`, 서브레벨 `Sub_MapName` 형식을 사용합니다 (`Sub_GrandHall`, `Sub_UtilityRoom` 등). **`L_` 접두어는 사용하지 않습니다.**
 - 데이터 자산이 실제 task에서 필요하다고 승인된 경우 `DA_AssetName`, 데이터 테이블은 `DT_AssetName` 형식을 우선 사용합니다.
+- 머티리얼은 `M_AssetName`, 머티리얼 인스턴스는 `MI_AssetName`을 사용합니다.
+- 태그와 ID는 영문 스네이크/파스칼로 일관되게 작성합니다. 예: `Patrol_A`, `Light_Emergency_Red_01`.
+
+전체 네이밍 표는 `AGENTS.md` §4-2가 기준이며, 이 문서와 충돌하면 `AGENTS.md`를 따릅니다.
 
 ### C++ 파일 이름
 
@@ -46,6 +50,8 @@
 - 현재 시나리오 전용 상태와 전체 진행 유지 상태를 같은 클래스에 편의상 누적하지 않습니다.
 - 개별 이상 현상이나 상호작용 Actor가 전체 시나리오 시작·종료·시간 복구를 직접 제어하지 않게 합니다.
 - “S02 이후에도 쓸 것 같다”는 이유만으로 인터페이스, 베이스 클래스, 범용 데이터 구조를 미리 만들지 않습니다.
+- 규칙, 시각 이벤트, 조명 ID, 실패 조건, 수첩·로그 텍스트를 C++이나 Blueprint에 **하드코딩하지 않습니다.** DataTable(CSV)과 String Table을 경유합니다 (`AGENTS.md` §3-6, §4-3).
+- 조작 입력은 WASD·Shift·Tab·E·F **5종으로 고정**입니다. 새 입력 액션을 추가하는 코드를 작성하지 않습니다 (`AGENTS.md` §3-1).
 
 ## Blueprint 규칙
 
@@ -79,7 +85,7 @@
 
 ## 금지 또는 제한 규칙
 
-- 플러그인, 모듈, 시스템 도입 같은 task 범위 밖 작업은 `docs/WORKFLOW.md`의 `진행 제약`을 따릅니다.
-- 비밀값 취급 규칙은 `docs/WORKFLOW.md`의 `진행 제약`을 따릅니다.
+- 플러그인, 모듈, 시스템 도입 같은 task 범위 밖 작업은 `Docs/WORKFLOW.md`의 `진행 제약`을 따릅니다.
+- 비밀값 취급 규칙은 `Docs/WORKFLOW.md`의 `진행 제약`을 따릅니다.
 - “나중에 쓸 수도 있다”는 이유만으로 미사용 상태, 더미 데이터 구조, 가짜 설정 항목을 추가하지 않습니다.
 - 승인된 Aeterna 기획 기준과 다른 흐름을 임시 편의 기능으로 숨겨 넣지 않습니다.

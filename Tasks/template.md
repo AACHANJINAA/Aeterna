@@ -2,8 +2,8 @@
 
 <!--
 작성 규칙:
-- task 문서 작성과 갱신은 docs/TASK_WRITING.md를 따른다.
-- 파일명은 docs/TASK_WRITING.md의 `파일명 규칙`을 따른다.
+- task 문서 작성과 갱신은 Docs/TASK_WRITING.md를 따른다.
+- 파일명은 Docs/TASK_WRITING.md의 `파일명 규칙`을 따른다.
 - 이 파일의 주석은 작성자용 안내이며 실제 task 문서에는 복사하지 않는다.
 -->
 
@@ -40,7 +40,7 @@
 
 ### 에이전트 확인
 
-<!-- 동기화 주의: 이 체크박스들은 docs/TESTING.md의 검증 원칙과 짝을 이룬다. 항목 변경 시 TESTING.md도 함께 확인한다. -->
+<!-- 동기화 주의: 이 체크박스들은 Docs/TESTING.md의 검증 원칙과 짝을 이룬다. 항목 변경 시 TESTING.md도 함께 확인한다. -->
 - [ ] 관련 코드와 자산 수정 완료
 - [ ] 로컬 정적 점검 또는 프로젝트 구조 기준 확인 완료
 - [ ] Unreal C++/Blueprint/에셋 규칙 위반 없음
