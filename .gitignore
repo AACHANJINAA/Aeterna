@@ -7,7 +7,7 @@ Binaries/
 Intermediate/
 Saved/
 DerivedDataCache/
-Script/
+/Script/
 
 # Plugin generated folders
 Plugins/**/Binaries/
@@ -16,24 +16,26 @@ Plugins/**/Saved/
 Plugins/**/DerivedDataCache/
 
 # Build folder: ignore generated build content, but keep useful project metadata/icons/blacklists
-Build/*
-!Build/*/
-Build/*/**
-!Build/**/*.ico
-!Build/**/PakBlacklist*.txt
+# 하위 폴더를 먼저 되살려야(!/Build/**/) git이 안쪽까지 내려가서 아래 예외가 동작한다
+/Build/**
+!/Build/**/
+!/Build/**/*.ico
+!/Build/**/PakBlacklist*.txt
 
 # Packaged builds / staged outputs
-Releases/
-Packaged/
-StagedBuilds/
-Windows/
-WindowsNoEditor/
-Linux/
-LinuxNoEditor/
-Mac/
-MacNoEditor/
-Android/
-IOS/
+# 반드시 루트 한정(/)으로 둔다 — 앵커가 없으면 Config/Windows, Config/Android 같은
+# 플랫폼별 설정 폴더까지 무시되어 커밋에서 조용히 빠진다
+/Releases/
+/Packaged/
+/StagedBuilds/
+/Windows/
+/WindowsNoEditor/
+/Linux/
+/LinuxNoEditor/
+/Mac/
+/MacNoEditor/
+/Android/
+/IOS/
 
 # Unreal generated project files
 *.sln
@@ -90,14 +92,16 @@ compile_commands.json
 *.lastbuildstate
 
 # Common local build configuration folders
-Debug/
-DebugGame/
-Development/
-Shipping/
-x64/
-x86/
-Win32/
-Win64/
+# 루트 한정 — 앵커가 없으면 Source/ThirdParty/**/x64/ 같은 정상 경로까지 먹는다
+# (Binaries/, Intermediate/ 안의 빌드 산출물은 위에서 이미 무시된다)
+/Debug/
+/DebugGame/
+/Development/
+/Shipping/
+/x64/
+/x86/
+/Win32/
+/Win64/
 
 # .NET / Unreal Build Tool generated artifacts
 obj/
@@ -142,12 +146,10 @@ Profiling/
 Thumbs.db
 Desktop.ini
 
-# Explicitly keep Unreal project/source/content roots and assets
-!*.uproject
-!Source/
-!Config/
-!Content/
-!Plugins/
-!Plugins/**/Source/
-!*.uasset
-!*.umap
+# 로컬 에이전트 설정 (개인 PC 전용 — 공유하지 않는다)
+.claude/settings.local.json
+
+# NOTE: 여기에 !*.uasset / !*.umap 같은 "명시적 유지" 예외를 다시 넣지 말 것.
+# gitignore는 마지막 매치가 이기므로, 그 예외가 위쪽의 *_BuiltData.uasset 규칙을
+# 무효화해서 라이트맵 빌드 데이터(수백 MB, 빌드마다 전체 변경)가 커밋된다.
+# Source/, Config/, Content/, *.uproject 는 애초에 무시된 적이 없어 예외가 필요 없다.
