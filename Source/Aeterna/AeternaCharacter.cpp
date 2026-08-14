@@ -6,6 +6,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/Engine.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -173,6 +174,14 @@ bool AAeternaCharacter::IsSprinting() const
 void AAeternaCharacter::ToggleNotebook()
 {
 	bNotebookOpen = !bNotebookOpen;
+	const FString NotebookMessage = bNotebookOpen ? TEXT("Notebook open") : TEXT("Notebook close");
+
+	UE_LOG(LogAeterna, Log, TEXT("%s"), *NotebookMessage);
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, NotebookMessage);
+	}
+
 	BP_NotebookStateChanged(bNotebookOpen);
 }
 
@@ -215,6 +224,14 @@ void AAeternaCharacter::TryInteract()
 void AAeternaCharacter::ToggleHeadlamp()
 {
 	bHeadlampOn = !bHeadlampOn;
+	const FString HeadlampMessage = bHeadlampOn ? TEXT("Light on") : TEXT("Light down");
+
+	UE_LOG(LogAeterna, Log, TEXT("%s"), *HeadlampMessage);
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, HeadlampMessage);
+	}
+
 	BP_HeadlampStateChanged(bHeadlampOn);
 }
 
