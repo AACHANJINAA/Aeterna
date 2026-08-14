@@ -40,8 +40,16 @@ AAeternaCharacter::AAeternaCharacter()
 	GetCapsuleComponent()->SetCapsuleSize(34.0f, 96.0f);
 
 	// Configure character movement
+	GetCharacterMovement()->MaxWalkSpeed = BasicWalkSpeed;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 	GetCharacterMovement()->AirControl = 0.5f;
+}
+
+void AAeternaCharacter::BeginPlay()
+{
+	Super::BeginPlay();
+
+	GetCharacterMovement()->MaxWalkSpeed = BasicWalkSpeed;
 }
 
 void AAeternaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -55,6 +63,13 @@ void AAeternaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAeternaCharacter::MoveInput);
+
+		// Sprinting
+		if (BasicSprintAction)
+		{
+			EnhancedInputComponent->BindAction(BasicSprintAction, ETriggerEvent::Started, this, &AAeternaCharacter::StartBasicSprint);
+			EnhancedInputComponent->BindAction(BasicSprintAction, ETriggerEvent::Completed, this, &AAeternaCharacter::EndBasicSprint);
+		}
 
 		// Looking/Aiming
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AAeternaCharacter::LookInput);
@@ -117,4 +132,21 @@ void AAeternaCharacter::DoJumpEnd()
 {
 	// pass StopJumping to the character
 	StopJumping();
+}
+
+void AAeternaCharacter::StartBasicSprint()
+{
+	bBasicSprinting = true;
+	GetCharacterMovement()->MaxWalkSpeed = BasicSprintSpeed;
+}
+
+void AAeternaCharacter::EndBasicSprint()
+{
+	bBasicSprinting = false;
+	GetCharacterMovement()->MaxWalkSpeed = BasicWalkSpeed;
+}
+
+bool AAeternaCharacter::IsSprinting() const
+{
+	return bBasicSprinting;
 }

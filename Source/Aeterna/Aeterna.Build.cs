@@ -14,9 +14,6 @@ public class Aeterna : ModuleRules
 			"Engine",
 			"InputCore",
 			"EnhancedInput",
-			"AIModule",
-			"StateTreeModule",
-			"GameplayStateTreeModule",
 			"UMG",
 			"Slate"
 		});
@@ -24,13 +21,7 @@ public class Aeterna : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 
 		PublicIncludePaths.AddRange(new string[] {
-			"Aeterna",
-			"Aeterna/Variant_Horror",
-			"Aeterna/Variant_Horror/UI",
-			"Aeterna/Variant_Shooter",
-			"Aeterna/Variant_Shooter/AI",
-			"Aeterna/Variant_Shooter/UI",
-			"Aeterna/Variant_Shooter/Weapons"
+			"Aeterna"
 		});
 
 		// Uncomment if you are using Slate UI

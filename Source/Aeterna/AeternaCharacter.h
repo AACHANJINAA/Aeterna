@@ -41,6 +41,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category ="Input")
 	UInputAction* MoveAction;
 
+	/** Sprint Input Action */
+	UPROPERTY(EditAnywhere, Category ="Input", meta = (DisplayName = "Sprint Action"))
+	UInputAction* BasicSprintAction;
+
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* LookAction;
@@ -48,11 +52,26 @@ protected:
 	/** Mouse Look Input Action */
 	UPROPERTY(EditAnywhere, Category ="Input")
 	class UInputAction* MouseLookAction;
+
+	/** 기본 걷기 속도 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta = (AllowPrivateAccess = "true", DisplayName = "Walk Speed"))
+	float BasicWalkSpeed = 250.0f;
+
+	/** Shift 입력 중 사용할 달리기 속도 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Movement", meta = (AllowPrivateAccess = "true", DisplayName = "Sprint Speed"))
+	float BasicSprintSpeed = 600.0f;
+
+	/** 현재 달리기 입력이 유지되고 있는지 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Movement", meta = (AllowPrivateAccess = "true", DisplayName = "Sprinting"))
+	bool bBasicSprinting = false;
 	
 public:
 	AAeternaCharacter();
 
 protected:
+
+	/** Gameplay initialization */
+	virtual void BeginPlay() override;
 
 	/** Called from Input Actions for movement input */
 	void MoveInput(const FInputActionValue& Value);
@@ -76,6 +95,14 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void DoJumpEnd();
 
+	/** Shift 입력 시작 시 걷기에서 달리기로 전환합니다. */
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void StartBasicSprint();
+
+	/** Shift 입력 종료 시 다시 걷기 속도로 전환합니다. */
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void EndBasicSprint();
+
 protected:
 
 	/** Set up input action bindings */
@@ -89,6 +116,10 @@ public:
 
 	/** Returns first person camera component **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
+
+	/** Returns whether the character is currently sprinting. **/
+	UFUNCTION(BlueprintPure, Category="Movement")
+	bool IsSprinting() const;
 
 };
 
