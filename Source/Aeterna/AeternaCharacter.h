@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AeternaInteractableInterface.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "AeternaCharacter.generated.h"
@@ -81,6 +82,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "cm"))
 	float InteractionTraceDistance = 300.0f;
 
+	/** 현재 시야 중앙에 잡힌 상호작용 대상입니다. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Interaction", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<AActor> FocusedInteractableActor;
+
+	/** 현재 상호작용 대상의 표시 정보입니다. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Interaction", meta = (AllowPrivateAccess = "true"))
+	FAeternaInteractionInfo FocusedInteractionInfo;
+
 	/** 현재 수첩이 열려 있는지 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Notebook", meta = (AllowPrivateAccess = "true"))
 	bool bNotebookOpen = false;
@@ -96,6 +105,9 @@ protected:
 
 	/** Gameplay initialization */
 	virtual void BeginPlay() override;
+
+	/** Updates focused interaction target. */
+	virtual void Tick(float DeltaSeconds) override;
 
 	/** Called from Input Actions for movement input */
 	void MoveInput(const FInputActionValue& Value);
@@ -139,6 +151,10 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void ToggleHeadlamp();
 
+	/** 현재 시야 중앙 상호작용 대상을 갱신합니다. */
+	UFUNCTION(BlueprintCallable, Category="Interaction")
+	virtual void UpdateFocusedInteractable();
+
 	/** 수첩 상태가 바뀔 때 BP에서 UI 표시를 연결합니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Notebook", meta = (DisplayName = "Notebook State Changed"))
 	void BP_NotebookStateChanged(bool bOpen);
@@ -150,6 +166,10 @@ protected:
 	/** 상호작용 대상이 없거나 상호작용할 수 없을 때 BP에서 피드백을 연결합니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Interaction", meta = (DisplayName = "Interaction Failed"))
 	void BP_InteractionFailed();
+
+	/** 조준 중인 상호작용 대상이 바뀔 때 BP에서 프롬프트 표시를 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Interaction", meta = (DisplayName = "Focused Interactable Changed"))
+	void BP_FocusedInteractableChanged(AActor* NewFocusedActor, const FAeternaInteractionInfo& InteractionInfo);
 
 protected:
 
@@ -176,6 +196,14 @@ public:
 	/** Returns whether the headlamp is currently on. **/
 	UFUNCTION(BlueprintPure, Category="Headlamp")
 	bool IsHeadlampOn() const;
+
+	/** Returns currently focused interactable actor. **/
+	UFUNCTION(BlueprintPure, Category="Interaction")
+	AActor* GetFocusedInteractableActor() const;
+
+	/** Returns currently focused interaction info. **/
+	UFUNCTION(BlueprintPure, Category="Interaction")
+	FAeternaInteractionInfo GetFocusedInteractionInfo() const;
 
 };
 

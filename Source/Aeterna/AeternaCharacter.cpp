@@ -14,6 +14,8 @@
 
 AAeternaCharacter::AAeternaCharacter()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(55.f, 96.0f);
 	
@@ -52,6 +54,13 @@ void AAeternaCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	GetCharacterMovement()->MaxWalkSpeed = BasicWalkSpeed;
+}
+
+void AAeternaCharacter::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	UpdateFocusedInteractable();
 }
 
 void AAeternaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -187,38 +196,51 @@ void AAeternaCharacter::ToggleNotebook()
 
 void AAeternaCharacter::TryInteract()
 {
-	if (!FirstPersonCameraComponent)
-	{
-		BP_InteractionFailed();
-		return;
-	}
+	UpdateFocusedInteractable();
 
-	const FVector TraceStart = FirstPersonCameraComponent->GetComponentLocation();
-	const FVector TraceEnd = TraceStart + FirstPersonCameraComponent->GetForwardVector() * InteractionTraceDistance;
-
-	FHitResult HitResult;
-	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AeternaInteractTrace), false, this);
-
-	if (!GetWorld() || !GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, QueryParams))
-	{
-		BP_InteractionFailed();
-		return;
-	}
-
-	AActor* HitActor = HitResult.GetActor();
-	if (!HitActor || !HitActor->GetClass()->ImplementsInterface(UAeternaInteractableInterface::StaticClass()))
-	{
-		BP_InteractionFailed();
-		return;
-	}
-
-	if (!IAeternaInteractableInterface::Execute_CanInteract(HitActor, this))
+	AActor* HitActor = FocusedInteractableActor.Get();
+	if (!HitActor)
 	{
 		BP_InteractionFailed();
 		return;
 	}
 
 	IAeternaInteractableInterface::Execute_Interact(HitActor, this);
+}
+
+void AAeternaCharacter::UpdateFocusedInteractable()
+{
+	AActor* NewFocusedActor = nullptr;
+	FAeternaInteractionInfo NewInteractionInfo;
+
+	if (FirstPersonCameraComponent && GetWorld())
+	{
+		const FVector TraceStart = FirstPersonCameraComponent->GetComponentLocation();
+		const FVector TraceEnd = TraceStart + FirstPersonCameraComponent->GetForwardVector() * InteractionTraceDistance;
+
+		FHitResult HitResult;
+		FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AeternaInteractFocusTrace), false, this);
+
+		if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, QueryParams))
+		{
+			AActor* HitActor = HitResult.GetActor();
+			if (HitActor && HitActor->GetClass()->ImplementsInterface(UAeternaInteractableInterface::StaticClass()))
+			{
+				NewFocusedActor = HitActor;
+				NewInteractionInfo = IAeternaInteractableInterface::Execute_GetInteractionInfo(HitActor, this);
+			}
+		}
+	}
+
+	if (FocusedInteractableActor != NewFocusedActor)
+	{
+		FocusedInteractableActor = NewFocusedActor;
+		FocusedInteractionInfo = NewInteractionInfo;
+		BP_FocusedInteractableChanged(FocusedInteractableActor.Get(), FocusedInteractionInfo);
+		return;
+	}
+
+	FocusedInteractionInfo = NewInteractionInfo;
 }
 
 void AAeternaCharacter::ToggleHeadlamp()
@@ -243,4 +265,14 @@ bool AAeternaCharacter::IsNotebookOpen() const
 bool AAeternaCharacter::IsHeadlampOn() const
 {
 	return bHeadlampOn;
+}
+
+AActor* AAeternaCharacter::GetFocusedInteractableActor() const
+{
+	return FocusedInteractableActor.Get();
+}
+
+FAeternaInteractionInfo AAeternaCharacter::GetFocusedInteractionInfo() const
+{
+	return FocusedInteractionInfo;
 }
