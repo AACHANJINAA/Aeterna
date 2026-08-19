@@ -40,19 +40,17 @@ void UAeternaInteractionPromptComponent::ShowPrompt(AActor* PromptActor, const F
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(HidePromptTimerHandle);
+		World->GetTimerManager().ClearTimer(SuccessFeedbackTimerHandle);
 	}
 
-	if (UTextBlock* ActionTextBlock = FindTextBlock(ActionTextBlockName))
+	bShowingSuccessFeedback = false;
+	const FText PromptText = InteractionInfo.PromptText.IsEmpty()
+		? FText::FromString(TEXT("Interact"))
+		: InteractionInfo.PromptText;
+	SetPromptText(ActionText, PromptText);
+	if (bDefaultPromptTextColorCached)
 	{
-		ActionTextBlock->SetText(ActionText);
-	}
-
-	if (UTextBlock* PromptTextBlock = FindTextBlock(PromptTextBlockName))
-	{
-		const FText PromptText = InteractionInfo.PromptText.IsEmpty()
-			? FText::FromString(TEXT("Interact"))
-			: InteractionInfo.PromptText;
-		PromptTextBlock->SetText(PromptText);
+		SetPromptTextColor(DefaultPromptTextColor);
 	}
 
 	PromptWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
@@ -82,6 +80,39 @@ void UAeternaInteractionPromptComponent::HidePrompt()
 	HidePromptImmediately();
 }
 
+void UAeternaInteractionPromptComponent::ShowSuccessFeedback(AActor* PromptActor)
+{
+	CreatePromptWidget();
+	if (!PromptWidget || !PromptActor)
+	{
+		return;
+	}
+
+	CurrentPromptActor = PromptActor;
+	bShowingSuccessFeedback = true;
+
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(HidePromptTimerHandle);
+		World->GetTimerManager().ClearTimer(SuccessFeedbackTimerHandle);
+		if (SuccessFeedbackDuration > 0.0f)
+		{
+			World->GetTimerManager().SetTimer(SuccessFeedbackTimerHandle, this, &UAeternaInteractionPromptComponent::HidePromptImmediately, SuccessFeedbackDuration, false);
+		}
+	}
+
+	SetPromptText(FText::GetEmpty(), SuccessText);
+	SetPromptTextColor(SuccessTextColor);
+	PromptWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+	SetComponentTickEnabled(true);
+	UpdatePromptScreenPosition();
+
+	if (SuccessFeedbackDuration <= 0.0f)
+	{
+		HidePromptImmediately();
+	}
+}
+
 void UAeternaInteractionPromptComponent::CreatePromptWidget()
 {
 	if (PromptWidget || !PromptWidgetClass)
@@ -95,6 +126,7 @@ void UAeternaInteractionPromptComponent::CreatePromptWidget()
 		if (PromptWidget)
 		{
 			PromptWidget->AddToViewport(ViewportZOrder);
+			CacheDefaultPromptTextColor();
 		}
 	}
 }
@@ -107,6 +139,41 @@ UTextBlock* UAeternaInteractionPromptComponent::FindTextBlock(FName TextBlockNam
 	}
 
 	return Cast<UTextBlock>(PromptWidget->GetWidgetFromName(TextBlockName));
+}
+
+void UAeternaInteractionPromptComponent::SetPromptText(const FText& InActionText, const FText& InPromptText)
+{
+	if (UTextBlock* ActionTextBlock = FindTextBlock(ActionTextBlockName))
+	{
+		ActionTextBlock->SetText(InActionText);
+	}
+
+	if (UTextBlock* PromptTextBlock = FindTextBlock(PromptTextBlockName))
+	{
+		PromptTextBlock->SetText(InPromptText);
+	}
+}
+
+void UAeternaInteractionPromptComponent::SetPromptTextColor(const FSlateColor& InTextColor)
+{
+	if (UTextBlock* PromptTextBlock = FindTextBlock(PromptTextBlockName))
+	{
+		PromptTextBlock->SetColorAndOpacity(InTextColor);
+	}
+}
+
+void UAeternaInteractionPromptComponent::CacheDefaultPromptTextColor()
+{
+	if (bDefaultPromptTextColorCached)
+	{
+		return;
+	}
+
+	if (UTextBlock* PromptTextBlock = FindTextBlock(PromptTextBlockName))
+	{
+		DefaultPromptTextColor = PromptTextBlock->GetColorAndOpacity();
+		bDefaultPromptTextColorCached = true;
+	}
 }
 
 void UAeternaInteractionPromptComponent::UpdatePromptScreenPosition()
@@ -138,6 +205,7 @@ void UAeternaInteractionPromptComponent::UpdatePromptScreenPosition()
 void UAeternaInteractionPromptComponent::HidePromptImmediately()
 {
 	CurrentPromptActor = nullptr;
+	bShowingSuccessFeedback = false;
 	SetComponentTickEnabled(false);
 	if (PromptWidget)
 	{

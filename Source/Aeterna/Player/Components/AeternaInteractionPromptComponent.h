@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Interaction/AeternaInteractableInterface.h"
 #include "Player/Components/AeternaPlayerComponent.h"
+#include "Styling/SlateColor.h"
 #include "TimerManager.h"
 #include "AeternaInteractionPromptComponent.generated.h"
 
@@ -28,6 +29,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Interaction|Prompt")
 	void HidePrompt();
 
+	UFUNCTION(BlueprintCallable, Category="Interaction|Prompt")
+	void ShowSuccessFeedback(AActor* PromptActor);
+
+	UFUNCTION(BlueprintPure, Category="Interaction|Prompt")
+	bool IsShowingSuccessFeedback() const { return bShowingSuccessFeedback; }
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt")
 	TSubclassOf<UUserWidget> PromptWidgetClass;
@@ -42,6 +49,12 @@ protected:
 	FText ActionText = FText::FromString(TEXT("[E]"));
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt")
+	FText SuccessText = FText::FromString(TEXT("Success"));
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt")
+	FSlateColor SuccessTextColor = FSlateColor(FLinearColor(0.1f, 1.0f, 0.35f, 1.0f));
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt")
 	int32 ViewportZOrder = 10;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt", meta=(ClampMin="0.0", Units="s"))
@@ -50,9 +63,18 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt", meta=(Units="cm"))
 	float PromptWorldVerticalOffset = 35.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt", meta=(ClampMin="0.0", Units="s"))
+	float SuccessFeedbackDuration = 0.7f;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Interaction|Prompt")
+	bool bShowingSuccessFeedback = false;
+
 private:
 	void CreatePromptWidget();
 	UTextBlock* FindTextBlock(FName TextBlockName) const;
+	void SetPromptText(const FText& InActionText, const FText& InPromptText);
+	void SetPromptTextColor(const FSlateColor& InTextColor);
+	void CacheDefaultPromptTextColor();
 	void UpdatePromptScreenPosition();
 	void HidePromptImmediately();
 
@@ -62,5 +84,9 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<AActor> CurrentPromptActor;
 
+	FSlateColor DefaultPromptTextColor;
+	bool bDefaultPromptTextColorCached = false;
+
 	FTimerHandle HidePromptTimerHandle;
+	FTimerHandle SuccessFeedbackTimerHandle;
 };

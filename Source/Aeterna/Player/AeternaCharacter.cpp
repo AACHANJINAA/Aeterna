@@ -257,12 +257,25 @@ void AAeternaCharacter::ToggleNotebook()
 
 void AAeternaCharacter::TryInteract()
 {
-	if (!InteractionComponent || !InteractionComponent->TryInteract(this))
+	if (!InteractionComponent)
 	{
-		UE_LOG(LogAeterna, Log, TEXT("No interaction target"));
-
 		BP_InteractionFailed();
+		return;
 	}
+
+	const bool bInteractionSucceeded = InteractionComponent->TryInteract(this);
+	if (bInteractionSucceeded)
+	{
+		if (InteractionPromptComponent)
+		{
+			InteractionPromptComponent->ShowSuccessFeedback(InteractionComponent->GetFocusedInteractableActor());
+		}
+		return;
+	}
+
+	UE_LOG(LogAeterna, Log, TEXT("No interaction target"));
+
+	BP_InteractionFailed();
 }
 
 void AAeternaCharacter::UpdateHeadBob(float DeltaSeconds)
