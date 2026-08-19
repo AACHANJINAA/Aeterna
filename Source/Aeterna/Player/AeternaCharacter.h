@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AeternaInteractableInterface.h"
 #include "GameFramework/Character.h"
+#include "Interaction/AeternaInteractableInterface.h"
 #include "Logging/LogMacros.h"
 #include "AeternaCharacter.generated.h"
 
@@ -17,6 +17,7 @@ class USpotLightComponent;
 class UAeternaBatteryComponent;
 class UAeternaHeadBobComponent;
 class UAeternaInteractionComponent;
+class UAeternaInteractionPromptComponent;
 class UAeternaScanProgressComponent;
 struct FInputActionValue;
 
@@ -53,6 +54,10 @@ class AAeternaCharacter : public ACharacter
 	/** 상호작용 라인트레이스와 실행 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UAeternaInteractionComponent* InteractionComponent;
+
+	/** 상호작용 프롬프트 위젯 표시 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaInteractionPromptComponent* InteractionPromptComponent;
 
 	/** 스캔 진행도 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))

@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 
-#include "AeternaCameraManager.h"
+#include "Player/AeternaCameraManager.h"
 
 AAeternaCameraManager::AAeternaCameraManager()
 {

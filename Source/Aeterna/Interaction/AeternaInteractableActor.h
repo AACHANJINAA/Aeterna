@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AeternaInteractableInterface.h"
 #include "GameFramework/Actor.h"
+#include "Interaction/AeternaInteractableInterface.h"
 #include "AeternaInteractableActor.generated.h"
 
 class AAeternaCharacter;

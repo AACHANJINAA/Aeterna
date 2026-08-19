@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "AeternaGameMode.h"
+#include "Core/AeternaGameMode.h"
 
 AAeternaGameMode::AAeternaGameMode()
 {

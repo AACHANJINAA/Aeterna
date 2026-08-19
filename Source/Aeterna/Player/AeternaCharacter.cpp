@@ -1,22 +1,24 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "AeternaCharacter.h"
-#include "AeternaBatteryComponent.h"
-#include "AeternaHeadBobComponent.h"
-#include "AeternaInteractableActor.h"
-#include "AeternaInteractableInterface.h"
-#include "AeternaInteractionComponent.h"
-#include "AeternaScanProgressComponent.h"
+#include "Player/AeternaCharacter.h"
+
+#include "Aeterna.h"
+#include "Interaction/AeternaInteractableActor.h"
+#include "Interaction/AeternaInteractableInterface.h"
+#include "Player/Components/AeternaBatteryComponent.h"
+#include "Player/Components/AeternaHeadBobComponent.h"
+#include "Player/Components/AeternaInteractionComponent.h"
+#include "Player/Components/AeternaInteractionPromptComponent.h"
+#include "Player/Components/AeternaScanProgressComponent.h"
+
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SpotLightComponent.h"
-#include "Engine/Engine.h"
 #include "EnhancedInputComponent.h"
-#include "InputActionValue.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Aeterna.h"
+#include "InputActionValue.h"
 
 AAeternaCharacter::AAeternaCharacter()
 {
@@ -55,6 +57,7 @@ AAeternaCharacter::AAeternaCharacter()
 	HeadBobComponent = CreateDefaultSubobject<UAeternaHeadBobComponent>(TEXT("HeadBobComponent"));
 	BatteryComponent = CreateDefaultSubobject<UAeternaBatteryComponent>(TEXT("BatteryComponent"));
 	InteractionComponent = CreateDefaultSubobject<UAeternaInteractionComponent>(TEXT("InteractionComponent"));
+	InteractionPromptComponent = CreateDefaultSubobject<UAeternaInteractionPromptComponent>(TEXT("InteractionPromptComponent"));
 	ScanProgressComponent = CreateDefaultSubobject<UAeternaScanProgressComponent>(TEXT("ScanProgressComponent"));
 
 	// configure the character comps
@@ -89,6 +92,10 @@ void AAeternaCharacter::BeginPlay()
 	{
 		InteractionComponent->InitializePlayerComponent(this);
 		InteractionComponent->InitializeInteraction(FirstPersonCameraComponent);
+	}
+	if (InteractionPromptComponent)
+	{
+		InteractionPromptComponent->InitializePlayerComponent(this);
 	}
 	if (ScanProgressComponent)
 	{
@@ -244,10 +251,6 @@ void AAeternaCharacter::ToggleNotebook()
 	const FString NotebookMessage = bNotebookOpen ? TEXT("Notebook open") : TEXT("Notebook close");
 
 	UE_LOG(LogAeterna, Log, TEXT("%s"), *NotebookMessage);
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, NotebookMessage);
-	}
 
 	BP_NotebookStateChanged(bNotebookOpen);
 }
@@ -257,10 +260,6 @@ void AAeternaCharacter::TryInteract()
 	if (!InteractionComponent || !InteractionComponent->TryInteract(this))
 	{
 		UE_LOG(LogAeterna, Log, TEXT("No interaction target"));
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::Silver, TEXT("No Interaction Target"));
-		}
 
 		BP_InteractionFailed();
 	}
@@ -278,7 +277,22 @@ void AAeternaCharacter::UpdateFocusedInteractable()
 {
 	if (InteractionComponent && InteractionComponent->UpdateFocusedInteractable(this))
 	{
-		BP_FocusedInteractableChanged(InteractionComponent->GetFocusedInteractableActor(), InteractionComponent->GetFocusedInteractionInfo());
+		AActor* NewFocusedActor = InteractionComponent->GetFocusedInteractableActor();
+		const FAeternaInteractionInfo InteractionInfo = InteractionComponent->GetFocusedInteractionInfo();
+
+		if (InteractionPromptComponent)
+		{
+			if (NewFocusedActor)
+			{
+				InteractionPromptComponent->ShowPrompt(NewFocusedActor, InteractionInfo);
+			}
+			else
+			{
+				InteractionPromptComponent->HidePrompt();
+			}
+		}
+
+		BP_FocusedInteractableChanged(NewFocusedActor, InteractionInfo);
 	}
 }
 
@@ -292,10 +306,6 @@ void AAeternaCharacter::ToggleHeadlamp()
 	if (!bHeadlampOn && BatteryComponent->GetCurrentBattery() <= 0.0f)
 	{
 		UE_LOG(LogAeterna, Log, TEXT("Light unavailable: battery empty"));
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Light unavailable: battery empty"));
-		}
 		return;
 	}
 
@@ -309,10 +319,6 @@ void AAeternaCharacter::ToggleHeadlamp()
 	const FString HeadlampMessage = bHeadlampOn ? TEXT("Light on") : TEXT("Light down");
 
 	UE_LOG(LogAeterna, Log, TEXT("%s"), *HeadlampMessage);
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, HeadlampMessage);
-	}
 
 	BP_HeadlampStateChanged(bHeadlampOn);
 }
@@ -341,11 +347,6 @@ bool AAeternaCharacter::RegisterScanPoint(FName ScanPointId)
 	BP_ScanProgressChanged(CurrentCount, RequiredCount);
 
 	UE_LOG(LogAeterna, Log, TEXT("Scan complete: %s (%d / %d)"), *ScanPointId.ToString(), CurrentCount, RequiredCount);
-	if (GEngine)
-	{
-		const FString ScanMessage = FString::Printf(TEXT("Scan Complete %d / %d"), CurrentCount, RequiredCount);
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, ScanMessage);
-	}
 
 	if (RequiredCount > 0 && CurrentCount >= RequiredCount)
 	{

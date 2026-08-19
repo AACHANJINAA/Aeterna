@@ -1,9 +1,10 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "AeternaBatteryComponent.h"
-#include "Components/SpotLightComponent.h"
-#include "Engine/Engine.h"
+#include "Player/Components/AeternaBatteryComponent.h"
+
 #include "Aeterna.h"
+
+#include "Components/SpotLightComponent.h"
 
 UAeternaBatteryComponent::UAeternaBatteryComponent()
 {
@@ -35,10 +36,6 @@ bool UAeternaBatteryComponent::TickBattery(float DeltaSeconds, bool bHeadlampOn)
 	{
 		BatteryDebugPrintTimer = 0.0f;
 		UE_LOG(LogAeterna, Log, TEXT("%s"), *BatteryDebugString);
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(1205, BatteryDebugPrintInterval + 0.1f, FColor::Orange, BatteryDebugString);
-		}
 	}
 
 	return !FMath::IsNearlyEqual(PreviousBattery, CurrentBattery);
@@ -58,12 +55,6 @@ void UAeternaBatteryComponent::AddBattery(float Amount)
 	UpdateBatteryDebugString(false);
 
 	UE_LOG(LogAeterna, Log, TEXT("Battery charge complete: +%.1f -> %.1f / %.1f"), LastBatteryChargeAmount, CurrentBattery, MaxBattery);
-	if (GEngine)
-	{
-		const FString BatteryMessage = FString::Printf(TEXT("Battery Charge Complete +%.0f | %.0f / %.0f"), LastBatteryChargeAmount, CurrentBattery, MaxBattery);
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, BatteryMessage);
-		GEngine->AddOnScreenDebugMessage(1205, 2.0f, FColor::Orange, BatteryDebugString);
-	}
 }
 
 void UAeternaBatteryComponent::UpdateHeadlampBrightness()

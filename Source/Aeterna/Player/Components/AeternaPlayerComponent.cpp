@@ -1,7 +1,9 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "AeternaPlayerComponent.h"
-#include "AeternaCharacter.h"
+#include "Player/Components/AeternaPlayerComponent.h"
+
+#include "Player/AeternaCharacter.h"
+
 #include "Camera/CameraComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 

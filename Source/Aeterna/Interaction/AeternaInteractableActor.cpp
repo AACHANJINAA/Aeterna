@@ -1,8 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "AeternaInteractableActor.h"
-#include "AeternaCharacter.h"
-#include "Engine/Engine.h"
+#include "Interaction/AeternaInteractableActor.h"
+
+#include "Player/AeternaCharacter.h"
 
 AAeternaInteractableActor::AAeternaInteractableActor()
 {
@@ -33,11 +33,6 @@ bool AAeternaInteractableActor::PerformInteraction(AActor* Interactor)
 				if (AeternaCharacter->HasScannedPoint(ResolvedScanPointId))
 				{
 					UE_LOG(LogTemp, Log, TEXT("Scan already registered: %s"), *ResolvedScanPointId.ToString());
-					if (GEngine)
-					{
-						const FString Message = FString::Printf(TEXT("Scan Already Registered: %s"), *ResolvedScanPointId.ToString());
-						GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Yellow, Message);
-					}
 					return false;
 				}
 
@@ -64,22 +59,12 @@ bool AAeternaInteractableActor::PerformInteraction(AActor* Interactor)
 	if (bHandledInteraction)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Interaction complete: %s"), *GetName());
-		if (GEngine)
-		{
-			const FString Message = FString::Printf(TEXT("Interaction Complete: %s"), *GetName());
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, Message);
-		}
 
 		BP_Interacted(Interactor);
 		return true;
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("Interaction failed: %s"), *GetName());
-	if (GEngine)
-	{
-		const FString Message = FString::Printf(TEXT("Interaction Failed: %s"), *GetName());
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Message);
-	}
 
 	return false;
 }
@@ -100,7 +85,7 @@ FAeternaInteractionInfo AAeternaInteractableActor::GetInteractionInfo_Implementa
 		switch (InteractionInfo.Type)
 		{
 		case EAeternaInteractionType::Scan:
-			InteractionInfo.PromptText = FText::FromString(TEXT("Can Scan It"));
+			InteractionInfo.PromptText = FText::FromString(TEXT("Scan Exhibit"));
 			break;
 
 		case EAeternaInteractionType::Read:
@@ -116,7 +101,7 @@ FAeternaInteractionInfo AAeternaInteractableActor::GetInteractionInfo_Implementa
 			break;
 
 		case EAeternaInteractionType::Charge:
-			InteractionInfo.PromptText = FText::FromString(TEXT("Can Charge Battery"));
+			InteractionInfo.PromptText = FText::FromString(TEXT("Can Charge It"));
 			break;
 
 		case EAeternaInteractionType::UseTerminal:

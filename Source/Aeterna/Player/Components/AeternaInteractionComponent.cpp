@@ -1,9 +1,10 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "AeternaInteractionComponent.h"
-#include "AeternaInteractableActor.h"
+#include "Player/Components/AeternaInteractionComponent.h"
+
+#include "Interaction/AeternaInteractableActor.h"
+
 #include "Camera/CameraComponent.h"
-#include "Engine/Engine.h"
 
 UAeternaInteractionComponent::UAeternaInteractionComponent()
 {
@@ -53,22 +54,6 @@ bool UAeternaInteractionComponent::UpdateFocusedInteractable(AActor* Interactor)
 	const bool bFocusChanged = FocusedInteractableActor != NewFocusedActor;
 	FocusedInteractableActor = NewFocusedActor;
 	FocusedInteractionInfo = NewInteractionInfo;
-
-	if (bFocusChanged && GEngine)
-	{
-		if (FocusedInteractableActor)
-		{
-			const FText PromptText = FocusedInteractionInfo.PromptText.IsEmpty()
-				? FText::FromString(TEXT("Interact"))
-				: FocusedInteractionInfo.PromptText;
-			const FString PromptMessage = FString::Printf(TEXT("[E] %s"), *PromptText.ToString());
-			GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Green, PromptMessage);
-		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Silver, TEXT("No Interaction"));
-		}
-	}
 
 	return bFocusChanged;
 }

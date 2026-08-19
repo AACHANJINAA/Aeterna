@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AeternaPlayerComponent.h"
+#include "Player/Components/AeternaPlayerComponent.h"
 #include "AeternaBatteryComponent.generated.h"
 
 class USpotLightComponent;

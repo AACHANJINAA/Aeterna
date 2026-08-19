@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "AeternaScanProgressComponent.h"
+#include "Player/Components/AeternaScanProgressComponent.h"
 
 UAeternaScanProgressComponent::UAeternaScanProgressComponent()
 {

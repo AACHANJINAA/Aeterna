@@ -1,13 +1,15 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 
-#include "AeternaPlayerController.h"
+#include "Player/AeternaPlayerController.h"
+
+#include "Aeterna.h"
+#include "Player/AeternaCameraManager.h"
+
+#include "Blueprint/UserWidget.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
 #include "InputMappingContext.h"
-#include "AeternaCameraManager.h"
-#include "Blueprint/UserWidget.h"
-#include "Aeterna.h"
 #include "Widgets/Input/SVirtualJoystick.h"
 
 AAeternaPlayerController::AAeternaPlayerController()

@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AeternaInteractableInterface.h"
-#include "AeternaPlayerComponent.h"
+#include "Interaction/AeternaInteractableInterface.h"
+#include "Player/Components/AeternaPlayerComponent.h"
 #include "AeternaInteractionComponent.generated.h"
 
 class UCameraComponent;
