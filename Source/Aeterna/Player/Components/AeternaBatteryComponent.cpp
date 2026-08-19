@@ -76,7 +76,13 @@ void UAeternaBatteryComponent::UpdateHeadlampBrightness()
 
 	HeadlampComponent->SetIntensity(FMath::Lerp(LowBatteryLightIntensity, FullBatteryLightIntensity, WeightedAlpha));
 	HeadlampComponent->SetAttenuationRadius(FMath::Lerp(LowBatteryAttenuationRadius, FullBatteryAttenuationRadius, WeightedAlpha));
+	HeadlampComponent->SetLightColor(FMath::Lerp(LowBatteryLightColor, FullBatteryLightColor, WeightedAlpha));
 	HeadlampComponent->SetTemperature(FMath::Lerp(LowBatteryTemperature, FullBatteryTemperature, WeightedAlpha));
+
+	const float InnerConeAngle = FMath::Lerp(LowBatteryInnerConeAngle, FullBatteryInnerConeAngle, WeightedAlpha);
+	const float OuterConeAngle = FMath::Max(FMath::Lerp(LowBatteryOuterConeAngle, FullBatteryOuterConeAngle, WeightedAlpha), InnerConeAngle);
+	HeadlampComponent->SetInnerConeAngle(InnerConeAngle);
+	HeadlampComponent->SetOuterConeAngle(OuterConeAngle);
 }
 
 void UAeternaBatteryComponent::UpdateBatteryDebugString(bool bHeadlampOn)

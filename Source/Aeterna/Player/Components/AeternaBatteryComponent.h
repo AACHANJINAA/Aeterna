@@ -79,11 +79,29 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta=(ClampMin="0.0", Units="cm"))
 	float LowBatteryAttenuationRadius = 350.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Color")
+	FLinearColor FullBatteryLightColor = FLinearColor(1.0f, 0.95f, 0.82f, 1.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Color")
+	FLinearColor LowBatteryLightColor = FLinearColor(1.0f, 0.45f, 0.22f, 1.0f);
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta=(ClampMin="1000.0", Units="K"))
 	float FullBatteryTemperature = 6500.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta=(ClampMin="1000.0", Units="K"))
 	float LowBatteryTemperature = 2600.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Shape", meta=(ClampMin="0.0", ClampMax="80.0", Units="deg"))
+	float FullBatteryInnerConeAngle = 18.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Shape", meta=(ClampMin="0.0", ClampMax="80.0", Units="deg"))
+	float LowBatteryInnerConeAngle = 10.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Shape", meta=(ClampMin="1.0", ClampMax="80.0", Units="deg"))
+	float FullBatteryOuterConeAngle = 36.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Shape", meta=(ClampMin="1.0", ClampMax="80.0", Units="deg"))
+	float LowBatteryOuterConeAngle = 22.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta=(ClampMin="0.1"))
 	float BatteryBrightnessExponent = 1.8f;
