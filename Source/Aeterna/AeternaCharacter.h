@@ -13,6 +13,11 @@ class USkeletalMeshComponent;
 class UCameraComponent;
 class UInputAction;
 class USpotLightComponent;
+
+class UAeternaBatteryComponent;
+class UAeternaHeadBobComponent;
+class UAeternaInteractionComponent;
+class UAeternaScanProgressComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -36,6 +41,22 @@ class AAeternaCharacter : public ACharacter
 	/** M-05 머리 위 내장 헤드램프 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	USpotLightComponent* HeadlampComponent;
+
+	/** 1인칭 카메라 흔들림 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaHeadBobComponent* HeadBobComponent;
+
+	/** 플레이어 배터리와 헤드램프 밝기 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaBatteryComponent* BatteryComponent;
+
+	/** 상호작용 라인트레이스와 실행 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaInteractionComponent* InteractionComponent;
+
+	/** 스캔 진행도 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaScanProgressComponent* ScanProgressComponent;
 
 protected:
 
@@ -83,82 +104,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Movement", meta = (AllowPrivateAccess = "true", DisplayName = "Sprinting"))
 	bool bBasicSprinting = false;
 
-	/** 1인칭 카메라 흔들림을 사용할지 여부입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true"))
-	bool bEnableHeadBob = true;
-
-	/** 정지 상태에서 아주 약하게 움직이는 호흡감 속도입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
-	float IdleHeadBobFrequency = 0.65f;
-
-	/** 정지 상태 카메라 세로 움직임입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "cm"))
-	float IdleHeadBobVerticalAmount = 0.9f;
-
-	/** 정지 상태 카메라 피치 회전입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "deg"))
-	float IdleHeadBobPitchAmount = 0.14f;
-
-	/** 걷기 상태 카메라 흔들림 속도입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
-	float WalkHeadBobFrequency = 1.55f;
-
-	/** 걷기 상태 카메라 세로 움직임입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "cm"))
-	float WalkHeadBobVerticalAmount = 2.4f;
-
-	/** 걷기 상태 카메라 좌우 움직임입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "cm"))
-	float WalkHeadBobSideAmount = 1.25f;
-
-	/** 걷기 상태 카메라 피치 회전입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "deg"))
-	float WalkHeadBobPitchAmount = 0.32f;
-
-	/** 달리기 상태 카메라 흔들림 속도입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
-	float SprintHeadBobFrequency = 2.25f;
-
-	/** 달리기 상태 카메라 세로 움직임입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "cm"))
-	float SprintHeadBobVerticalAmount = 3.8f;
-
-	/** 달리기 상태 카메라 좌우 움직임입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "cm"))
-	float SprintHeadBobSideAmount = 2.0f;
-
-	/** 달리기 상태 카메라 피치 회전입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "deg"))
-	float SprintHeadBobPitchAmount = 0.55f;
-
-	/** 흔들림 상태가 바뀔 때 보간되는 속도입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
-	float HeadBobBlendSpeed = 8.0f;
-
-	/** 헤드밥 계산 기준 카메라 상대 위치입니다. */
-	FVector BaseCameraRelativeLocation = FVector::ZeroVector;
-
-	/** 헤드밥 계산 기준 카메라 상대 회전입니다. */
-	FRotator BaseCameraRelativeRotation = FRotator::ZeroRotator;
-
-	/** 현재 헤드밥 위상입니다. */
-	float HeadBobPhase = 0.0f;
-
-	/** 현재 이동 헤드밥 블렌드 값입니다. */
-	float HeadBobMoveBlend = 0.0f;
-
-	/** 상호작용 스캔 거리 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "cm"))
-	float InteractionTraceDistance = 300.0f;
-
-	/** 현재 시야 중앙에 잡힌 상호작용 대상입니다. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Interaction", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<AActor> FocusedInteractableActor;
-
-	/** 현재 상호작용 대상의 표시 정보입니다. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Interaction", meta = (AllowPrivateAccess = "true"))
-	FAeternaInteractionInfo FocusedInteractionInfo;
-
 	/** 현재 수첩이 열려 있는지 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Notebook", meta = (AllowPrivateAccess = "true"))
 	bool bNotebookOpen = false;
@@ -166,73 +111,6 @@ protected:
 	/** 현재 헤드램프가 켜져 있는지 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Headlamp", meta = (AllowPrivateAccess = "true"))
 	bool bHeadlampOn = false;
-
-	/** 플레이어 배터리 최대 잔량 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery", meta = (AllowPrivateAccess = "true", ClampMin = "1.0"))
-	float MaxBattery = 100.0f;
-
-	/** 현재 플레이어 배터리 잔량 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Battery", meta = (AllowPrivateAccess = "true"))
-	float CurrentBattery = 100.0f;
-
-	/** 마지막으로 충전된 배터리 양 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Battery", meta = (AllowPrivateAccess = "true"))
-	float LastBatteryChargeAmount = 0.0f;
-
-	/** 헤드램프 ON 동안 초당 소모되는 배터리 양 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
-	float HeadlampBatteryDrainPerSecond = 2.5f;
-
-	/** 배터리 디버그 문자열을 화면에 계속 표시할지 여부 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|Debug", meta = (AllowPrivateAccess = "true"))
-	bool bShowBatteryDebugString = true;
-
-	/** 배터리 디버그 문자열 출력 간격 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|Debug", meta = (AllowPrivateAccess = "true", ClampMin = "0.05", Units = "s"))
-	float BatteryDebugPrintInterval = 0.5f;
-
-	/** 현재 배터리 상태 확인용 디버그 문자열 */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Battery|Debug", meta = (AllowPrivateAccess = "true"))
-	FString BatteryDebugString;
-
-	/** 배터리 디버그 문자열 출력 타이머 */
-	float BatteryDebugPrintTimer = 0.0f;
-
-	/** 배터리 만충 시 헤드램프 강도 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
-	float FullBatteryLightIntensity = 8000.0f;
-
-	/** 방전 직전 헤드램프 강도 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
-	float LowBatteryLightIntensity = 600.0f;
-
-	/** 배터리 만충 시 헤드램프 도달 거리 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "cm"))
-	float FullBatteryAttenuationRadius = 1600.0f;
-
-	/** 방전 직전 헤드램프 도달 거리 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "cm"))
-	float LowBatteryAttenuationRadius = 350.0f;
-
-	/** 배터리 만충 시 헤드램프 색온도 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta = (AllowPrivateAccess = "true", ClampMin = "1000.0", Units = "K"))
-	float FullBatteryTemperature = 6500.0f;
-
-	/** 방전 직전 헤드램프 색온도 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta = (AllowPrivateAccess = "true", ClampMin = "1000.0", Units = "K"))
-	float LowBatteryTemperature = 2600.0f;
-
-	/** 후반부에 더 급격히 어두워지게 만드는 감쇠 지수 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta = (AllowPrivateAccess = "true", ClampMin = "0.1"))
-	float BatteryBrightnessExponent = 1.8f;
-
-	/** S01 테스트용 필수 스캔 개수 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scan", meta = (AllowPrivateAccess = "true", ClampMin = "0"))
-	int32 RequiredScanCount = 3;
-
-	/** 이미 스캔한 지점 ID */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Scan", meta = (AllowPrivateAccess = "true"))
-	TSet<FName> ScannedPointIds;
 	
 public:
 	AAeternaCharacter();

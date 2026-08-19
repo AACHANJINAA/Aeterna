@@ -1,8 +1,12 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "AeternaCharacter.h"
+#include "AeternaBatteryComponent.h"
+#include "AeternaHeadBobComponent.h"
 #include "AeternaInteractableActor.h"
 #include "AeternaInteractableInterface.h"
+#include "AeternaInteractionComponent.h"
+#include "AeternaScanProgressComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -33,8 +37,6 @@ AAeternaCharacter::AAeternaCharacter()
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("First Person Camera"));
 	FirstPersonCameraComponent->SetupAttachment(FirstPersonMesh, FName("head"));
 	FirstPersonCameraComponent->SetRelativeLocationAndRotation(FVector(-2.8f, 5.89f, 0.0f), FRotator(0.0f, 90.0f, -90.0f));
-	BaseCameraRelativeLocation = FirstPersonCameraComponent->GetRelativeLocation();
-	BaseCameraRelativeRotation = FirstPersonCameraComponent->GetRelativeRotation();
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
 	FirstPersonCameraComponent->bEnableFirstPersonFieldOfView = true;
 	FirstPersonCameraComponent->bEnableFirstPersonScale = true;
@@ -46,12 +48,14 @@ AAeternaCharacter::AAeternaCharacter()
 	HeadlampComponent->SetRelativeLocation(FVector(18.0f, 0.0f, -4.0f));
 	HeadlampComponent->SetRelativeRotation(FRotator::ZeroRotator);
 	HeadlampComponent->SetVisibility(false);
-	HeadlampComponent->SetIntensity(FullBatteryLightIntensity);
-	HeadlampComponent->SetAttenuationRadius(FullBatteryAttenuationRadius);
 	HeadlampComponent->SetUseTemperature(true);
-	HeadlampComponent->SetTemperature(FullBatteryTemperature);
 	HeadlampComponent->SetInnerConeAngle(18.0f);
 	HeadlampComponent->SetOuterConeAngle(36.0f);
+
+	HeadBobComponent = CreateDefaultSubobject<UAeternaHeadBobComponent>(TEXT("HeadBobComponent"));
+	BatteryComponent = CreateDefaultSubobject<UAeternaBatteryComponent>(TEXT("BatteryComponent"));
+	InteractionComponent = CreateDefaultSubobject<UAeternaInteractionComponent>(TEXT("InteractionComponent"));
+	ScanProgressComponent = CreateDefaultSubobject<UAeternaScanProgressComponent>(TEXT("ScanProgressComponent"));
 
 	// configure the character comps
 	GetMesh()->SetOwnerNoSee(true);
@@ -70,16 +74,26 @@ void AAeternaCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	GetCharacterMovement()->MaxWalkSpeed = BasicWalkSpeed;
-	if (FirstPersonCameraComponent)
+	if (HeadBobComponent)
 	{
-		BaseCameraRelativeLocation = FirstPersonCameraComponent->GetRelativeLocation();
-		BaseCameraRelativeRotation = FirstPersonCameraComponent->GetRelativeRotation();
+		HeadBobComponent->InitializePlayerComponent(this);
+		HeadBobComponent->InitializeHeadBob(BasicSprintSpeed);
 	}
-
-	CurrentBattery = FMath::Clamp(CurrentBattery, 0.0f, MaxBattery);
-	UpdateHeadlampBrightness();
-	UpdateBatteryDebugString();
-	BP_BatteryChanged(CurrentBattery, MaxBattery, GetBatteryNormalized());
+	if (BatteryComponent)
+	{
+		BatteryComponent->InitializePlayerComponent(this);
+		BatteryComponent->InitializeBattery(HeadlampComponent);
+		BP_BatteryChanged(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
+	}
+	if (InteractionComponent)
+	{
+		InteractionComponent->InitializePlayerComponent(this);
+		InteractionComponent->InitializeInteraction(FirstPersonCameraComponent);
+	}
+	if (ScanProgressComponent)
+	{
+		ScanProgressComponent->InitializePlayerComponent(this);
+	}
 }
 
 void AAeternaCharacter::Tick(float DeltaSeconds)
@@ -89,25 +103,11 @@ void AAeternaCharacter::Tick(float DeltaSeconds)
 	UpdateHeadBob(DeltaSeconds);
 	UpdateFocusedInteractable();
 
-	if (bHeadlampOn && HeadlampBatteryDrainPerSecond > 0.0f)
+	if (BatteryComponent && BatteryComponent->TickBattery(DeltaSeconds, bHeadlampOn))
 	{
-		CurrentBattery = FMath::Max(CurrentBattery - HeadlampBatteryDrainPerSecond * DeltaSeconds, 0.0f);
-		UpdateHeadlampBrightness();
-		UpdateBatteryDebugString();
-		BP_BatteryChanged(CurrentBattery, MaxBattery, GetBatteryNormalized());
+		BP_BatteryChanged(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
 
-		BatteryDebugPrintTimer += DeltaSeconds;
-		if (bShowBatteryDebugString && BatteryDebugPrintTimer >= BatteryDebugPrintInterval)
-		{
-			BatteryDebugPrintTimer = 0.0f;
-			UE_LOG(LogAeterna, Log, TEXT("%s"), *BatteryDebugString);
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(1205, BatteryDebugPrintInterval + 0.1f, FColor::Orange, BatteryDebugString);
-			}
-		}
-
-		if (CurrentBattery <= 0.0f)
+		if (bHeadlampOn && BatteryComponent->GetCurrentBattery() <= 0.0f)
 		{
 			bHeadlampOn = false;
 			if (HeadlampComponent)
@@ -254,10 +254,7 @@ void AAeternaCharacter::ToggleNotebook()
 
 void AAeternaCharacter::TryInteract()
 {
-	UpdateFocusedInteractable();
-
-	AActor* HitActor = FocusedInteractableActor.Get();
-	if (!HitActor)
+	if (!InteractionComponent || !InteractionComponent->TryInteract(this))
 	{
 		UE_LOG(LogAeterna, Log, TEXT("No interaction target"));
 		if (GEngine)
@@ -266,132 +263,33 @@ void AAeternaCharacter::TryInteract()
 		}
 
 		BP_InteractionFailed();
-		return;
 	}
-
-	if (AAeternaInteractableActor* NativeInteractable = Cast<AAeternaInteractableActor>(HitActor))
-	{
-		NativeInteractable->PerformInteraction(this);
-		return;
-	}
-
-	IAeternaInteractableInterface::Execute_Interact(HitActor, this);
 }
 
 void AAeternaCharacter::UpdateHeadBob(float DeltaSeconds)
 {
-	if (!FirstPersonCameraComponent)
+	if (HeadBobComponent)
 	{
-		return;
+		HeadBobComponent->UpdateHeadBob(DeltaSeconds, bBasicSprinting);
 	}
-
-	if (!bEnableHeadBob)
-	{
-		HeadBobMoveBlend = 0.0f;
-		FirstPersonCameraComponent->SetRelativeLocation(BaseCameraRelativeLocation);
-		FirstPersonCameraComponent->SetRelativeRotation(BaseCameraRelativeRotation);
-		return;
-	}
-
-	const FVector HorizontalVelocity = FVector(GetVelocity().X, GetVelocity().Y, 0.0f);
-	const float HorizontalSpeed = HorizontalVelocity.Size();
-	const bool bMovingOnGround = HorizontalSpeed > 5.0f && GetCharacterMovement() && GetCharacterMovement()->IsMovingOnGround();
-	const float TargetMoveBlend = bMovingOnGround ? FMath::Clamp(HorizontalSpeed / FMath::Max(BasicSprintSpeed, 1.0f), 0.0f, 1.0f) : 0.0f;
-	HeadBobMoveBlend = FMath::FInterpTo(HeadBobMoveBlend, TargetMoveBlend, DeltaSeconds, HeadBobBlendSpeed);
-
-	const float SprintAlpha = bBasicSprinting ? 1.0f : 0.0f;
-	const float MoveFrequency = FMath::Lerp(WalkHeadBobFrequency, SprintHeadBobFrequency, SprintAlpha);
-	const float MoveVerticalAmount = FMath::Lerp(WalkHeadBobVerticalAmount, SprintHeadBobVerticalAmount, SprintAlpha);
-	const float MoveSideAmount = FMath::Lerp(WalkHeadBobSideAmount, SprintHeadBobSideAmount, SprintAlpha);
-	const float MovePitchAmount = FMath::Lerp(WalkHeadBobPitchAmount, SprintHeadBobPitchAmount, SprintAlpha);
-
-	const float BobFrequency = FMath::Lerp(IdleHeadBobFrequency, MoveFrequency, HeadBobMoveBlend);
-	HeadBobPhase = FMath::Fmod(HeadBobPhase + DeltaSeconds * BobFrequency * 2.0f * UE_PI, 2.0f * UE_PI);
-
-	const float IdleBlend = 1.0f - HeadBobMoveBlend;
-	const float IdleVerticalOffset = FMath::Sin(HeadBobPhase) * IdleHeadBobVerticalAmount * IdleBlend;
-	const float IdlePitchOffset = FMath::Sin(HeadBobPhase * 0.75f) * IdleHeadBobPitchAmount * IdleBlend;
-
-	const float MoveVerticalOffset = FMath::Sin(HeadBobPhase * 2.0f) * MoveVerticalAmount * HeadBobMoveBlend;
-	const float MoveSideOffset = FMath::Sin(HeadBobPhase) * MoveSideAmount * HeadBobMoveBlend;
-	const float MovePitchOffset = FMath::Sin(HeadBobPhase * 2.0f + 0.5f * UE_PI) * MovePitchAmount * HeadBobMoveBlend;
-
-	FVector BobbedLocation = BaseCameraRelativeLocation;
-	BobbedLocation.Y += MoveSideOffset;
-	BobbedLocation.Z += IdleVerticalOffset + MoveVerticalOffset;
-
-	FRotator BobbedRotation = BaseCameraRelativeRotation;
-	BobbedRotation.Pitch += IdlePitchOffset + MovePitchOffset;
-
-	FirstPersonCameraComponent->SetRelativeLocation(BobbedLocation);
-	FirstPersonCameraComponent->SetRelativeRotation(BobbedRotation);
 }
 
 void AAeternaCharacter::UpdateFocusedInteractable()
 {
-	AActor* NewFocusedActor = nullptr;
-	FAeternaInteractionInfo NewInteractionInfo;
-
-	if (FirstPersonCameraComponent && GetWorld())
+	if (InteractionComponent && InteractionComponent->UpdateFocusedInteractable(this))
 	{
-		const FVector TraceStart = FirstPersonCameraComponent->GetComponentLocation();
-		const FVector TraceEnd = TraceStart + FirstPersonCameraComponent->GetForwardVector() * InteractionTraceDistance;
-
-		FHitResult HitResult;
-		FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AeternaInteractFocusTrace), false, this);
-
-		if (GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Visibility, QueryParams))
-		{
-			AActor* HitActor = HitResult.GetActor();
-			if (HitActor && HitActor->GetClass()->ImplementsInterface(UAeternaInteractableInterface::StaticClass()))
-			{
-				if (AAeternaInteractableActor* NativeInteractable = Cast<AAeternaInteractableActor>(HitActor))
-				{
-					NewInteractionInfo = NativeInteractable->GetInteractionInfo_Implementation(this);
-				}
-				else
-				{
-					NewInteractionInfo = IAeternaInteractableInterface::Execute_GetInteractionInfo(HitActor, this);
-				}
-
-				if (NewInteractionInfo.Type != EAeternaInteractionType::None || !NewInteractionInfo.PromptText.IsEmpty())
-				{
-					NewFocusedActor = HitActor;
-				}
-			}
-		}
+		BP_FocusedInteractableChanged(InteractionComponent->GetFocusedInteractableActor(), InteractionComponent->GetFocusedInteractionInfo());
 	}
-
-	if (FocusedInteractableActor != NewFocusedActor)
-	{
-		FocusedInteractableActor = NewFocusedActor;
-		FocusedInteractionInfo = NewInteractionInfo;
-		BP_FocusedInteractableChanged(FocusedInteractableActor.Get(), FocusedInteractionInfo);
-
-		if (GEngine)
-		{
-			if (FocusedInteractableActor)
-			{
-				const FText PromptText = FocusedInteractionInfo.PromptText.IsEmpty()
-					? FText::FromString(TEXT("Interact"))
-					: FocusedInteractionInfo.PromptText;
-				const FString PromptMessage = FString::Printf(TEXT("[E] %s"), *PromptText.ToString());
-				GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Green, PromptMessage);
-			}
-			else
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Silver, TEXT("No Interaction"));
-			}
-		}
-		return;
-	}
-
-	FocusedInteractionInfo = NewInteractionInfo;
 }
 
 void AAeternaCharacter::ToggleHeadlamp()
 {
-	if (!bHeadlampOn && CurrentBattery <= 0.0f)
+	if (!BatteryComponent)
+	{
+		return;
+	}
+
+	if (!bHeadlampOn && BatteryComponent->GetCurrentBattery() <= 0.0f)
 	{
 		UE_LOG(LogAeterna, Log, TEXT("Light unavailable: battery empty"));
 		if (GEngine)
@@ -421,46 +319,35 @@ void AAeternaCharacter::ToggleHeadlamp()
 
 void AAeternaCharacter::AddPlayerBattery(float Amount)
 {
-	if (Amount <= 0.0f)
+	if (!BatteryComponent || Amount <= 0.0f)
 	{
 		return;
 	}
 
-	const float PreviousBattery = CurrentBattery;
-	CurrentBattery = FMath::Clamp(CurrentBattery + Amount, 0.0f, MaxBattery);
-	LastBatteryChargeAmount = CurrentBattery - PreviousBattery;
-	UpdateHeadlampBrightness();
-	UpdateBatteryDebugString();
-	BP_BatteryChanged(CurrentBattery, MaxBattery, GetBatteryNormalized());
-
-	UE_LOG(LogAeterna, Log, TEXT("Battery charge complete: +%.1f -> %.1f / %.1f"), LastBatteryChargeAmount, CurrentBattery, MaxBattery);
-	if (GEngine)
-	{
-		const FString BatteryMessage = FString::Printf(TEXT("Battery Charge Complete +%.0f | %.0f / %.0f"), LastBatteryChargeAmount, CurrentBattery, MaxBattery);
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, BatteryMessage);
-		GEngine->AddOnScreenDebugMessage(1205, 2.0f, FColor::Orange, BatteryDebugString);
-	}
+	BatteryComponent->AddBattery(Amount);
+	BatteryComponent->UpdateBatteryDebugString(bHeadlampOn);
+	BP_BatteryChanged(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
 }
 
 bool AAeternaCharacter::RegisterScanPoint(FName ScanPointId)
 {
-	if (ScanPointId.IsNone() || ScannedPointIds.Contains(ScanPointId))
+	if (!ScanProgressComponent || !ScanProgressComponent->RegisterScanPoint(ScanPointId))
 	{
 		return false;
 	}
 
-	ScannedPointIds.Add(ScanPointId);
-	const int32 CurrentCount = ScannedPointIds.Num();
-	BP_ScanProgressChanged(CurrentCount, RequiredScanCount);
+	const int32 CurrentCount = ScanProgressComponent->GetCompletedScanCount();
+	const int32 RequiredCount = ScanProgressComponent->GetRequiredScanCount();
+	BP_ScanProgressChanged(CurrentCount, RequiredCount);
 
-	UE_LOG(LogAeterna, Log, TEXT("Scan complete: %s (%d / %d)"), *ScanPointId.ToString(), CurrentCount, RequiredScanCount);
+	UE_LOG(LogAeterna, Log, TEXT("Scan complete: %s (%d / %d)"), *ScanPointId.ToString(), CurrentCount, RequiredCount);
 	if (GEngine)
 	{
-		const FString ScanMessage = FString::Printf(TEXT("Scan Complete %d / %d"), CurrentCount, RequiredScanCount);
+		const FString ScanMessage = FString::Printf(TEXT("Scan Complete %d / %d"), CurrentCount, RequiredCount);
 		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, ScanMessage);
 	}
 
-	if (RequiredScanCount > 0 && CurrentCount >= RequiredScanCount)
+	if (RequiredCount > 0 && CurrentCount >= RequiredCount)
 	{
 		BP_AllRequiredScansCompleted();
 	}
@@ -470,40 +357,23 @@ bool AAeternaCharacter::RegisterScanPoint(FName ScanPointId)
 
 bool AAeternaCharacter::HasScannedPoint(FName ScanPointId) const
 {
-	return !ScanPointId.IsNone() && ScannedPointIds.Contains(ScanPointId);
+	return ScanProgressComponent && ScanProgressComponent->HasScannedPoint(ScanPointId);
 }
 
 void AAeternaCharacter::UpdateHeadlampBrightness()
 {
-	if (!HeadlampComponent)
+	if (BatteryComponent)
 	{
-		return;
+		BatteryComponent->UpdateHeadlampBrightness();
 	}
-
-	const float BatteryAlpha = FMath::Clamp(GetBatteryNormalized(), 0.0f, 1.0f);
-	const float WeightedAlpha = FMath::Pow(BatteryAlpha, BatteryBrightnessExponent);
-
-	if (BatteryAlpha <= 0.0f)
-	{
-		HeadlampComponent->SetVisibility(false);
-		HeadlampComponent->SetIntensity(0.0f);
-		return;
-	}
-
-	HeadlampComponent->SetIntensity(FMath::Lerp(LowBatteryLightIntensity, FullBatteryLightIntensity, WeightedAlpha));
-	HeadlampComponent->SetAttenuationRadius(FMath::Lerp(LowBatteryAttenuationRadius, FullBatteryAttenuationRadius, WeightedAlpha));
-	HeadlampComponent->SetTemperature(FMath::Lerp(LowBatteryTemperature, FullBatteryTemperature, WeightedAlpha));
 }
 
 void AAeternaCharacter::UpdateBatteryDebugString()
 {
-	BatteryDebugString = FString::Printf(
-		TEXT("Battery %.1f / %.1f (%.0f%%) | Headlamp %s | Drain %.1f/s"),
-		CurrentBattery,
-		MaxBattery,
-		GetBatteryNormalized() * 100.0f,
-		bHeadlampOn ? TEXT("ON") : TEXT("OFF"),
-		bHeadlampOn ? HeadlampBatteryDrainPerSecond : 0.0f);
+	if (BatteryComponent)
+	{
+		BatteryComponent->UpdateBatteryDebugString(bHeadlampOn);
+	}
 }
 
 bool AAeternaCharacter::IsNotebookOpen() const
@@ -518,35 +388,35 @@ bool AAeternaCharacter::IsHeadlampOn() const
 
 float AAeternaCharacter::GetCurrentBattery() const
 {
-	return CurrentBattery;
+	return BatteryComponent ? BatteryComponent->GetCurrentBattery() : 0.0f;
 }
 
 float AAeternaCharacter::GetLastBatteryChargeAmount() const
 {
-	return LastBatteryChargeAmount;
+	return BatteryComponent ? BatteryComponent->GetLastBatteryChargeAmount() : 0.0f;
 }
 
 FString AAeternaCharacter::GetBatteryDebugString() const
 {
-	return BatteryDebugString;
+	return BatteryComponent ? BatteryComponent->GetBatteryDebugString() : FString();
 }
 
 float AAeternaCharacter::GetBatteryNormalized() const
 {
-	return MaxBattery > 0.0f ? CurrentBattery / MaxBattery : 0.0f;
+	return BatteryComponent ? BatteryComponent->GetBatteryNormalized() : 0.0f;
 }
 
 int32 AAeternaCharacter::GetCompletedScanCount() const
 {
-	return ScannedPointIds.Num();
+	return ScanProgressComponent ? ScanProgressComponent->GetCompletedScanCount() : 0;
 }
 
 AActor* AAeternaCharacter::GetFocusedInteractableActor() const
 {
-	return FocusedInteractableActor.Get();
+	return InteractionComponent ? InteractionComponent->GetFocusedInteractableActor() : nullptr;
 }
 
 FAeternaInteractionInfo AAeternaCharacter::GetFocusedInteractionInfo() const
 {
-	return FocusedInteractionInfo;
+	return InteractionComponent ? InteractionComponent->GetFocusedInteractionInfo() : FAeternaInteractionInfo();
 }
