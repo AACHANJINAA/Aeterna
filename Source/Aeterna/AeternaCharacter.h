@@ -83,6 +83,70 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Movement", meta = (AllowPrivateAccess = "true", DisplayName = "Sprinting"))
 	bool bBasicSprinting = false;
 
+	/** 1인칭 카메라 흔들림을 사용할지 여부입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true"))
+	bool bEnableHeadBob = true;
+
+	/** 정지 상태에서 아주 약하게 움직이는 호흡감 속도입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
+	float IdleHeadBobFrequency = 0.65f;
+
+	/** 정지 상태 카메라 세로 움직임입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "cm"))
+	float IdleHeadBobVerticalAmount = 0.9f;
+
+	/** 정지 상태 카메라 피치 회전입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "deg"))
+	float IdleHeadBobPitchAmount = 0.14f;
+
+	/** 걷기 상태 카메라 흔들림 속도입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
+	float WalkHeadBobFrequency = 1.55f;
+
+	/** 걷기 상태 카메라 세로 움직임입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "cm"))
+	float WalkHeadBobVerticalAmount = 2.4f;
+
+	/** 걷기 상태 카메라 좌우 움직임입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "cm"))
+	float WalkHeadBobSideAmount = 1.25f;
+
+	/** 걷기 상태 카메라 피치 회전입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "deg"))
+	float WalkHeadBobPitchAmount = 0.32f;
+
+	/** 달리기 상태 카메라 흔들림 속도입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
+	float SprintHeadBobFrequency = 2.25f;
+
+	/** 달리기 상태 카메라 세로 움직임입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "cm"))
+	float SprintHeadBobVerticalAmount = 3.8f;
+
+	/** 달리기 상태 카메라 좌우 움직임입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "cm"))
+	float SprintHeadBobSideAmount = 2.0f;
+
+	/** 달리기 상태 카메라 피치 회전입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "deg"))
+	float SprintHeadBobPitchAmount = 0.55f;
+
+	/** 흔들림 상태가 바뀔 때 보간되는 속도입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Camera|Head Bob", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
+	float HeadBobBlendSpeed = 8.0f;
+
+	/** 헤드밥 계산 기준 카메라 상대 위치입니다. */
+	FVector BaseCameraRelativeLocation = FVector::ZeroVector;
+
+	/** 헤드밥 계산 기준 카메라 상대 회전입니다. */
+	FRotator BaseCameraRelativeRotation = FRotator::ZeroRotator;
+
+	/** 현재 헤드밥 위상입니다. */
+	float HeadBobPhase = 0.0f;
+
+	/** 현재 이동 헤드밥 블렌드 값입니다. */
+	float HeadBobMoveBlend = 0.0f;
+
 	/** 상호작용 스캔 거리 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "cm"))
 	float InteractionTraceDistance = 300.0f;
@@ -220,6 +284,10 @@ public:
 	/** F 입력 시 헤드램프 상태를 전환합니다. */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void ToggleHeadlamp();
+
+	/** 속도 상태에 맞춰 1인칭 카메라 헤드밥을 갱신합니다. */
+	UFUNCTION(BlueprintCallable, Category="Camera|Head Bob")
+	virtual void UpdateHeadBob(float DeltaSeconds);
 
 	/** 현재 시야 중앙 상호작용 대상을 갱신합니다. */
 	UFUNCTION(BlueprintCallable, Category="Interaction")

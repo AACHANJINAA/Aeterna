@@ -33,6 +33,8 @@ AAeternaCharacter::AAeternaCharacter()
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("First Person Camera"));
 	FirstPersonCameraComponent->SetupAttachment(FirstPersonMesh, FName("head"));
 	FirstPersonCameraComponent->SetRelativeLocationAndRotation(FVector(-2.8f, 5.89f, 0.0f), FRotator(0.0f, 90.0f, -90.0f));
+	BaseCameraRelativeLocation = FirstPersonCameraComponent->GetRelativeLocation();
+	BaseCameraRelativeRotation = FirstPersonCameraComponent->GetRelativeRotation();
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
 	FirstPersonCameraComponent->bEnableFirstPersonFieldOfView = true;
 	FirstPersonCameraComponent->bEnableFirstPersonScale = true;
@@ -68,6 +70,12 @@ void AAeternaCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	GetCharacterMovement()->MaxWalkSpeed = BasicWalkSpeed;
+	if (FirstPersonCameraComponent)
+	{
+		BaseCameraRelativeLocation = FirstPersonCameraComponent->GetRelativeLocation();
+		BaseCameraRelativeRotation = FirstPersonCameraComponent->GetRelativeRotation();
+	}
+
 	CurrentBattery = FMath::Clamp(CurrentBattery, 0.0f, MaxBattery);
 	UpdateHeadlampBrightness();
 	UpdateBatteryDebugString();
@@ -78,6 +86,7 @@ void AAeternaCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	UpdateHeadBob(DeltaSeconds);
 	UpdateFocusedInteractable();
 
 	if (bHeadlampOn && HeadlampBatteryDrainPerSecond > 0.0f)
@@ -267,6 +276,55 @@ void AAeternaCharacter::TryInteract()
 	}
 
 	IAeternaInteractableInterface::Execute_Interact(HitActor, this);
+}
+
+void AAeternaCharacter::UpdateHeadBob(float DeltaSeconds)
+{
+	if (!FirstPersonCameraComponent)
+	{
+		return;
+	}
+
+	if (!bEnableHeadBob)
+	{
+		HeadBobMoveBlend = 0.0f;
+		FirstPersonCameraComponent->SetRelativeLocation(BaseCameraRelativeLocation);
+		FirstPersonCameraComponent->SetRelativeRotation(BaseCameraRelativeRotation);
+		return;
+	}
+
+	const FVector HorizontalVelocity = FVector(GetVelocity().X, GetVelocity().Y, 0.0f);
+	const float HorizontalSpeed = HorizontalVelocity.Size();
+	const bool bMovingOnGround = HorizontalSpeed > 5.0f && GetCharacterMovement() && GetCharacterMovement()->IsMovingOnGround();
+	const float TargetMoveBlend = bMovingOnGround ? FMath::Clamp(HorizontalSpeed / FMath::Max(BasicSprintSpeed, 1.0f), 0.0f, 1.0f) : 0.0f;
+	HeadBobMoveBlend = FMath::FInterpTo(HeadBobMoveBlend, TargetMoveBlend, DeltaSeconds, HeadBobBlendSpeed);
+
+	const float SprintAlpha = bBasicSprinting ? 1.0f : 0.0f;
+	const float MoveFrequency = FMath::Lerp(WalkHeadBobFrequency, SprintHeadBobFrequency, SprintAlpha);
+	const float MoveVerticalAmount = FMath::Lerp(WalkHeadBobVerticalAmount, SprintHeadBobVerticalAmount, SprintAlpha);
+	const float MoveSideAmount = FMath::Lerp(WalkHeadBobSideAmount, SprintHeadBobSideAmount, SprintAlpha);
+	const float MovePitchAmount = FMath::Lerp(WalkHeadBobPitchAmount, SprintHeadBobPitchAmount, SprintAlpha);
+
+	const float BobFrequency = FMath::Lerp(IdleHeadBobFrequency, MoveFrequency, HeadBobMoveBlend);
+	HeadBobPhase = FMath::Fmod(HeadBobPhase + DeltaSeconds * BobFrequency * 2.0f * UE_PI, 2.0f * UE_PI);
+
+	const float IdleBlend = 1.0f - HeadBobMoveBlend;
+	const float IdleVerticalOffset = FMath::Sin(HeadBobPhase) * IdleHeadBobVerticalAmount * IdleBlend;
+	const float IdlePitchOffset = FMath::Sin(HeadBobPhase * 0.75f) * IdleHeadBobPitchAmount * IdleBlend;
+
+	const float MoveVerticalOffset = FMath::Sin(HeadBobPhase * 2.0f) * MoveVerticalAmount * HeadBobMoveBlend;
+	const float MoveSideOffset = FMath::Sin(HeadBobPhase) * MoveSideAmount * HeadBobMoveBlend;
+	const float MovePitchOffset = FMath::Sin(HeadBobPhase * 2.0f + 0.5f * UE_PI) * MovePitchAmount * HeadBobMoveBlend;
+
+	FVector BobbedLocation = BaseCameraRelativeLocation;
+	BobbedLocation.Y += MoveSideOffset;
+	BobbedLocation.Z += IdleVerticalOffset + MoveVerticalOffset;
+
+	FRotator BobbedRotation = BaseCameraRelativeRotation;
+	BobbedRotation.Pitch += IdlePitchOffset + MovePitchOffset;
+
+	FirstPersonCameraComponent->SetRelativeLocation(BobbedLocation);
+	FirstPersonCameraComponent->SetRelativeRotation(BobbedRotation);
 }
 
 void AAeternaCharacter::UpdateFocusedInteractable()
