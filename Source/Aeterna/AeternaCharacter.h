@@ -12,6 +12,7 @@ class UInputComponent;
 class USkeletalMeshComponent;
 class UCameraComponent;
 class UInputAction;
+class USpotLightComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -31,6 +32,10 @@ class AAeternaCharacter : public ACharacter
 	/** First person camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FirstPersonCameraComponent;
+
+	/** M-05 머리 위 내장 헤드램프 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	USpotLightComponent* HeadlampComponent;
 
 protected:
 
@@ -97,11 +102,76 @@ protected:
 	/** 현재 헤드램프가 켜져 있는지 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Headlamp", meta = (AllowPrivateAccess = "true"))
 	bool bHeadlampOn = false;
+
+	/** 플레이어 배터리 최대 잔량 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery", meta = (AllowPrivateAccess = "true", ClampMin = "1.0"))
+	float MaxBattery = 100.0f;
+
+	/** 현재 플레이어 배터리 잔량 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Battery", meta = (AllowPrivateAccess = "true"))
+	float CurrentBattery = 100.0f;
+
+	/** 마지막으로 충전된 배터리 양 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Battery", meta = (AllowPrivateAccess = "true"))
+	float LastBatteryChargeAmount = 0.0f;
+
+	/** 헤드램프 ON 동안 초당 소모되는 배터리 양 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
+	float HeadlampBatteryDrainPerSecond = 2.5f;
+
+	/** 배터리 디버그 문자열을 화면에 계속 표시할지 여부 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|Debug", meta = (AllowPrivateAccess = "true"))
+	bool bShowBatteryDebugString = true;
+
+	/** 배터리 디버그 문자열 출력 간격 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|Debug", meta = (AllowPrivateAccess = "true", ClampMin = "0.05", Units = "s"))
+	float BatteryDebugPrintInterval = 0.5f;
+
+	/** 현재 배터리 상태 확인용 디버그 문자열 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Battery|Debug", meta = (AllowPrivateAccess = "true"))
+	FString BatteryDebugString;
+
+	/** 배터리 디버그 문자열 출력 타이머 */
+	float BatteryDebugPrintTimer = 0.0f;
+
+	/** 배터리 만충 시 헤드램프 강도 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
+	float FullBatteryLightIntensity = 8000.0f;
+
+	/** 방전 직전 헤드램프 강도 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta = (AllowPrivateAccess = "true", ClampMin = "0.0"))
+	float LowBatteryLightIntensity = 600.0f;
+
+	/** 배터리 만충 시 헤드램프 도달 거리 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "cm"))
+	float FullBatteryAttenuationRadius = 1600.0f;
+
+	/** 방전 직전 헤드램프 도달 거리 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta = (AllowPrivateAccess = "true", ClampMin = "0.0", Units = "cm"))
+	float LowBatteryAttenuationRadius = 350.0f;
+
+	/** 배터리 만충 시 헤드램프 색온도 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta = (AllowPrivateAccess = "true", ClampMin = "1000.0", Units = "K"))
+	float FullBatteryTemperature = 6500.0f;
+
+	/** 방전 직전 헤드램프 색온도 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta = (AllowPrivateAccess = "true", ClampMin = "1000.0", Units = "K"))
+	float LowBatteryTemperature = 2600.0f;
+
+	/** 후반부에 더 급격히 어두워지게 만드는 감쇠 지수 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta = (AllowPrivateAccess = "true", ClampMin = "0.1"))
+	float BatteryBrightnessExponent = 1.8f;
+
+	/** S01 테스트용 필수 스캔 개수 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scan", meta = (AllowPrivateAccess = "true", ClampMin = "0"))
+	int32 RequiredScanCount = 3;
+
+	/** 이미 스캔한 지점 ID */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Scan", meta = (AllowPrivateAccess = "true"))
+	TSet<FName> ScannedPointIds;
 	
 public:
 	AAeternaCharacter();
-
-protected:
 
 	/** Gameplay initialization */
 	virtual void BeginPlay() override;
@@ -155,6 +225,26 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="Interaction")
 	virtual void UpdateFocusedInteractable();
 
+	/** 플레이어 배터리를 충전합니다. */
+	UFUNCTION(BlueprintCallable, Category="Battery")
+	virtual void AddPlayerBattery(float Amount);
+
+	/** 스캔 지점 완료를 기록합니다. */
+	UFUNCTION(BlueprintCallable, Category="Scan")
+	virtual bool RegisterScanPoint(FName ScanPointId);
+
+	/** 이미 기록된 스캔 지점인지 확인합니다. */
+	UFUNCTION(BlueprintPure, Category="Scan")
+	virtual bool HasScannedPoint(FName ScanPointId) const;
+
+	/** 헤드램프 조명 값을 현재 배터리 잔량에 맞춰 갱신합니다. */
+	UFUNCTION(BlueprintCallable, Category="Headlamp")
+	virtual void UpdateHeadlampBrightness();
+
+	/** 배터리 디버그 문자열을 현재 값으로 갱신합니다. */
+	UFUNCTION(BlueprintCallable, Category="Battery|Debug")
+	virtual void UpdateBatteryDebugString();
+
 	/** 수첩 상태가 바뀔 때 BP에서 UI 표시를 연결합니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Notebook", meta = (DisplayName = "Notebook State Changed"))
 	void BP_NotebookStateChanged(bool bOpen);
@@ -170,6 +260,18 @@ protected:
 	/** 조준 중인 상호작용 대상이 바뀔 때 BP에서 프롬프트 표시를 연결합니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Interaction", meta = (DisplayName = "Focused Interactable Changed"))
 	void BP_FocusedInteractableChanged(AActor* NewFocusedActor, const FAeternaInteractionInfo& InteractionInfo);
+
+	/** 배터리 잔량이 바뀔 때 BP에서 게이지 표시를 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Battery", meta = (DisplayName = "Battery Changed"))
+	void BP_BatteryChanged(float Current, float Max, float Normalized);
+
+	/** 스캔 진행도가 바뀔 때 BP에서 표시를 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Scan", meta = (DisplayName = "Scan Progress Changed"))
+	void BP_ScanProgressChanged(int32 CurrentCount, int32 RequiredCount);
+
+	/** 필수 스캔 지점이 모두 완료됐을 때 BP에서 목표 완료 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Scan", meta = (DisplayName = "All Required Scans Completed"))
+	void BP_AllRequiredScansCompleted();
 
 protected:
 
@@ -197,6 +299,26 @@ public:
 	UFUNCTION(BlueprintPure, Category="Headlamp")
 	bool IsHeadlampOn() const;
 
+	/** Returns current player battery. **/
+	UFUNCTION(BlueprintPure, Category="Battery")
+	float GetCurrentBattery() const;
+
+	/** Returns last charged battery amount. **/
+	UFUNCTION(BlueprintPure, Category="Battery")
+	float GetLastBatteryChargeAmount() const;
+
+	/** Returns battery debug string. **/
+	UFUNCTION(BlueprintPure, Category="Battery|Debug")
+	FString GetBatteryDebugString() const;
+
+	/** Returns normalized player battery from 0 to 1. **/
+	UFUNCTION(BlueprintPure, Category="Battery")
+	float GetBatteryNormalized() const;
+
+	/** Returns completed scan count. **/
+	UFUNCTION(BlueprintPure, Category="Scan")
+	int32 GetCompletedScanCount() const;
+
 	/** Returns currently focused interactable actor. **/
 	UFUNCTION(BlueprintPure, Category="Interaction")
 	AActor* GetFocusedInteractableActor() const;
@@ -206,4 +328,3 @@ public:
 	FAeternaInteractionInfo GetFocusedInteractionInfo() const;
 
 };
-

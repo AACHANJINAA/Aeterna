@@ -1,11 +1,13 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "AeternaCharacter.h"
+#include "AeternaInteractableActor.h"
 #include "AeternaInteractableInterface.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/SpotLightComponent.h"
 #include "Engine/Engine.h"
 #include "EnhancedInputComponent.h"
 #include "InputActionValue.h"
@@ -37,6 +39,18 @@ AAeternaCharacter::AAeternaCharacter()
 	FirstPersonCameraComponent->FirstPersonFieldOfView = 70.0f;
 	FirstPersonCameraComponent->FirstPersonScale = 0.6f;
 
+	HeadlampComponent = CreateDefaultSubobject<USpotLightComponent>(TEXT("Headlamp"));
+	HeadlampComponent->SetupAttachment(FirstPersonCameraComponent);
+	HeadlampComponent->SetRelativeLocation(FVector(18.0f, 0.0f, -4.0f));
+	HeadlampComponent->SetRelativeRotation(FRotator::ZeroRotator);
+	HeadlampComponent->SetVisibility(false);
+	HeadlampComponent->SetIntensity(FullBatteryLightIntensity);
+	HeadlampComponent->SetAttenuationRadius(FullBatteryAttenuationRadius);
+	HeadlampComponent->SetUseTemperature(true);
+	HeadlampComponent->SetTemperature(FullBatteryTemperature);
+	HeadlampComponent->SetInnerConeAngle(18.0f);
+	HeadlampComponent->SetOuterConeAngle(36.0f);
+
 	// configure the character comps
 	GetMesh()->SetOwnerNoSee(true);
 	GetMesh()->FirstPersonPrimitiveType = EFirstPersonPrimitiveType::WorldSpaceRepresentation;
@@ -54,6 +68,10 @@ void AAeternaCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	GetCharacterMovement()->MaxWalkSpeed = BasicWalkSpeed;
+	CurrentBattery = FMath::Clamp(CurrentBattery, 0.0f, MaxBattery);
+	UpdateHeadlampBrightness();
+	UpdateBatteryDebugString();
+	BP_BatteryChanged(CurrentBattery, MaxBattery, GetBatteryNormalized());
 }
 
 void AAeternaCharacter::Tick(float DeltaSeconds)
@@ -61,6 +79,37 @@ void AAeternaCharacter::Tick(float DeltaSeconds)
 	Super::Tick(DeltaSeconds);
 
 	UpdateFocusedInteractable();
+
+	if (bHeadlampOn && HeadlampBatteryDrainPerSecond > 0.0f)
+	{
+		CurrentBattery = FMath::Max(CurrentBattery - HeadlampBatteryDrainPerSecond * DeltaSeconds, 0.0f);
+		UpdateHeadlampBrightness();
+		UpdateBatteryDebugString();
+		BP_BatteryChanged(CurrentBattery, MaxBattery, GetBatteryNormalized());
+
+		BatteryDebugPrintTimer += DeltaSeconds;
+		if (bShowBatteryDebugString && BatteryDebugPrintTimer >= BatteryDebugPrintInterval)
+		{
+			BatteryDebugPrintTimer = 0.0f;
+			UE_LOG(LogAeterna, Log, TEXT("%s"), *BatteryDebugString);
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(1205, BatteryDebugPrintInterval + 0.1f, FColor::Orange, BatteryDebugString);
+			}
+		}
+
+		if (CurrentBattery <= 0.0f)
+		{
+			bHeadlampOn = false;
+			if (HeadlampComponent)
+			{
+				HeadlampComponent->SetVisibility(false);
+			}
+
+			UE_LOG(LogAeterna, Log, TEXT("Light down"));
+			BP_HeadlampStateChanged(false);
+		}
+	}
 }
 
 void AAeternaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -201,7 +250,19 @@ void AAeternaCharacter::TryInteract()
 	AActor* HitActor = FocusedInteractableActor.Get();
 	if (!HitActor)
 	{
+		UE_LOG(LogAeterna, Log, TEXT("No interaction target"));
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::Silver, TEXT("No Interaction Target"));
+		}
+
 		BP_InteractionFailed();
+		return;
+	}
+
+	if (AAeternaInteractableActor* NativeInteractable = Cast<AAeternaInteractableActor>(HitActor))
+	{
+		NativeInteractable->PerformInteraction(this);
 		return;
 	}
 
@@ -226,8 +287,19 @@ void AAeternaCharacter::UpdateFocusedInteractable()
 			AActor* HitActor = HitResult.GetActor();
 			if (HitActor && HitActor->GetClass()->ImplementsInterface(UAeternaInteractableInterface::StaticClass()))
 			{
-				NewFocusedActor = HitActor;
-				NewInteractionInfo = IAeternaInteractableInterface::Execute_GetInteractionInfo(HitActor, this);
+				if (AAeternaInteractableActor* NativeInteractable = Cast<AAeternaInteractableActor>(HitActor))
+				{
+					NewInteractionInfo = NativeInteractable->GetInteractionInfo_Implementation(this);
+				}
+				else
+				{
+					NewInteractionInfo = IAeternaInteractableInterface::Execute_GetInteractionInfo(HitActor, this);
+				}
+
+				if (NewInteractionInfo.Type != EAeternaInteractionType::None || !NewInteractionInfo.PromptText.IsEmpty())
+				{
+					NewFocusedActor = HitActor;
+				}
 			}
 		}
 	}
@@ -237,6 +309,22 @@ void AAeternaCharacter::UpdateFocusedInteractable()
 		FocusedInteractableActor = NewFocusedActor;
 		FocusedInteractionInfo = NewInteractionInfo;
 		BP_FocusedInteractableChanged(FocusedInteractableActor.Get(), FocusedInteractionInfo);
+
+		if (GEngine)
+		{
+			if (FocusedInteractableActor)
+			{
+				const FText PromptText = FocusedInteractionInfo.PromptText.IsEmpty()
+					? FText::FromString(TEXT("Interact"))
+					: FocusedInteractionInfo.PromptText;
+				const FString PromptMessage = FString::Printf(TEXT("[E] %s"), *PromptText.ToString());
+				GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Green, PromptMessage);
+			}
+			else
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 0.5f, FColor::Silver, TEXT("No Interaction"));
+			}
+		}
 		return;
 	}
 
@@ -245,7 +333,23 @@ void AAeternaCharacter::UpdateFocusedInteractable()
 
 void AAeternaCharacter::ToggleHeadlamp()
 {
+	if (!bHeadlampOn && CurrentBattery <= 0.0f)
+	{
+		UE_LOG(LogAeterna, Log, TEXT("Light unavailable: battery empty"));
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, TEXT("Light unavailable: battery empty"));
+		}
+		return;
+	}
+
 	bHeadlampOn = !bHeadlampOn;
+	if (HeadlampComponent)
+	{
+		HeadlampComponent->SetVisibility(bHeadlampOn);
+	}
+	UpdateHeadlampBrightness();
+
 	const FString HeadlampMessage = bHeadlampOn ? TEXT("Light on") : TEXT("Light down");
 
 	UE_LOG(LogAeterna, Log, TEXT("%s"), *HeadlampMessage);
@@ -257,6 +361,93 @@ void AAeternaCharacter::ToggleHeadlamp()
 	BP_HeadlampStateChanged(bHeadlampOn);
 }
 
+void AAeternaCharacter::AddPlayerBattery(float Amount)
+{
+	if (Amount <= 0.0f)
+	{
+		return;
+	}
+
+	const float PreviousBattery = CurrentBattery;
+	CurrentBattery = FMath::Clamp(CurrentBattery + Amount, 0.0f, MaxBattery);
+	LastBatteryChargeAmount = CurrentBattery - PreviousBattery;
+	UpdateHeadlampBrightness();
+	UpdateBatteryDebugString();
+	BP_BatteryChanged(CurrentBattery, MaxBattery, GetBatteryNormalized());
+
+	UE_LOG(LogAeterna, Log, TEXT("Battery charge complete: +%.1f -> %.1f / %.1f"), LastBatteryChargeAmount, CurrentBattery, MaxBattery);
+	if (GEngine)
+	{
+		const FString BatteryMessage = FString::Printf(TEXT("Battery Charge Complete +%.0f | %.0f / %.0f"), LastBatteryChargeAmount, CurrentBattery, MaxBattery);
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, BatteryMessage);
+		GEngine->AddOnScreenDebugMessage(1205, 2.0f, FColor::Orange, BatteryDebugString);
+	}
+}
+
+bool AAeternaCharacter::RegisterScanPoint(FName ScanPointId)
+{
+	if (ScanPointId.IsNone() || ScannedPointIds.Contains(ScanPointId))
+	{
+		return false;
+	}
+
+	ScannedPointIds.Add(ScanPointId);
+	const int32 CurrentCount = ScannedPointIds.Num();
+	BP_ScanProgressChanged(CurrentCount, RequiredScanCount);
+
+	UE_LOG(LogAeterna, Log, TEXT("Scan complete: %s (%d / %d)"), *ScanPointId.ToString(), CurrentCount, RequiredScanCount);
+	if (GEngine)
+	{
+		const FString ScanMessage = FString::Printf(TEXT("Scan Complete %d / %d"), CurrentCount, RequiredScanCount);
+		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Cyan, ScanMessage);
+	}
+
+	if (RequiredScanCount > 0 && CurrentCount >= RequiredScanCount)
+	{
+		BP_AllRequiredScansCompleted();
+	}
+
+	return true;
+}
+
+bool AAeternaCharacter::HasScannedPoint(FName ScanPointId) const
+{
+	return !ScanPointId.IsNone() && ScannedPointIds.Contains(ScanPointId);
+}
+
+void AAeternaCharacter::UpdateHeadlampBrightness()
+{
+	if (!HeadlampComponent)
+	{
+		return;
+	}
+
+	const float BatteryAlpha = FMath::Clamp(GetBatteryNormalized(), 0.0f, 1.0f);
+	const float WeightedAlpha = FMath::Pow(BatteryAlpha, BatteryBrightnessExponent);
+
+	if (BatteryAlpha <= 0.0f)
+	{
+		HeadlampComponent->SetVisibility(false);
+		HeadlampComponent->SetIntensity(0.0f);
+		return;
+	}
+
+	HeadlampComponent->SetIntensity(FMath::Lerp(LowBatteryLightIntensity, FullBatteryLightIntensity, WeightedAlpha));
+	HeadlampComponent->SetAttenuationRadius(FMath::Lerp(LowBatteryAttenuationRadius, FullBatteryAttenuationRadius, WeightedAlpha));
+	HeadlampComponent->SetTemperature(FMath::Lerp(LowBatteryTemperature, FullBatteryTemperature, WeightedAlpha));
+}
+
+void AAeternaCharacter::UpdateBatteryDebugString()
+{
+	BatteryDebugString = FString::Printf(
+		TEXT("Battery %.1f / %.1f (%.0f%%) | Headlamp %s | Drain %.1f/s"),
+		CurrentBattery,
+		MaxBattery,
+		GetBatteryNormalized() * 100.0f,
+		bHeadlampOn ? TEXT("ON") : TEXT("OFF"),
+		bHeadlampOn ? HeadlampBatteryDrainPerSecond : 0.0f);
+}
+
 bool AAeternaCharacter::IsNotebookOpen() const
 {
 	return bNotebookOpen;
@@ -265,6 +456,31 @@ bool AAeternaCharacter::IsNotebookOpen() const
 bool AAeternaCharacter::IsHeadlampOn() const
 {
 	return bHeadlampOn;
+}
+
+float AAeternaCharacter::GetCurrentBattery() const
+{
+	return CurrentBattery;
+}
+
+float AAeternaCharacter::GetLastBatteryChargeAmount() const
+{
+	return LastBatteryChargeAmount;
+}
+
+FString AAeternaCharacter::GetBatteryDebugString() const
+{
+	return BatteryDebugString;
+}
+
+float AAeternaCharacter::GetBatteryNormalized() const
+{
+	return MaxBattery > 0.0f ? CurrentBattery / MaxBattery : 0.0f;
+}
+
+int32 AAeternaCharacter::GetCompletedScanCount() const
+{
+	return ScannedPointIds.Num();
 }
 
 AActor* AAeternaCharacter::GetFocusedInteractableActor() const
