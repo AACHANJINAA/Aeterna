@@ -7,7 +7,6 @@
 #include "Player/UI/AeternaClockHudWidget.h"
 
 #include "Blueprint/UserWidget.h"
-#include "Blueprint/WidgetLayoutLibrary.h"
 #include "GameFramework/PlayerController.h"
 
 UAeternaClockComponent::UAeternaClockComponent()
@@ -52,8 +51,7 @@ void UAeternaClockComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 	if (ClockHudWidget)
 	{
-		ApplyClockHud();
-		SetComponentTickEnabled(false);
+		UpdateClockHudPosition();
 	}
 }
 
@@ -66,7 +64,10 @@ void UAeternaClockComponent::AdvanceClockMinutes(int32 MinutesToAdvance)
 
 	const int32 PreviousClockMinutes = CurrentClockMinutes;
 	CurrentClockMinutes = FMath::Clamp(CurrentClockMinutes + MinutesToAdvance, 0, MaxClockMinutes);
-	ApplyClockHud();
+	if (!ApplyClockHud())
+	{
+		SetComponentTickEnabled(true);
+	}
 
 	if (PreviousClockMinutes != CurrentClockMinutes)
 	{
@@ -112,28 +113,47 @@ void UAeternaClockComponent::CreateClockHudWidget()
 	}
 }
 
-void UAeternaClockComponent::ApplyClockHud()
+bool UAeternaClockComponent::ApplyClockHud()
 {
 	if (UAeternaClockHudWidget* NativeClockHudWidget = Cast<UAeternaClockHudWidget>(ClockHudWidget))
 	{
 		NativeClockHudWidget->SetClockMinutes(CurrentClockMinutes);
-		UpdateClockHudPosition();
+		return UpdateClockHudPosition();
 	}
+
+	return false;
 }
 
-void UAeternaClockComponent::UpdateClockHudPosition()
+bool UAeternaClockComponent::UpdateClockHudPosition()
 {
 	if (!ClockHudWidget)
 	{
-		return;
+		return false;
 	}
 
-	const FVector2D ViewportSize = UWidgetLayoutLibrary::GetViewportSize(this);
-	if (ViewportSize.X <= 0.0f || ViewportSize.Y <= 0.0f)
+	AAeternaCharacter* AeternaCharacter = GetAeternaCharacter();
+	APlayerController* PlayerController = AeternaCharacter ? Cast<APlayerController>(AeternaCharacter->GetController()) : nullptr;
+	if (!PlayerController && GetWorld())
 	{
-		return;
+		PlayerController = GetWorld()->GetFirstPlayerController();
+	}
+
+	if (!PlayerController)
+	{
+		return false;
+	}
+
+	int32 ViewportSizeX = 0;
+	int32 ViewportSizeY = 0;
+	PlayerController->GetViewportSize(ViewportSizeX, ViewportSizeY);
+	if (ViewportSizeX <= 0 || ViewportSizeY <= 0)
+	{
+		return false;
 	}
 
 	ClockHudWidget->SetAlignmentInViewport(FVector2D(0.5f, 0.0f));
-	ClockHudWidget->SetPositionInViewport(FVector2D((ViewportSize.X * 0.5f) + TopCenterOffset.X, TopCenterOffset.Y), false);
+	ClockHudWidget->SetPositionInViewport(
+		FVector2D((static_cast<float>(ViewportSizeX) * 0.5f) + TopCenterOffset.X, TopCenterOffset.Y),
+		true);
+	return true;
 }

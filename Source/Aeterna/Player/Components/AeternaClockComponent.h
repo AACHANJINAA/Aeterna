@@ -47,8 +47,8 @@ protected:
 
 private:
 	void CreateClockHudWidget();
-	void ApplyClockHud();
-	void UpdateClockHudPosition();
+	bool ApplyClockHud();
+	bool UpdateClockHudPosition();
 
 	int32 CurrentClockMinutes = 0;
 
