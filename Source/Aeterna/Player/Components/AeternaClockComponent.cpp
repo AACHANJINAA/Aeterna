@@ -3,6 +3,7 @@
 #include "Player/Components/AeternaClockComponent.h"
 
 #include "Aeterna.h"
+#include "Core/GameClockSubsystem.h"
 #include "Player/AeternaCharacter.h"
 #include "Player/UI/AeternaClockHudWidget.h"
 
@@ -32,6 +33,23 @@ void UAeternaClockComponent::BeginPlay()
 
 	CreateClockHudWidget();
 	ApplyClockHud();
+
+	if (UGameClockSubsystem* GameClockSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UGameClockSubsystem>() : nullptr)
+	{
+		CurrentClockMinutes = GameClockSubsystem->GetClockMinutes();
+		GameClockSubsystem->OnClockMinuteChanged.AddUniqueDynamic(this, &UAeternaClockComponent::HandleGameClockMinuteChanged);
+		ApplyClockHud();
+	}
+}
+
+void UAeternaClockComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (UGameClockSubsystem* GameClockSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UGameClockSubsystem>() : nullptr)
+	{
+		GameClockSubsystem->OnClockMinuteChanged.RemoveDynamic(this, &UAeternaClockComponent::HandleGameClockMinuteChanged);
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void UAeternaClockComponent::InitializePlayerComponent(AAeternaCharacter* InPlayerCharacter)
@@ -59,6 +77,12 @@ void UAeternaClockComponent::AdvanceClockMinutes(int32 MinutesToAdvance)
 {
 	if (MinutesToAdvance <= 0)
 	{
+		return;
+	}
+
+	if (UGameClockSubsystem* GameClockSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UGameClockSubsystem>() : nullptr)
+	{
+		GameClockSubsystem->AdvanceClockMinutes(MinutesToAdvance);
 		return;
 	}
 
@@ -156,4 +180,10 @@ bool UAeternaClockComponent::UpdateClockHudPosition()
 		FVector2D((static_cast<float>(ViewportSizeX) * 0.5f) + TopCenterOffset.X, TopCenterOffset.Y),
 		true);
 	return true;
+}
+
+void UAeternaClockComponent::HandleGameClockMinuteChanged(int32 InClockMinutes)
+{
+	CurrentClockMinutes = InClockMinutes;
+	ApplyClockHud();
 }

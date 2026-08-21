@@ -17,6 +17,7 @@ public:
 	UAeternaClockComponent();
 
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void InitializePlayerComponent(AAeternaCharacter* InPlayerCharacter) override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
@@ -31,10 +32,10 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Clock", meta=(ClampMin="0"))
-	int32 StartClockMinutes = 0;
+	int32 StartClockMinutes = 60;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Clock", meta=(ClampMin="0"))
-	int32 MaxClockMinutes = 360;
+	int32 MaxClockMinutes = 300;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Clock|Debug", meta=(ClampMin="1"))
 	int32 DebugAdvanceMinutes = 30;
@@ -50,7 +51,10 @@ private:
 	bool ApplyClockHud();
 	bool UpdateClockHudPosition();
 
-	int32 CurrentClockMinutes = 0;
+	UFUNCTION()
+	void HandleGameClockMinuteChanged(int32 InClockMinutes);
+
+	int32 CurrentClockMinutes = 60;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UUserWidget> ClockHudWidget;
