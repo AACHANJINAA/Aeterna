@@ -124,13 +124,13 @@ void AAeternaCharacter::Tick(float DeltaSeconds)
 	UpdateHeadBob(DeltaSeconds);
 	UpdateFocusedInteractable();
 
-	if (BatteryComponent && BatteryHudComponent)
-	{
-		BatteryHudComponent->UpdateBatteryHud(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
-	}
-
 	if (BatteryComponent && BatteryComponent->TickBattery(DeltaSeconds, bHeadlampOn))
 	{
+		if (BatteryHudComponent)
+		{
+			BatteryHudComponent->UpdateBatteryHud(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
+		}
+
 		BP_BatteryChanged(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
 
 		if (bHeadlampOn && BatteryComponent->GetCurrentBattery() <= 0.0f)
@@ -140,8 +140,6 @@ void AAeternaCharacter::Tick(float DeltaSeconds)
 			{
 				HeadlampComponent->SetVisibility(false);
 			}
-
-			UE_LOG(LogAeterna, Log, TEXT("Light down"));
 			BP_HeadlampStateChanged(false);
 		}
 	}
@@ -193,7 +191,7 @@ void AAeternaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	}
 	else
 	{
-		UE_LOG(LogAeterna, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+		UE_LOG(LogAeterna, Error, TEXT("'%s' requires an Enhanced Input Component."), *GetNameSafe(this));
 	}
 
 #if !UE_BUILD_SHIPPING
@@ -284,10 +282,6 @@ bool AAeternaCharacter::IsSprinting() const
 void AAeternaCharacter::ToggleNotebook()
 {
 	bNotebookOpen = !bNotebookOpen;
-	const FString NotebookMessage = bNotebookOpen ? TEXT("Notebook open") : TEXT("Notebook close");
-
-	UE_LOG(LogAeterna, Log, TEXT("%s"), *NotebookMessage);
-
 	BP_NotebookStateChanged(bNotebookOpen);
 }
 
@@ -308,9 +302,6 @@ void AAeternaCharacter::TryInteract()
 		}
 		return;
 	}
-
-	UE_LOG(LogAeterna, Log, TEXT("No interaction target"));
-
 	BP_InteractionFailed();
 }
 
@@ -354,7 +345,6 @@ void AAeternaCharacter::ToggleHeadlamp()
 
 	if (!bHeadlampOn && BatteryComponent->GetCurrentBattery() <= 0.0f)
 	{
-		UE_LOG(LogAeterna, Log, TEXT("Light unavailable: battery empty"));
 		return;
 	}
 
@@ -364,10 +354,6 @@ void AAeternaCharacter::ToggleHeadlamp()
 		HeadlampComponent->SetVisibility(bHeadlampOn);
 	}
 	UpdateHeadlampBrightness();
-
-	const FString HeadlampMessage = bHeadlampOn ? TEXT("Light on") : TEXT("Light down");
-
-	UE_LOG(LogAeterna, Log, TEXT("%s"), *HeadlampMessage);
 
 	BP_HeadlampStateChanged(bHeadlampOn);
 }
@@ -398,8 +384,6 @@ bool AAeternaCharacter::RegisterScanPoint(FName ScanPointId)
 	const int32 CurrentCount = ScanProgressComponent->GetCompletedScanCount();
 	const int32 RequiredCount = ScanProgressComponent->GetRequiredScanCount();
 	BP_ScanProgressChanged(CurrentCount, RequiredCount);
-
-	UE_LOG(LogAeterna, Log, TEXT("Scan complete: %s (%d / %d)"), *ScanPointId.ToString(), CurrentCount, RequiredCount);
 
 	if (RequiredCount > 0 && CurrentCount >= RequiredCount)
 	{

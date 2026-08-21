@@ -110,7 +110,6 @@ void UGameClockSubsystem::SetClockMinutesInternal(int32 NewClockMinutes)
 		bFinished = true;
 		bClockRunning = false;
 		OnClockFinished.Broadcast(CurrentClockMinutes);
-		UE_LOG(LogAeterna, Log, TEXT("Game clock finished at %02d:%02d"), CurrentClockMinutes / 60, CurrentClockMinutes % 60);
 	}
 }
 
@@ -127,10 +126,6 @@ void UGameClockSubsystem::BroadcastReachedEvents(int32 PreviousClockMinutes, int
 		{
 			ReachedEventIds.Add(ClockEvent.EventId);
 			OnClockEventReached.Broadcast(ClockEvent.EventId, ClockEvent.ClockMinutes);
-			UE_LOG(LogAeterna, Log, TEXT("Game clock event reached: %s at %02d:%02d"),
-				*ClockEvent.EventId.ToString(),
-				ClockEvent.ClockMinutes / 60,
-				ClockEvent.ClockMinutes % 60);
 		}
 	}
 }

@@ -31,13 +31,6 @@ bool UAeternaBatteryComponent::TickBattery(float DeltaSeconds, bool bHeadlampOn)
 	UpdateHeadlampBrightness();
 	UpdateBatteryDebugString(bHeadlampOn);
 
-	BatteryDebugPrintTimer += DeltaSeconds;
-	if (bShowBatteryDebugString && BatteryDebugPrintTimer >= BatteryDebugPrintInterval)
-	{
-		BatteryDebugPrintTimer = 0.0f;
-		UE_LOG(LogAeterna, Log, TEXT("%s"), *BatteryDebugString);
-	}
-
 	return !FMath::IsNearlyEqual(PreviousBattery, CurrentBattery);
 }
 
@@ -53,8 +46,6 @@ void UAeternaBatteryComponent::AddBattery(float Amount)
 	LastBatteryChargeAmount = CurrentBattery - PreviousBattery;
 	UpdateHeadlampBrightness();
 	UpdateBatteryDebugString(false);
-
-	UE_LOG(LogAeterna, Log, TEXT("Battery charge complete: +%.1f -> %.1f / %.1f"), LastBatteryChargeAmount, CurrentBattery, MaxBattery);
 }
 
 void UAeternaBatteryComponent::UpdateHeadlampBrightness()

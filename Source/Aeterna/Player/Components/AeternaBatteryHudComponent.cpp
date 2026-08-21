@@ -61,6 +61,12 @@ void UAeternaBatteryHudComponent::TickComponent(float DeltaTime, ELevelTick Tick
 
 void UAeternaBatteryHudComponent::UpdateBatteryHud(float Current, float Max, float Normalized)
 {
+	if (!HasBatteryHudValueChanged(Current, Max, Normalized))
+	{
+		UpdateBatteryHudPosition();
+		return;
+	}
+
 	LastCurrentBattery = Current;
 	LastMaxBattery = Max;
 	LastBatteryNormalized = Normalized;
@@ -149,4 +155,11 @@ void UAeternaBatteryHudComponent::UpdateBatteryHudPosition()
 
 	BatteryHudWidget->SetAlignmentInViewport(FVector2D::ZeroVector);
 	BatteryHudWidget->SetPositionInViewport(WidgetPosition, true);
+}
+
+bool UAeternaBatteryHudComponent::HasBatteryHudValueChanged(float Current, float Max, float Normalized) const
+{
+	return !FMath::IsNearlyEqual(LastCurrentBattery, Current)
+		|| !FMath::IsNearlyEqual(LastMaxBattery, Max)
+		|| !FMath::IsNearlyEqual(LastBatteryNormalized, Normalized);
 }

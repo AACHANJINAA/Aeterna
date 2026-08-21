@@ -53,3 +53,29 @@
 - Git
 	- 외부 에셋/플러그인 폴더 `.gitignore` 제외 처리
 	- C++ 화면 디버그 메시지 제거 후 `UE_LOG` 중심으로 정리
+
+### 2026-08-21
+
+- Clock / Scenario Time Loop
+	- `UGameClockSubsystem` 기반 기본 시간 루프 정리
+	- 기본 게임 시간 범위를 01:00~05:00으로 설정
+	- 기본 시간 배속을 게임 30분 = 실제 30초 기준으로 조정
+	- 분 변경, 시각 이벤트 도달, 종료 브로드캐스트 추가
+	- 시계 HUD가 GameClock 분 변경 이벤트를 구독하도록 연결
+	- 전체화면/창 크기 변경 시 시계 HUD가 현재 뷰포트 중앙 상단을 다시 계산하도록 수정
+
+- Player / Interaction
+	- 점프 입력 로직은 유지하되 기본 비활성화
+	- `bEnableJumpInput`이 켜진 경우에만 JumpAction 바인딩
+	- 스캔 목표 개수를 Blueprint에서 설정할 수 있도록 `SetRequiredScanCount` 추가
+
+- Performance / Cleanup
+	- 배터리 HUD 매 Tick 갱신 제거
+	- 배터리 값 변경 시에만 HUD와 BP 이벤트를 갱신하도록 변경
+	- 배터리 HUD 내부에서 동일 값 반복 갱신을 건너뛰도록 캐시 비교 추가
+	- 배터리 디버그 로그 옵션과 반복 로그 타이머 제거
+	- 일반 상태 확인용 `UE_LOG` 정리, 오류성 로그만 유지
+
+- Architecture Notes
+	- 현재 컴포넌트 분리는 기능 단위로 양호하나, `AAeternaCharacter`가 여러 컴포넌트의 흐름을 직접 조율하는 경향이 있음
+	- 추후 `ScenarioManager` 추가 시 시계, 배터리, 스캔, 현재 밤 초기화 흐름을 Character 중심에서 ScenarioManager/상태 관리 책임으로 이동할 필요 있음

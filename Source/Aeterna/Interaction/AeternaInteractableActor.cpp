@@ -32,7 +32,6 @@ bool AAeternaInteractableActor::PerformInteraction(AActor* Interactor)
 				const FName ResolvedScanPointId = ScanPointId.IsNone() ? GetFName() : ScanPointId;
 				if (AeternaCharacter->HasScannedPoint(ResolvedScanPointId))
 				{
-					UE_LOG(LogTemp, Log, TEXT("Scan already registered: %s"), *ResolvedScanPointId.ToString());
 					return false;
 				}
 
@@ -58,13 +57,9 @@ bool AAeternaInteractableActor::PerformInteraction(AActor* Interactor)
 
 	if (bHandledInteraction)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Interaction complete: %s"), *GetName());
-
 		BP_Interacted(Interactor);
 		return true;
 	}
-
-	UE_LOG(LogTemp, Warning, TEXT("Interaction failed: %s"), *GetName());
 
 	return false;
 }

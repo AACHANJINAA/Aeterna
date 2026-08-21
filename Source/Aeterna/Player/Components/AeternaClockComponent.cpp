@@ -86,18 +86,10 @@ void UAeternaClockComponent::AdvanceClockMinutes(int32 MinutesToAdvance)
 		return;
 	}
 
-	const int32 PreviousClockMinutes = CurrentClockMinutes;
 	CurrentClockMinutes = FMath::Clamp(CurrentClockMinutes + MinutesToAdvance, 0, MaxClockMinutes);
 	if (!ApplyClockHud())
 	{
 		SetComponentTickEnabled(true);
-	}
-
-	if (PreviousClockMinutes != CurrentClockMinutes)
-	{
-		UE_LOG(LogAeterna, Log, TEXT("Clock advanced: %02d:%02d"),
-			CurrentClockMinutes / 60,
-			CurrentClockMinutes % 60);
 	}
 }
 

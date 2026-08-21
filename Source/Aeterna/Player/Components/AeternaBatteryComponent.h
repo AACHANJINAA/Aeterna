@@ -58,12 +58,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery", meta=(ClampMin="0.0"))
 	float HeadlampBatteryDrainPerSecond = 2.5f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|Debug")
-	bool bShowBatteryDebugString = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|Debug", meta=(ClampMin="0.05", Units="s"))
-	float BatteryDebugPrintInterval = 0.5f;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Battery|Debug")
 	FString BatteryDebugString;
 
@@ -108,5 +102,4 @@ protected:
 
 private:
 	TObjectPtr<USpotLightComponent> HeadlampComponent;
-	float BatteryDebugPrintTimer = 0.0f;
 };

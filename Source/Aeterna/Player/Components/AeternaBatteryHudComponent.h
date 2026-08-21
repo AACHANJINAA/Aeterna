@@ -43,6 +43,7 @@ private:
 	void CreateBatteryHudWidget();
 	void ApplyBatteryHud();
 	void UpdateBatteryHudPosition();
+	bool HasBatteryHudValueChanged(float Current, float Max, float Normalized) const;
 
 	float LastCurrentBattery = 1.0f;
 	float LastMaxBattery = 1.0f;
