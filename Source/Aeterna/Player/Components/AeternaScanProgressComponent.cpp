@@ -22,3 +22,8 @@ bool UAeternaScanProgressComponent::HasScannedPoint(FName ScanPointId) const
 {
 	return !ScanPointId.IsNone() && ScannedPointIds.Contains(ScanPointId);
 }
+
+void UAeternaScanProgressComponent::SetRequiredScanCount(int32 InRequiredScanCount)
+{
+	RequiredScanCount = FMath::Max(0, InRequiredScanCount);
+}

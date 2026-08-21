@@ -152,9 +152,12 @@ void AAeternaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
-		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AAeternaCharacter::DoJumpStart);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AAeternaCharacter::DoJumpEnd);
+		// Jumping is kept for future experiments, but disabled by default for Aeterna's fixed input set.
+		if (bEnableJumpInput && JumpAction)
+		{
+			EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &AAeternaCharacter::DoJumpStart);
+			EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AAeternaCharacter::DoJumpEnd);
+		}
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AAeternaCharacter::MoveInput);
@@ -241,12 +244,22 @@ void AAeternaCharacter::DoMove(float Right, float Forward)
 
 void AAeternaCharacter::DoJumpStart()
 {
+	if (!bEnableJumpInput)
+	{
+		return;
+	}
+
 	// pass Jump to the character
 	Jump();
 }
 
 void AAeternaCharacter::DoJumpEnd()
 {
+	if (!bEnableJumpInput)
+	{
+		return;
+	}
+
 	// pass StopJumping to the character
 	StopJumping();
 }

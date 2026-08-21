@@ -79,6 +79,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category ="Input")
 	UInputAction* JumpAction;
 
+	/** 향후 필요할 때만 켜는 점프 입력입니다. Aeterna 기본 조작에서는 꺼둡니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category ="Input", meta=(DisplayName = "Enable Jump Input"))
+	bool bEnableJumpInput = false;
+
 	/** Move Input Action */
 	UPROPERTY(EditAnywhere, Category ="Input")
 	UInputAction* MoveAction;
