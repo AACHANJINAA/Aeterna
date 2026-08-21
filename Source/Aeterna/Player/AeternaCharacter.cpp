@@ -6,6 +6,7 @@
 #include "Interaction/AeternaInteractableActor.h"
 #include "Interaction/AeternaInteractableInterface.h"
 #include "Player/Components/AeternaBatteryComponent.h"
+#include "Player/Components/AeternaBatteryHudComponent.h"
 #include "Player/Components/AeternaHeadBobComponent.h"
 #include "Player/Components/AeternaInteractionComponent.h"
 #include "Player/Components/AeternaInteractionPromptComponent.h"
@@ -56,6 +57,7 @@ AAeternaCharacter::AAeternaCharacter()
 
 	HeadBobComponent = CreateDefaultSubobject<UAeternaHeadBobComponent>(TEXT("HeadBobComponent"));
 	BatteryComponent = CreateDefaultSubobject<UAeternaBatteryComponent>(TEXT("BatteryComponent"));
+	BatteryHudComponent = CreateDefaultSubobject<UAeternaBatteryHudComponent>(TEXT("BatteryHudComponent"));
 	InteractionComponent = CreateDefaultSubobject<UAeternaInteractionComponent>(TEXT("InteractionComponent"));
 	InteractionPromptComponent = CreateDefaultSubobject<UAeternaInteractionPromptComponent>(TEXT("InteractionPromptComponent"));
 	ScanProgressComponent = CreateDefaultSubobject<UAeternaScanProgressComponent>(TEXT("ScanProgressComponent"));
@@ -86,6 +88,11 @@ void AAeternaCharacter::BeginPlay()
 	{
 		BatteryComponent->InitializePlayerComponent(this);
 		BatteryComponent->InitializeBattery(HeadlampComponent);
+		if (BatteryHudComponent)
+		{
+			BatteryHudComponent->InitializePlayerComponent(this);
+			BatteryHudComponent->UpdateBatteryHud(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
+		}
 		BP_BatteryChanged(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
 	}
 	if (InteractionComponent)
@@ -109,6 +116,11 @@ void AAeternaCharacter::Tick(float DeltaSeconds)
 
 	UpdateHeadBob(DeltaSeconds);
 	UpdateFocusedInteractable();
+
+	if (BatteryComponent && BatteryHudComponent)
+	{
+		BatteryHudComponent->UpdateBatteryHud(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
+	}
 
 	if (BatteryComponent && BatteryComponent->TickBattery(DeltaSeconds, bHeadlampOn))
 	{
@@ -345,6 +357,10 @@ void AAeternaCharacter::AddPlayerBattery(float Amount)
 
 	BatteryComponent->AddBattery(Amount);
 	BatteryComponent->UpdateBatteryDebugString(bHeadlampOn);
+	if (BatteryHudComponent)
+	{
+		BatteryHudComponent->UpdateBatteryHud(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
+	}
 	BP_BatteryChanged(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
 }
 

@@ -15,6 +15,7 @@ class UInputAction;
 class USpotLightComponent;
 
 class UAeternaBatteryComponent;
+class UAeternaBatteryHudComponent;
 class UAeternaHeadBobComponent;
 class UAeternaInteractionComponent;
 class UAeternaInteractionPromptComponent;
@@ -50,6 +51,10 @@ class AAeternaCharacter : public ACharacter
 	/** 플레이어 배터리와 헤드램프 밝기 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UAeternaBatteryComponent* BatteryComponent;
+
+	/** 플레이어 배터리 HUD 표시 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaBatteryHudComponent* BatteryHudComponent;
 
 	/** 상호작용 라인트레이스와 실행 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
