@@ -7,6 +7,7 @@
 #include "Interaction/AeternaInteractableInterface.h"
 #include "Player/Components/AeternaBatteryComponent.h"
 #include "Player/Components/AeternaBatteryHudComponent.h"
+#include "Player/Components/AeternaClockComponent.h"
 #include "Player/Components/AeternaHeadBobComponent.h"
 #include "Player/Components/AeternaInteractionComponent.h"
 #include "Player/Components/AeternaInteractionPromptComponent.h"
@@ -20,6 +21,7 @@
 #include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "InputActionValue.h"
+#include "InputCoreTypes.h"
 
 AAeternaCharacter::AAeternaCharacter()
 {
@@ -58,6 +60,7 @@ AAeternaCharacter::AAeternaCharacter()
 	HeadBobComponent = CreateDefaultSubobject<UAeternaHeadBobComponent>(TEXT("HeadBobComponent"));
 	BatteryComponent = CreateDefaultSubobject<UAeternaBatteryComponent>(TEXT("BatteryComponent"));
 	BatteryHudComponent = CreateDefaultSubobject<UAeternaBatteryHudComponent>(TEXT("BatteryHudComponent"));
+	ClockComponent = CreateDefaultSubobject<UAeternaClockComponent>(TEXT("ClockComponent"));
 	InteractionComponent = CreateDefaultSubobject<UAeternaInteractionComponent>(TEXT("InteractionComponent"));
 	InteractionPromptComponent = CreateDefaultSubobject<UAeternaInteractionPromptComponent>(TEXT("InteractionPromptComponent"));
 	ScanProgressComponent = CreateDefaultSubobject<UAeternaScanProgressComponent>(TEXT("ScanProgressComponent"));
@@ -94,6 +97,10 @@ void AAeternaCharacter::BeginPlay()
 			BatteryHudComponent->UpdateBatteryHud(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
 		}
 		BP_BatteryChanged(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
+	}
+	if (ClockComponent)
+	{
+		ClockComponent->InitializePlayerComponent(this);
 	}
 	if (InteractionComponent)
 	{
@@ -185,6 +192,10 @@ void AAeternaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	{
 		UE_LOG(LogAeterna, Error, TEXT("'%s' Failed to find an Enhanced Input Component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
+
+#if !UE_BUILD_SHIPPING
+	PlayerInputComponent->BindKey(EKeys::P, IE_Pressed, this, &AAeternaCharacter::AdvanceDebugClock);
+#endif
 }
 
 
@@ -406,6 +417,14 @@ void AAeternaCharacter::UpdateBatteryDebugString()
 	}
 }
 
+void AAeternaCharacter::AdvanceDebugClock()
+{
+	if (ClockComponent)
+	{
+		ClockComponent->AdvanceDebugClockStep();
+	}
+}
+
 bool AAeternaCharacter::IsNotebookOpen() const
 {
 	return bNotebookOpen;
@@ -434,6 +453,11 @@ FString AAeternaCharacter::GetBatteryDebugString() const
 float AAeternaCharacter::GetBatteryNormalized() const
 {
 	return BatteryComponent ? BatteryComponent->GetBatteryNormalized() : 0.0f;
+}
+
+int32 AAeternaCharacter::GetClockMinutes() const
+{
+	return ClockComponent ? ClockComponent->GetClockMinutes() : 0;
 }
 
 int32 AAeternaCharacter::GetCompletedScanCount() const

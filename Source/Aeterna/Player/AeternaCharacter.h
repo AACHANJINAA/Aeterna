@@ -16,6 +16,7 @@ class USpotLightComponent;
 
 class UAeternaBatteryComponent;
 class UAeternaBatteryHudComponent;
+class UAeternaClockComponent;
 class UAeternaHeadBobComponent;
 class UAeternaInteractionComponent;
 class UAeternaInteractionPromptComponent;
@@ -55,6 +56,10 @@ class AAeternaCharacter : public ACharacter
 	/** 플레이어 배터리 HUD 표시 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UAeternaBatteryHudComponent* BatteryHudComponent;
+
+	/** 화면 시계와 테스트용 시간 진행 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaClockComponent* ClockComponent;
 
 	/** 상호작용 라인트레이스와 실행 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
@@ -201,6 +206,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Battery|Debug")
 	virtual void UpdateBatteryDebugString();
 
+	/** 개발 테스트용으로 화면 시계를 30분 진행합니다. */
+	UFUNCTION(BlueprintCallable, Category="Clock|Debug")
+	virtual void AdvanceDebugClock();
+
 	/** 수첩 상태가 바뀔 때 BP에서 UI 표시를 연결합니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Notebook", meta = (DisplayName = "Notebook State Changed"))
 	void BP_NotebookStateChanged(bool bOpen);
@@ -270,6 +279,10 @@ public:
 	/** Returns normalized player battery from 0 to 1. **/
 	UFUNCTION(BlueprintPure, Category="Battery")
 	float GetBatteryNormalized() const;
+
+	/** Returns current clock minutes from 00:00. **/
+	UFUNCTION(BlueprintPure, Category="Clock")
+	int32 GetClockMinutes() const;
 
 	/** Returns completed scan count. **/
 	UFUNCTION(BlueprintPure, Category="Scan")

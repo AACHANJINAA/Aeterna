@@ -31,10 +31,10 @@ protected:
 	FVector2D ViewportAnchorNormalized = FVector2D(0.0f, 1.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Position")
-	FVector2D ViewportOffset = FVector2D(32.0f, 1000.0f);
+	FVector2D ViewportOffset = FVector2D(32.0f, 32.0f);
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Position", meta=(ClampMin="0.0", ClampMax="1.0"))
-	FVector2D WidgetAlignment = FVector2D(0.0f, 1.0f);
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Position")
+	FVector2D HudWidgetSize = FVector2D(420.0f, 82.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD")
 	int32 ViewportZOrder = 5;

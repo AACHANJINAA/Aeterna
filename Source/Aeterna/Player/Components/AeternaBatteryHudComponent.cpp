@@ -6,7 +6,6 @@
 #include "Player/UI/AeternaBatteryHudWidget.h"
 
 #include "Blueprint/UserWidget.h"
-#include "Components/SlateWrapperTypes.h"
 #include "GameFramework/PlayerController.h"
 
 UAeternaBatteryHudComponent::UAeternaBatteryHudComponent()
@@ -110,8 +109,7 @@ void UAeternaBatteryHudComponent::CreateBatteryHudWidget()
 	if (BatteryHudWidget)
 	{
 		BatteryHudWidget->AddToViewport(ViewportZOrder);
-		BatteryHudWidget->SetAnchorsInViewport(FAnchors(ViewportAnchorNormalized.X, ViewportAnchorNormalized.Y));
-		BatteryHudWidget->SetAlignmentInViewport(WidgetAlignment);
+		BatteryHudWidget->SetAlignmentInViewport(FVector2D::ZeroVector);
 		BatteryHudWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
 		BatteryHudWidget->ForceLayoutPrepass();
 		UpdateBatteryHudPosition();
@@ -125,7 +123,30 @@ void UAeternaBatteryHudComponent::UpdateBatteryHudPosition()
 		return;
 	}
 
-	BatteryHudWidget->SetAnchorsInViewport(FAnchors(ViewportAnchorNormalized.X, ViewportAnchorNormalized.Y));
-	BatteryHudWidget->SetAlignmentInViewport(WidgetAlignment);
-	BatteryHudWidget->SetPositionInViewport(ViewportOffset, false);
+	AAeternaCharacter* AeternaCharacter = GetAeternaCharacter();
+	APlayerController* PlayerController = AeternaCharacter ? Cast<APlayerController>(AeternaCharacter->GetController()) : nullptr;
+	if (!PlayerController && GetWorld())
+	{
+		PlayerController = GetWorld()->GetFirstPlayerController();
+	}
+
+	if (!PlayerController)
+	{
+		return;
+	}
+
+	int32 ViewportSizeX = 0;
+	int32 ViewportSizeY = 0;
+	PlayerController->GetViewportSize(ViewportSizeX, ViewportSizeY);
+
+	const FVector2D WidgetPosition(
+		ViewportAnchorNormalized.X >= 0.5f
+			? static_cast<float>(ViewportSizeX) - HudWidgetSize.X - ViewportOffset.X
+			: ViewportOffset.X,
+		ViewportAnchorNormalized.Y >= 0.5f
+			? static_cast<float>(ViewportSizeY) - HudWidgetSize.Y - ViewportOffset.Y
+			: ViewportOffset.Y);
+
+	BatteryHudWidget->SetAlignmentInViewport(FVector2D::ZeroVector);
+	BatteryHudWidget->SetPositionInViewport(WidgetPosition, true);
 }
