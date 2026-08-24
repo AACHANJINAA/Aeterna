@@ -28,23 +28,23 @@ bool AAeternaInteractableActor::PerformInteraction(AActor* Interactor)
 		switch (InteractionType)
 		{
 		case EAeternaInteractionType::Scan:
-			{
-				const FName ResolvedScanPointId = ScanPointId.IsNone() ? GetFName() : ScanPointId;
-				if (AeternaCharacter->HasScannedPoint(ResolvedScanPointId))
-				{
-					return false;
-				}
-
-				bHandledInteraction = AeternaCharacter->RegisterScanPoint(ResolvedScanPointId);
-			}
+			bHandledInteraction = RegisterScanProgress(AeternaCharacter);
 			break;
 
 		case EAeternaInteractionType::Charge:
 			AeternaCharacter->AddPlayerBattery(BatteryChargeAmount);
+			if (bCountsAsScanPoint)
+			{
+				RegisterScanProgress(AeternaCharacter);
+			}
 			bHandledInteraction = true;
 			break;
 
 		default:
+			if (bCountsAsScanPoint)
+			{
+				RegisterScanProgress(AeternaCharacter);
+			}
 			bHandledInteraction = true;
 			break;
 		}
@@ -62,6 +62,22 @@ bool AAeternaInteractableActor::PerformInteraction(AActor* Interactor)
 	}
 
 	return false;
+}
+
+bool AAeternaInteractableActor::RegisterScanProgress(AAeternaCharacter* AeternaCharacter)
+{
+	if (!AeternaCharacter)
+	{
+		return false;
+	}
+
+	const FName ResolvedScanPointId = ScanPointId.IsNone() ? GetFName() : ScanPointId;
+	if (AeternaCharacter->HasScannedPoint(ResolvedScanPointId))
+	{
+		return false;
+	}
+
+	return AeternaCharacter->RegisterScanPoint(ResolvedScanPointId);
 }
 
 bool AAeternaInteractableActor::CanInteract_Implementation(AActor* Interactor) const

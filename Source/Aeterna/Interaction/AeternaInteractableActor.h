@@ -38,6 +38,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scan")
 	FName ScanPointId;
 
+	/** Scan 타입이 아니어도 이 상호작용을 스캔 진행도에 함께 기록합니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scan")
+	bool bCountsAsScanPoint = false;
+
 	/** Charge 타입일 때 회복할 배터리 양입니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery", meta=(ClampMin="0.0"))
 	float BatteryChargeAmount = 35.0f;
@@ -50,6 +54,9 @@ public:
 	/** C++ 기본 상호작용 처리입니다. BP는 추가 연출만 BP_Interacted에 연결합니다. */
 	UFUNCTION(BlueprintCallable, Category="Interaction")
 	bool PerformInteraction(AActor* Interactor);
+
+	UFUNCTION(BlueprintCallable, Category="Scan")
+	bool RegisterScanProgress(AAeternaCharacter* AeternaCharacter);
 
 	/** BP에서 추가 연출이나 로그를 연결합니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Interaction", meta=(DisplayName="Interacted"))

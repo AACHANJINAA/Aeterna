@@ -7,6 +7,8 @@
 #include "GameFramework/Actor.h"
 #include "ScenarioLoopStarterActor.generated.h"
 
+class UAeternaScanProgressComponent;
+
 UCLASS()
 class AETERNA_API AScenarioLoopStarterActor : public AActor
 {
@@ -16,6 +18,7 @@ public:
 	AScenarioLoopStarterActor();
 
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	UFUNCTION(BlueprintCallable, CallInEditor, Category="Scenario")
 	void StartScenarioLoop();
@@ -44,4 +47,26 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Clock")
 	TArray<FGameClockEventDefinition> ClockEvents;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Scan")
+	bool bConfigurePlayerScanProgress = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Scan", meta=(ClampMin="0"))
+	int32 RequiredScanCount = 3;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Scan")
+	bool bResetScanProgressOnStart = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Scan")
+	bool bCompleteScenarioOnRequiredScans = false;
+
+private:
+	UFUNCTION()
+	void HandleRequiredScanCountReached(int32 CurrentCount, int32 RequiredCount);
+
+	void ConfigurePlayerScanProgress();
+	void BindScanCompletion();
+	void UnbindScanCompletion();
+
+	TWeakObjectPtr<UAeternaScanProgressComponent> BoundScanProgressComponent;
 };
