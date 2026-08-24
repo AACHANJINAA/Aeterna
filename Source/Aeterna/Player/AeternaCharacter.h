@@ -202,6 +202,18 @@ public:
 	UFUNCTION(BlueprintPure, Category="Scan")
 	virtual bool HasScannedPoint(FName ScanPointId) const;
 
+	/** 필수 스캔 개수를 모두 채웠는지 확인합니다. */
+	UFUNCTION(BlueprintPure, Category="Scan")
+	virtual bool HasCompletedRequiredScans() const;
+
+	/** 시나리오나 테스트 BP에서 필요한 스캔 개수를 설정합니다. */
+	UFUNCTION(BlueprintCallable, Category="Scan")
+	virtual void SetRequiredScanCount(int32 RequiredCount);
+
+	/** 시나리오 재시작이나 테스트용으로 스캔 진행도를 초기화합니다. */
+	UFUNCTION(BlueprintCallable, Category="Scan")
+	virtual void ResetScanProgress();
+
 	/** 헤드램프 조명 값을 현재 배터리 잔량에 맞춰 갱신합니다. */
 	UFUNCTION(BlueprintCallable, Category="Headlamp")
 	virtual void UpdateHeadlampBrightness();
@@ -291,6 +303,10 @@ public:
 	/** Returns completed scan count. **/
 	UFUNCTION(BlueprintPure, Category="Scan")
 	int32 GetCompletedScanCount() const;
+
+	/** Returns required scan count. **/
+	UFUNCTION(BlueprintPure, Category="Scan")
+	int32 GetRequiredScanCount() const;
 
 	/** Returns currently focused interactable actor. **/
 	UFUNCTION(BlueprintPure, Category="Interaction")

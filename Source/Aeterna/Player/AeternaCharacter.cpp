@@ -398,6 +398,29 @@ bool AAeternaCharacter::HasScannedPoint(FName ScanPointId) const
 	return ScanProgressComponent && ScanProgressComponent->HasScannedPoint(ScanPointId);
 }
 
+bool AAeternaCharacter::HasCompletedRequiredScans() const
+{
+	return ScanProgressComponent && ScanProgressComponent->HasCompletedRequiredScans();
+}
+
+void AAeternaCharacter::SetRequiredScanCount(int32 RequiredCount)
+{
+	if (ScanProgressComponent)
+	{
+		ScanProgressComponent->SetRequiredScanCount(RequiredCount);
+		BP_ScanProgressChanged(ScanProgressComponent->GetCompletedScanCount(), ScanProgressComponent->GetRequiredScanCount());
+	}
+}
+
+void AAeternaCharacter::ResetScanProgress()
+{
+	if (ScanProgressComponent)
+	{
+		ScanProgressComponent->ResetScanProgress();
+		BP_ScanProgressChanged(ScanProgressComponent->GetCompletedScanCount(), ScanProgressComponent->GetRequiredScanCount());
+	}
+}
+
 void AAeternaCharacter::UpdateHeadlampBrightness()
 {
 	if (BatteryComponent)
@@ -460,6 +483,11 @@ int32 AAeternaCharacter::GetClockMinutes() const
 int32 AAeternaCharacter::GetCompletedScanCount() const
 {
 	return ScanProgressComponent ? ScanProgressComponent->GetCompletedScanCount() : 0;
+}
+
+int32 AAeternaCharacter::GetRequiredScanCount() const
+{
+	return ScanProgressComponent ? ScanProgressComponent->GetRequiredScanCount() : 0;
 }
 
 AActor* AAeternaCharacter::GetFocusedInteractableActor() const

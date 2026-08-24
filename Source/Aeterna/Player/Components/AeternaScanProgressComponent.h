@@ -6,6 +6,9 @@
 #include "Player/Components/AeternaPlayerComponent.h"
 #include "AeternaScanProgressComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FScanProgressChangedSignature, int32, CurrentCount, int32, RequiredCount);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FScanPointRegisteredSignature, FName, ScanPointId, int32, CurrentCount);
+
 UCLASS(ClassGroup=(Aeterna), meta=(BlueprintSpawnableComponent))
 class AETERNA_API UAeternaScanProgressComponent : public UAeternaPlayerComponent
 {
@@ -26,11 +29,23 @@ public:
 	UFUNCTION(BlueprintPure, Category="Scan")
 	int32 GetRequiredScanCount() const { return RequiredScanCount; }
 
+	UFUNCTION(BlueprintPure, Category="Scan")
+	bool HasCompletedRequiredScans() const;
+
 	UFUNCTION(BlueprintCallable, Category="Scan")
 	void SetRequiredScanCount(int32 InRequiredScanCount);
 
 	UFUNCTION(BlueprintCallable, Category="Scan")
 	void ResetScanProgress();
+
+	UPROPERTY(BlueprintAssignable, Category="Scan")
+	FScanPointRegisteredSignature OnScanPointRegistered;
+
+	UPROPERTY(BlueprintAssignable, Category="Scan")
+	FScanProgressChangedSignature OnScanProgressChanged;
+
+	UPROPERTY(BlueprintAssignable, Category="Scan")
+	FScanProgressChangedSignature OnRequiredScanCountReached;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scan", meta=(ClampMin="0"))
