@@ -24,6 +24,15 @@ public:
 	/** Constructor */
 	AAeternaPlayerController();
 
+	UFUNCTION(Exec)
+	void ScenarioComplete();
+
+	UFUNCTION(Exec)
+	void ScenarioFailRule();
+
+	UFUNCTION(Exec)
+	void ScenarioRestart();
+
 protected:
 
 	/** Input Mapping Contexts */

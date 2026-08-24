@@ -29,6 +29,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Scan")
 	void SetRequiredScanCount(int32 InRequiredScanCount);
 
+	UFUNCTION(BlueprintCallable, Category="Scan")
+	void ResetScanProgress();
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scan", meta=(ClampMin="0"))
 	int32 RequiredScanCount = 3;

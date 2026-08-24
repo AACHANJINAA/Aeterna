@@ -27,3 +27,8 @@ void UAeternaScanProgressComponent::SetRequiredScanCount(int32 InRequiredScanCou
 {
 	RequiredScanCount = FMath::Max(0, InRequiredScanCount);
 }
+
+void UAeternaScanProgressComponent::ResetScanProgress()
+{
+	ScannedPointIds.Reset();
+}

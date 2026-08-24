@@ -4,6 +4,7 @@
 #include "Player/AeternaPlayerController.h"
 
 #include "Aeterna.h"
+#include "Core/ScenarioManagerSubsystem.h"
 #include "Player/AeternaCameraManager.h"
 
 #include "Blueprint/UserWidget.h"
@@ -40,6 +41,30 @@ void AAeternaPlayerController::BeginPlay()
 
 		}
 
+	}
+}
+
+void AAeternaPlayerController::ScenarioComplete()
+{
+	if (UScenarioManagerSubsystem* ScenarioManager = GetWorld() ? GetWorld()->GetSubsystem<UScenarioManagerSubsystem>() : nullptr)
+	{
+		ScenarioManager->CompleteCurrentScenario();
+	}
+}
+
+void AAeternaPlayerController::ScenarioFailRule()
+{
+	if (UScenarioManagerSubsystem* ScenarioManager = GetWorld() ? GetWorld()->GetSubsystem<UScenarioManagerSubsystem>() : nullptr)
+	{
+		ScenarioManager->FailCurrentScenarioByRuleViolation();
+	}
+}
+
+void AAeternaPlayerController::ScenarioRestart()
+{
+	if (UScenarioManagerSubsystem* ScenarioManager = GetWorld() ? GetWorld()->GetSubsystem<UScenarioManagerSubsystem>() : nullptr)
+	{
+		ScenarioManager->RequestRestartCurrentScenario();
 	}
 }
 
