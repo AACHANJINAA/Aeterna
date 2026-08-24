@@ -19,7 +19,9 @@ Plugins/**/DerivedDataCache/
 /Plugins/
 /Content/AnimatedLightFunctions/
 /Content/DARK_C_KNIGHT/
+/Content/DetectiveOffice/
 /Content/HistoricalMueseum/
+/Content/Mabushii/
 /Content/QuestSystem/
 
 # Build folder: ignore generated build content, but keep useful project metadata/icons/blacklists
