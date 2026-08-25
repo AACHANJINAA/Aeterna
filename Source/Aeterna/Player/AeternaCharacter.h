@@ -20,6 +20,7 @@ class UAeternaClockComponent;
 class UAeternaHeadBobComponent;
 class UAeternaInteractionComponent;
 class UAeternaInteractionPromptComponent;
+class UAeternaObjectiveHudComponent;
 class UAeternaScanProgressComponent;
 class UAeternaCarryComponent;
 class UAeternaGazeRuleComponent;
@@ -73,6 +74,10 @@ class AAeternaCharacter : public ACharacter
 	/** 상호작용 프롬프트 위젯 표시 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UAeternaInteractionPromptComponent* InteractionPromptComponent;
+
+	/** 현재 시나리오 목표 HUD 표시 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaObjectiveHudComponent* ObjectiveHudComponent;
 
 	/** 스캔 진행도 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))

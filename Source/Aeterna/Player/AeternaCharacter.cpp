@@ -11,6 +11,7 @@
 #include "Player/Components/AeternaHeadBobComponent.h"
 #include "Player/Components/AeternaInteractionComponent.h"
 #include "Player/Components/AeternaInteractionPromptComponent.h"
+#include "Player/Components/AeternaObjectiveHudComponent.h"
 #include "Player/Components/AeternaScanProgressComponent.h"
 #include "Player/Components/AeternaCarryComponent.h"
 #include "Player/Components/AeternaGazeRuleComponent.h"
@@ -68,6 +69,7 @@ AAeternaCharacter::AAeternaCharacter()
 	ClockComponent = CreateDefaultSubobject<UAeternaClockComponent>(TEXT("ClockComponent"));
 	InteractionComponent = CreateDefaultSubobject<UAeternaInteractionComponent>(TEXT("InteractionComponent"));
 	InteractionPromptComponent = CreateDefaultSubobject<UAeternaInteractionPromptComponent>(TEXT("InteractionPromptComponent"));
+	ObjectiveHudComponent = CreateDefaultSubobject<UAeternaObjectiveHudComponent>(TEXT("ObjectiveHudComponent"));
 	ScanProgressComponent = CreateDefaultSubobject<UAeternaScanProgressComponent>(TEXT("ScanProgressComponent"));
 	CarryComponent = CreateDefaultSubobject<UAeternaCarryComponent>(TEXT("CarryComponent"));
 	GazeRuleComponent = CreateDefaultSubobject<UAeternaGazeRuleComponent>(TEXT("GazeRuleComponent"));
@@ -182,6 +184,16 @@ void AAeternaCharacter::BeginPlay()
 	{
 		ScanProgressComponent->InitializePlayerComponent(this);
 	}
+
+	if (!ObjectiveHudComponent || ObjectiveHudComponent->GetOwner() != this)
+	{
+		ObjectiveHudComponent = NewObject<UAeternaObjectiveHudComponent>(this, UAeternaObjectiveHudComponent::StaticClass(), TEXT("ObjectiveHudComponentRuntime"));
+		ObjectiveHudComponent->RegisterComponent();
+		UE_LOG(LogAeterna, Warning, TEXT("[ObjectiveHUD] 런타임에 생성했습니다. BP_Player를 열어 Compile 후 Save 하십시오."));
+	}
+
+	ObjectiveHudComponent->InitializePlayerComponent(this);
+	ObjectiveHudComponent->RefreshObjectiveHud();
 }
 
 void AAeternaCharacter::Tick(float DeltaSeconds)

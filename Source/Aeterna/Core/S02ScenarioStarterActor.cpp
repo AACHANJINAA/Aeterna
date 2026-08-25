@@ -15,9 +15,8 @@ AS02ScenarioStarterActor::AS02ScenarioStarterActor()
 	GameMinutesPerRealSecond = 0.2f;
 
 	// 밤2의 목표는 뼈 3개 설치입니다 (SPEC_NIGHT2 §0). 진행도 컴포넌트를 그대로 씁니다.
-	// 밤3이 없으므로 3/3 자동 완료는 아직 끕니다 — 켜려면 이 값만 true로 바꿉니다.
 	bConfigurePlayerScanProgress = true;
 	RequiredScanCount = 3;
 	bResetScanProgressOnStart = true;
-	bCompleteScenarioOnRequiredScans = false;
+	bCompleteScenarioOnRequiredScans = true;
 }
