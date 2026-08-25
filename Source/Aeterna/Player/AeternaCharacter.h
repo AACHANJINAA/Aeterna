@@ -22,6 +22,7 @@ class UAeternaInteractionComponent;
 class UAeternaInteractionPromptComponent;
 class UAeternaScanProgressComponent;
 class UAeternaCarryComponent;
+class UAeternaGazeRuleComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -77,6 +78,10 @@ class AAeternaCharacter : public ACharacter
 	/** E 홀드 운반과 제자리 설치 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UAeternaCarryComponent* CarryComponent;
+
+	/** 눈구멍 응시 규칙 판정 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaGazeRuleComponent* GazeRuleComponent;
 
 protected:
 
@@ -278,6 +283,10 @@ public:
 	/** 조준 중인 운반 후보가 바뀔 때 BP에서 프롬프트 표시를 연결합니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Carry", meta = (DisplayName = "Carry Target Changed"))
 	void BP_CarryTargetChanged(AActor* NewTargetActor, FName CarryId);
+
+	/** 눈구멍 응시 규칙을 어겼을 때 BP에서 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Gaze Rule", meta = (DisplayName = "Gaze Rule Violated"))
+	void BP_GazeRuleViolated(AActor* EyeActor);
 
 protected:
 

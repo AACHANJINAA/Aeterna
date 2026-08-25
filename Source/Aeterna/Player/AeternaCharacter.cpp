@@ -13,6 +13,7 @@
 #include "Player/Components/AeternaInteractionPromptComponent.h"
 #include "Player/Components/AeternaScanProgressComponent.h"
 #include "Player/Components/AeternaCarryComponent.h"
+#include "Player/Components/AeternaGazeRuleComponent.h"
 
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
@@ -66,6 +67,7 @@ AAeternaCharacter::AAeternaCharacter()
 	InteractionPromptComponent = CreateDefaultSubobject<UAeternaInteractionPromptComponent>(TEXT("InteractionPromptComponent"));
 	ScanProgressComponent = CreateDefaultSubobject<UAeternaScanProgressComponent>(TEXT("ScanProgressComponent"));
 	CarryComponent = CreateDefaultSubobject<UAeternaCarryComponent>(TEXT("CarryComponent"));
+	GazeRuleComponent = CreateDefaultSubobject<UAeternaGazeRuleComponent>(TEXT("GazeRuleComponent"));
 
 	// configure the character comps
 	GetMesh()->SetOwnerNoSee(true);
@@ -132,6 +134,15 @@ void AAeternaCharacter::BeginPlay()
 	{
 		CarryComponent->InitializePlayerComponent(this);
 	}
+
+	if (!GazeRuleComponent || GazeRuleComponent->GetOwner() != this)
+	{
+		GazeRuleComponent = NewObject<UAeternaGazeRuleComponent>(this, UAeternaGazeRuleComponent::StaticClass(), TEXT("GazeRuleComponentRuntime"));
+		GazeRuleComponent->RegisterComponent();
+		UE_LOG(LogAeterna, Warning, TEXT("[Gaze] GazeRuleComponent를 런타임에 생성했습니다. BP_Player를 열어 Compile 후 Save 하십시오."));
+	}
+
+	GazeRuleComponent->InitializePlayerComponent(this);
 
 	if (ScanProgressComponent)
 	{

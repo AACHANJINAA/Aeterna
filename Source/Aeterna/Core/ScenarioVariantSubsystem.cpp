@@ -81,6 +81,17 @@ void UScenarioVariantSubsystem::ApplyScenarioToTaggedActors(FName ScenarioId)
 			continue;
 		}
 
+		// 처음 본 배치를 기억해두고, 밤이 시작될 때마다 그 자리로 되돌립니다.
+		// 플레이어가 운반해 옮긴 뼈가 재시작 후에도 남아 있으면 안 됩니다 (SPEC_NIGHT2 §8).
+		if (const FTransform* AuthoredTransform = AuthoredTransforms.Find(Actor))
+		{
+			Actor->SetActorTransform(*AuthoredTransform);
+		}
+		else
+		{
+			AuthoredTransforms.Add(Actor, Actor->GetActorTransform());
+		}
+
 		Actor->SetActorHiddenInGame(!bActiveInScenario);
 		Actor->SetActorEnableCollision(bActiveInScenario);
 
@@ -110,4 +121,15 @@ void UScenarioVariantSubsystem::ApplyScenarioToTaggedActors(FName ScenarioId)
 void UScenarioVariantSubsystem::HandleScenarioStarted(FName ScenarioId)
 {
 	ApplyScenarioToTaggedActors(ScenarioId);
+}
+
+void UScenarioVariantSubsystem::RestoreAuthoredTransforms()
+{
+	for (const TPair<TObjectPtr<AActor>, FTransform>& AuthoredPair : AuthoredTransforms)
+	{
+		if (AActor* Actor = AuthoredPair.Key)
+		{
+			Actor->SetActorTransform(AuthoredPair.Value);
+		}
+	}
 }

@@ -33,9 +33,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Scenario Variant")
 	void ApplyScenarioToTaggedActors(FName ScenarioId);
 
+	/** 관리 중인 액터를 레벨에 배치된 원래 위치로 되돌립니다. */
+	UFUNCTION(BlueprintCallable, Category="Scenario Variant")
+	void RestoreAuthoredTransforms();
+
 private:
 	UFUNCTION()
 	void HandleScenarioStarted(FName ScenarioId);
 
 	TWeakObjectPtr<UScenarioManagerSubsystem> BoundScenarioManager;
+
+	/** 처음 본 시점의 배치 트랜스폼입니다. 재시작 시 여기로 되돌립니다. */
+	UPROPERTY(Transient)
+	TMap<TObjectPtr<AActor>, FTransform> AuthoredTransforms;
 };

@@ -3,6 +3,7 @@
 #include "Core/ScenarioLoopStarterActor.h"
 
 #include "Core/ScenarioManagerSubsystem.h"
+#include "Core/ScenarioVariantSubsystem.h"
 #include "Core/ScreenFadeSubsystem.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -87,11 +88,37 @@ void AScenarioLoopStarterActor::HandleScenarioCompleted(FName CompletedScenarioI
 	}
 
 	bTransitionPending = true;
+	bRestartPending = false;
 	SetPlayerInputLocked(true);
 
 	BindFadeFinished();
 	ScreenFadeSubsystem->SetFadeColor(ScenarioCompleteFadeColor);
 	ScreenFadeSubsystem->StartFadeOut(ScenarioCompleteFadeDurationSeconds, ScenarioCompleteFadeDelaySeconds);
+}
+
+void AScenarioLoopStarterActor::HandleScenarioFailed(FName FailedScenarioId, EScenarioFailureReason FailureReason)
+{
+	(void)FailureReason;
+
+	if (!bRestartOnRuleViolation || FailedScenarioId != ScenarioId || bTransitionPending)
+	{
+		return;
+	}
+
+	UScreenFadeSubsystem* ScreenFadeSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScreenFadeSubsystem>() : nullptr;
+	if (!ScreenFadeSubsystem)
+	{
+		return;
+	}
+
+	bTransitionPending = true;
+	bRestartPending = true;
+	SetPlayerInputLocked(true);
+
+	// 유예 시간 동안 위반 연출(눈구멍 등장 등)이 진행되고, 그 뒤 페이드아웃이 시작됩니다.
+	BindFadeFinished();
+	ScreenFadeSubsystem->SetFadeColor(ScenarioCompleteFadeColor);
+	ScreenFadeSubsystem->StartFadeOut(ScenarioCompleteFadeDurationSeconds, FailureFadeDelaySeconds);
 }
 
 void AScenarioLoopStarterActor::HandleFadeFinished(float TargetAlpha)
@@ -105,6 +132,13 @@ void AScenarioLoopStarterActor::HandleFadeFinished(float TargetAlpha)
 	bTransitionPending = false;
 	UnbindFadeFinished();
 
+	if (bRestartPending)
+	{
+		bRestartPending = false;
+		RestartScenario();
+		return;
+	}
+
 	if (!bStartNextScenarioAfterFadeOut || !NextScenarioStarter)
 	{
 		// 이어질 밤이 없으면 검은 화면을 유지하되 입력만 돌려줍니다.
@@ -113,6 +147,27 @@ void AScenarioLoopStarterActor::HandleFadeFinished(float TargetAlpha)
 	}
 
 	StartNextScenario();
+}
+
+void AScenarioLoopStarterActor::RestartScenario()
+{
+	MovePlayerTo(RestartPlayerStart);
+
+	// 플레이어가 옮긴 뼈를 배치 위치로 되돌립니다. 시나리오 시작에서도 한 번 더 적용됩니다.
+	if (UScenarioVariantSubsystem* ScenarioVariantSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScenarioVariantSubsystem>() : nullptr)
+	{
+		ScenarioVariantSubsystem->RestoreAuthoredTransforms();
+	}
+
+	// 같은 시나리오를 처음부터 다시 시작합니다. 클럭·스캔 진행도·운반 기록이 초기화됩니다.
+	StartScenarioLoop();
+
+	SetPlayerInputLocked(false);
+
+	if (UScreenFadeSubsystem* ScreenFadeSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScreenFadeSubsystem>() : nullptr)
+	{
+		ScreenFadeSubsystem->StartFadeIn(NextScenarioFadeInDurationSeconds, NextScenarioFadeInDelaySeconds);
+	}
 }
 
 void AScenarioLoopStarterActor::StartNextScenario()
@@ -133,7 +188,12 @@ void AScenarioLoopStarterActor::StartNextScenario()
 
 void AScenarioLoopStarterActor::MovePlayerToNextScenarioStart()
 {
-	if (!NextScenarioPlayerStart)
+	MovePlayerTo(NextScenarioPlayerStart);
+}
+
+void AScenarioLoopStarterActor::MovePlayerTo(AActor* TargetActor)
+{
+	if (!TargetActor)
 	{
 		return;
 	}
@@ -144,8 +204,8 @@ void AScenarioLoopStarterActor::MovePlayerToNextScenarioStart()
 		return;
 	}
 
-	const FVector TargetLocation = NextScenarioPlayerStart->GetActorLocation();
-	const FRotator TargetRotation = NextScenarioPlayerStart->GetActorRotation();
+	const FVector TargetLocation = TargetActor->GetActorLocation();
+	const FRotator TargetRotation = TargetActor->GetActorRotation();
 
 	if (ACharacter* PlayerCharacter = Cast<ACharacter>(PlayerPawn))
 	{
@@ -252,6 +312,7 @@ void AScenarioLoopStarterActor::BindScenarioCompletion()
 
 	BoundScenarioManager = ScenarioManager;
 	ScenarioManager->OnScenarioCompleted.AddUniqueDynamic(this, &AScenarioLoopStarterActor::HandleScenarioCompleted);
+	ScenarioManager->OnScenarioFailed.AddUniqueDynamic(this, &AScenarioLoopStarterActor::HandleScenarioFailed);
 }
 
 void AScenarioLoopStarterActor::UnbindScenarioCompletion()
@@ -259,6 +320,7 @@ void AScenarioLoopStarterActor::UnbindScenarioCompletion()
 	if (UScenarioManagerSubsystem* ScenarioManager = BoundScenarioManager.Get())
 	{
 		ScenarioManager->OnScenarioCompleted.RemoveDynamic(this, &AScenarioLoopStarterActor::HandleScenarioCompleted);
+		ScenarioManager->OnScenarioFailed.RemoveDynamic(this, &AScenarioLoopStarterActor::HandleScenarioFailed);
 	}
 	BoundScenarioManager.Reset();
 }

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Core/GameClockSubsystem.h"
+#include "Core/ScenarioManagerSubsystem.h"
 #include "GameFramework/Actor.h"
 #include "ScenarioLoopStarterActor.generated.h"
 
@@ -99,9 +100,24 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Next", meta=(ClampMin="0.0"))
 	float NextScenarioFadeInDurationSeconds = 1.5f;
 
+	/** 수첩 규칙 위반 시 이 밤을 처음부터 다시 시작합니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Failure")
+	bool bRestartOnRuleViolation = true;
+
+	/** 위반 시점부터 페이드아웃 시작까지의 유예 시간입니다. 이 사이에 위반 연출이 진행됩니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Failure", meta=(ClampMin="0.0"))
+	float FailureFadeDelaySeconds = 2.5f;
+
+	/** 재시작 시 플레이어를 옮길 지점입니다. 비우면 옮기지 않습니다. */
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Scenario|Failure")
+	TObjectPtr<AActor> RestartPlayerStart;
+
 private:
 	UFUNCTION()
 	void HandleRequiredScanCountReached(int32 CurrentCount, int32 RequiredCount);
+
+	UFUNCTION()
+	void HandleScenarioFailed(FName FailedScenarioId, EScenarioFailureReason FailureReason);
 
 	UFUNCTION()
 	void HandleScenarioCompleted(FName CompletedScenarioId);
@@ -110,6 +126,8 @@ private:
 	void HandleFadeFinished(float TargetAlpha);
 
 	void StartNextScenario();
+	void RestartScenario();
+	void MovePlayerTo(AActor* TargetActor);
 	void MovePlayerToNextScenarioStart();
 	void SetPlayerInputLocked(bool bLocked);
 
@@ -127,4 +145,7 @@ private:
 
 	/** 이 스타터가 시작한 밤 전환이 진행 중인지 여부입니다. */
 	bool bTransitionPending = false;
+
+	/** 진행 중인 전환이 재시작인지(true) 다음 밤으로 넘어가는 것인지(false) 구분합니다. */
+	bool bRestartPending = false;
 };
