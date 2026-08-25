@@ -65,7 +65,7 @@ protected:
 
 	/** 이 거리 안으로 들어오면 발동 후보가 됩니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Vanish Rule", meta=(ClampMin="0.0", Units="cm"))
-	float TriggerRadius = 600.0f;
+	float TriggerRadius = 1400.0f;
 
 	/** 화면 안에 있다고 보는 반각입니다. 이 안에 들어와 있어야 발동합니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Vanish Rule", meta=(ClampMin="1.0", ClampMax="90.0", Units="deg"))
