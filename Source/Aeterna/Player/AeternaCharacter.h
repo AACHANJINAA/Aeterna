@@ -21,6 +21,7 @@ class UAeternaHeadBobComponent;
 class UAeternaInteractionComponent;
 class UAeternaInteractionPromptComponent;
 class UAeternaScanProgressComponent;
+class UAeternaCarryComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -72,6 +73,10 @@ class AAeternaCharacter : public ACharacter
 	/** 스캔 진행도 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UAeternaScanProgressComponent* ScanProgressComponent;
+
+	/** E 홀드 운반과 제자리 설치 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaCarryComponent* CarryComponent;
 
 protected:
 
@@ -178,6 +183,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void TryInteract();
 
+	/** E 입력을 뗄 때 들고 있던 물체를 놓습니다. */
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void EndInteract();
+
 	/** F 입력 시 헤드램프 상태를 전환합니다. */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void ToggleHeadlamp();
@@ -254,6 +263,22 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category="Scan", meta = (DisplayName = "All Required Scans Completed"))
 	void BP_AllRequiredScansCompleted();
 
+	/** 물체를 들기 시작할 때 BP에서 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Carry", meta = (DisplayName = "Carry Started"))
+	void BP_CarryStarted(AActor* CarriedActor, FName CarryId);
+
+	/** 물체를 제자리가 아닌 곳에 놓을 때 BP에서 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Carry", meta = (DisplayName = "Carry Stopped"))
+	void BP_CarryStopped(AActor* DroppedActor, FName CarryId);
+
+	/** 물체가 제자리에 설치될 때 BP에서 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Carry", meta = (DisplayName = "Carry Installed"))
+	void BP_CarryInstalled(AActor* InstalledActor, FName CarryId);
+
+	/** 조준 중인 운반 후보가 바뀔 때 BP에서 프롬프트 표시를 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Carry", meta = (DisplayName = "Carry Target Changed"))
+	void BP_CarryTargetChanged(AActor* NewTargetActor, FName CarryId);
+
 protected:
 
 	/** Set up input action bindings */
@@ -315,5 +340,13 @@ public:
 	/** Returns currently focused interaction info. **/
 	UFUNCTION(BlueprintPure, Category="Interaction")
 	FAeternaInteractionInfo GetFocusedInteractionInfo() const;
+
+	/** Returns whether the player is currently carrying an object. **/
+	UFUNCTION(BlueprintPure, Category="Carry")
+	bool IsCarrying() const;
+
+	/** Returns the actor currently being carried. **/
+	UFUNCTION(BlueprintPure, Category="Carry")
+	AActor* GetCarriedActor() const;
 
 };

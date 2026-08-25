@@ -12,6 +12,7 @@
 #include "Player/Components/AeternaInteractionComponent.h"
 #include "Player/Components/AeternaInteractionPromptComponent.h"
 #include "Player/Components/AeternaScanProgressComponent.h"
+#include "Player/Components/AeternaCarryComponent.h"
 
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
@@ -64,6 +65,7 @@ AAeternaCharacter::AAeternaCharacter()
 	InteractionComponent = CreateDefaultSubobject<UAeternaInteractionComponent>(TEXT("InteractionComponent"));
 	InteractionPromptComponent = CreateDefaultSubobject<UAeternaInteractionPromptComponent>(TEXT("InteractionPromptComponent"));
 	ScanProgressComponent = CreateDefaultSubobject<UAeternaScanProgressComponent>(TEXT("ScanProgressComponent"));
+	CarryComponent = CreateDefaultSubobject<UAeternaCarryComponent>(TEXT("CarryComponent"));
 
 	// configure the character comps
 	GetMesh()->SetOwnerNoSee(true);
@@ -111,6 +113,26 @@ void AAeternaCharacter::BeginPlay()
 	{
 		InteractionPromptComponent->InitializePlayerComponent(this);
 	}
+	// BP가 이 컴포넌트보다 먼저 컴파일됐으면 인스턴싱이 갱신되지 않아,
+	// 인스턴스가 CDO 아키타입의 컴포넌트를 그대로 가리킬 수 있습니다.
+	// 그 컴포넌트는 월드에 속하지 않아 트레이스가 불가능하므로 여기서 갈아끼웁니다.
+	if (!CarryComponent || CarryComponent->GetOwner() != this)
+	{
+		const TCHAR* FallbackReason = CarryComponent ? TEXT("아키타입 컴포넌트를 가리킴") : TEXT("컴포넌트 없음");
+
+		CarryComponent = NewObject<UAeternaCarryComponent>(this, UAeternaCarryComponent::StaticClass(), TEXT("CarryComponentRuntime"));
+		CarryComponent->RegisterComponent();
+
+		UE_LOG(LogAeterna, Warning,
+			TEXT("[Carry] CarryComponent를 런타임에 생성했습니다 (%s). BP_Player를 열어 Compile 후 Save 하십시오."),
+			FallbackReason);
+	}
+
+	if (CarryComponent)
+	{
+		CarryComponent->InitializePlayerComponent(this);
+	}
+
 	if (ScanProgressComponent)
 	{
 		ScanProgressComponent->InitializePlayerComponent(this);
@@ -177,6 +199,8 @@ void AAeternaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		if (InteractAction)
 		{
 			EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AAeternaCharacter::TryInteract);
+			EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &AAeternaCharacter::EndInteract);
+			EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Canceled, this, &AAeternaCharacter::EndInteract);
 		}
 
 		// Headlamp
@@ -287,6 +311,12 @@ void AAeternaCharacter::ToggleNotebook()
 
 void AAeternaCharacter::TryInteract()
 {
+	// 운반 대상을 조준 중이면 상호작용보다 먼저 집습니다. E를 누르고 있는 동안 들려 있습니다.
+	if (CarryComponent && CarryComponent->TryStartCarry())
+	{
+		return;
+	}
+
 	if (!InteractionComponent)
 	{
 		BP_InteractionFailed();
@@ -303,6 +333,14 @@ void AAeternaCharacter::TryInteract()
 		return;
 	}
 	BP_InteractionFailed();
+}
+
+void AAeternaCharacter::EndInteract()
+{
+	if (CarryComponent)
+	{
+		CarryComponent->StopCarry();
+	}
 }
 
 void AAeternaCharacter::UpdateHeadBob(float DeltaSeconds)
@@ -498,4 +536,14 @@ AActor* AAeternaCharacter::GetFocusedInteractableActor() const
 FAeternaInteractionInfo AAeternaCharacter::GetFocusedInteractionInfo() const
 {
 	return InteractionComponent ? InteractionComponent->GetFocusedInteractionInfo() : FAeternaInteractionInfo();
+}
+
+bool AAeternaCharacter::IsCarrying() const
+{
+	return CarryComponent && CarryComponent->IsCarrying();
+}
+
+AActor* AAeternaCharacter::GetCarriedActor() const
+{
+	return CarryComponent ? CarryComponent->GetCarriedActor() : nullptr;
 }

@@ -8,6 +8,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "Player/Components/AeternaCarryComponent.h"
 #include "Player/Components/AeternaScanProgressComponent.h"
 
 AScenarioLoopStarterActor::AScenarioLoopStarterActor()
@@ -208,6 +209,11 @@ void AScenarioLoopStarterActor::ConfigurePlayerScanProgress()
 	if (bResetScanProgressOnStart)
 	{
 		ScanProgressComponent->ResetScanProgress();
+
+		if (UAeternaCarryComponent* CarryComponent = PlayerCharacter->FindComponentByClass<UAeternaCarryComponent>())
+		{
+			CarryComponent->ResetInstallProgress();
+		}
 	}
 
 	ScanProgressComponent->SetRequiredScanCount(RequiredScanCount);
