@@ -7,6 +7,7 @@
 #include "ScreenFadeSubsystem.generated.h"
 
 class UScreenFadeWidget;
+class UTexture2D;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FScreenFadeFinishedSignature, float, TargetAlpha);
 
@@ -44,6 +45,21 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Fade")
 	void SetFadeColor(FLinearColor InFadeColor);
 
+	UFUNCTION(BlueprintCallable, Category="Fade|Title")
+	void SetTitleText(FText InTitleText);
+
+	UFUNCTION(BlueprintCallable, Category="Fade|Title")
+	void SetTitleTexture(UTexture2D* InTitleTexture);
+
+	UFUNCTION(BlueprintCallable, Category="Fade|Title")
+	void SetTitleAlphaImmediate(float InTitleAlpha);
+
+	UFUNCTION(BlueprintCallable, Category="Fade|Title")
+	void StartTitleFadeIn(float DurationSeconds = 1.5f, float DelaySeconds = 0.0f);
+
+	UFUNCTION(BlueprintCallable, Category="Fade|Title")
+	void ClearTitleText();
+
 	UFUNCTION(BlueprintPure, Category="Fade")
 	bool IsFading() const { return bFadeActive; }
 
@@ -60,7 +76,9 @@ public:
 
 private:
 	void StartFade(float InTargetAlpha, float DurationSeconds, float DelaySeconds);
+	void StartTitleFade(float InTargetAlpha, float DurationSeconds, float DelaySeconds);
 	void ApplyFadeAlpha(float InFadeAlpha);
+	void ApplyTitleAlpha(float InTitleAlpha);
 	UScreenFadeWidget* EnsureFadeWidget();
 	void RemoveFadeWidget();
 
@@ -68,12 +86,21 @@ private:
 	TObjectPtr<UScreenFadeWidget> FadeWidget;
 
 	FLinearColor FadeColor = FLinearColor::Black;
+	FText TitleText;
+	TObjectPtr<UTexture2D> TitleTexture;
 
 	bool bFadeActive = false;
+	bool bTitleFadeActive = false;
 	float CurrentAlpha = 0.0f;
 	float StartAlpha = 0.0f;
 	float TargetAlpha = 0.0f;
 	float FadeDuration = 0.0f;
 	float ElapsedSeconds = 0.0f;
 	float RemainingDelaySeconds = 0.0f;
+	float CurrentTitleAlpha = 1.0f;
+	float StartTitleAlpha = 1.0f;
+	float TargetTitleAlpha = 1.0f;
+	float TitleFadeDuration = 0.0f;
+	float TitleElapsedSeconds = 0.0f;
+	float TitleRemainingDelaySeconds = 0.0f;
 };

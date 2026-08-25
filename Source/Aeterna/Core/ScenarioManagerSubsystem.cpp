@@ -143,7 +143,9 @@ void UScenarioManagerSubsystem::ClearCurrentScenario()
 
 void UScenarioManagerSubsystem::SetLoopDebugLogVisible(bool bVisible)
 {
-	bShowLoopDebugLog = bVisible;
+	// Scenario loop screen logging was useful during loop bring-up, but it overlaps
+	// player-facing HUD now. Keep the Blueprint API as a harmless cleanup hook.
+	bShowLoopDebugLog = false;
 	if (!bShowLoopDebugLog && GEngine)
 	{
 		GEngine->RemoveOnScreenDebugMessage(ScenarioLoopDebugMessageKey);

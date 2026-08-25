@@ -109,5 +109,5 @@ private:
 	FName CurrentScenarioId;
 	EScenarioRunState RunState = EScenarioRunState::None;
 	EScenarioFailureReason LastFailureReason = EScenarioFailureReason::None;
-	bool bShowLoopDebugLog = true;
+	bool bShowLoopDebugLog = false;
 };

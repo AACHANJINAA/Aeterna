@@ -5,11 +5,13 @@
 #include "Core/ScenarioManagerSubsystem.h"
 #include "Core/ScenarioVariantSubsystem.h"
 #include "Core/ScreenFadeSubsystem.h"
+#include "Engine/Texture2D.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Player/AeternaCharacter.h"
+#include "Player/Components/AeternaObjectiveHudComponent.h"
 #include "Player/Components/AeternaCarryComponent.h"
 #include "Player/Components/AeternaScanProgressComponent.h"
 
@@ -32,6 +34,7 @@ void AScenarioLoopStarterActor::BeginPlay()
 
 void AScenarioLoopStarterActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	GetWorldTimerManager().ClearTimer(StartDayCardTimerHandle);
 	UnbindScanCompletion();
 	UnbindScenarioCompletion();
 	UnbindFadeFinished();
@@ -39,6 +42,17 @@ void AScenarioLoopStarterActor::EndPlay(const EEndPlayReason::Type EndPlayReason
 }
 
 void AScenarioLoopStarterActor::StartScenarioLoop()
+{
+	if (PlayStartDayCard())
+	{
+		bStartScenarioAfterDayCardPending = true;
+		return;
+	}
+
+	StartScenarioLoopInternal();
+}
+
+void AScenarioLoopStarterActor::StartScenarioLoopInternal()
 {
 	if (UScenarioManagerSubsystem* ScenarioManager = GetWorld() ? GetWorld()->GetSubsystem<UScenarioManagerSubsystem>() : nullptr)
 	{
@@ -53,6 +67,14 @@ void AScenarioLoopStarterActor::StartScenarioLoop()
 		if (AAeternaCharacter* AeternaCharacter = Cast<AAeternaCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
 		{
 			AeternaCharacter->SetHeadlampOn(false);
+		}
+	}
+
+	if (ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(this, 0))
+	{
+		if (UAeternaObjectiveHudComponent* ObjectiveHudComponent = PlayerCharacter->FindComponentByClass<UAeternaObjectiveHudComponent>())
+		{
+			ObjectiveHudComponent->RefreshObjectiveHud();
 		}
 	}
 }
@@ -172,11 +194,14 @@ void AScenarioLoopStarterActor::RestartScenario()
 	// 같은 시나리오를 처음부터 다시 시작합니다. 클럭·스캔 진행도·운반 기록이 초기화됩니다.
 	StartScenarioLoop();
 
-	SetPlayerInputLocked(false);
-
-	if (UScreenFadeSubsystem* ScreenFadeSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScreenFadeSubsystem>() : nullptr)
+	if (!bPlayedStartDayCardLastStart)
 	{
-		ScreenFadeSubsystem->StartFadeIn(NextScenarioFadeInDurationSeconds, NextScenarioFadeInDelaySeconds);
+		SetPlayerInputLocked(false);
+
+		if (UScreenFadeSubsystem* ScreenFadeSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScreenFadeSubsystem>() : nullptr)
+		{
+			ScreenFadeSubsystem->StartFadeIn(NextScenarioFadeInDurationSeconds, NextScenarioFadeInDelaySeconds);
+		}
 	}
 }
 
@@ -188,11 +213,14 @@ void AScenarioLoopStarterActor::StartNextScenario()
 	// UScenarioVariantSubsystem이 Night_ 태그 액터들을 그 밤의 상태로 갈아끼웁니다.
 	NextScenarioStarter->StartScenarioLoop();
 
-	SetPlayerInputLocked(false);
-
-	if (UScreenFadeSubsystem* ScreenFadeSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScreenFadeSubsystem>() : nullptr)
+	if (!NextScenarioStarter->bPlayedStartDayCardLastStart)
 	{
-		ScreenFadeSubsystem->StartFadeIn(NextScenarioFadeInDurationSeconds, NextScenarioFadeInDelaySeconds);
+		SetPlayerInputLocked(false);
+
+		if (UScreenFadeSubsystem* ScreenFadeSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScreenFadeSubsystem>() : nullptr)
+		{
+			ScreenFadeSubsystem->StartFadeIn(NextScenarioFadeInDurationSeconds, NextScenarioFadeInDelaySeconds);
+		}
 	}
 }
 
@@ -255,6 +283,118 @@ void AScenarioLoopStarterActor::SetPlayerInputLocked(bool bLocked)
 	{
 		PlayerPawn->EnableInput(PlayerController);
 	}
+}
+
+bool AScenarioLoopStarterActor::PlayStartDayCard()
+{
+	bPlayedStartDayCardLastStart = false;
+
+	if (!bShowDayCardOnStart)
+	{
+		return false;
+	}
+
+	UScreenFadeSubsystem* ScreenFadeSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScreenFadeSubsystem>() : nullptr;
+	if (!ScreenFadeSubsystem)
+	{
+		return false;
+	}
+
+	GetWorldTimerManager().ClearTimer(StartDayCardTimerHandle);
+	SetPlayerInputLocked(true);
+	ScreenFadeSubsystem->SetFadeColor(StartDayCardFadeColor);
+	ScreenFadeSubsystem->SetFadeAlphaImmediate(1.0f);
+	UTexture2D* DayCardTexture = ResolveStartDayCardTexture();
+	ScreenFadeSubsystem->SetTitleText(FText::GetEmpty());
+	ScreenFadeSubsystem->SetTitleTexture(DayCardTexture);
+	ScreenFadeSubsystem->SetTitleAlphaImmediate(0.0f);
+	ScreenFadeSubsystem->StartTitleFadeIn(StartDayCardTextureFadeInSeconds, StartDayCardTextureDelaySeconds);
+
+	const float FadeInDelay = StartDayCardTextureDelaySeconds + StartDayCardTextureFadeInSeconds + StartDayCardHoldSeconds;
+	ScreenFadeSubsystem->StartFadeIn(StartDayCardFadeInSeconds, FadeInDelay);
+
+	const float UnlockDelay = FMath::Max(0.0f, FadeInDelay + StartDayCardFadeInSeconds);
+	GetWorldTimerManager().SetTimer(StartDayCardTimerHandle, this, &AScenarioLoopStarterActor::FinishStartDayCard, UnlockDelay, false);
+
+	bPlayedStartDayCardLastStart = true;
+	return true;
+}
+
+void AScenarioLoopStarterActor::FinishStartDayCard()
+{
+	if (UScreenFadeSubsystem* ScreenFadeSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScreenFadeSubsystem>() : nullptr)
+	{
+		ScreenFadeSubsystem->SetTitleAlphaImmediate(0.0f);
+		ScreenFadeSubsystem->ClearTitleText();
+	}
+
+	if (bStartScenarioAfterDayCardPending)
+	{
+		bStartScenarioAfterDayCardPending = false;
+		StartScenarioLoopInternal();
+	}
+
+	SetPlayerInputLocked(false);
+}
+
+FText AScenarioLoopStarterActor::BuildStartDayCardText() const
+{
+	if (!StartDayCardText.IsEmpty())
+	{
+		return StartDayCardText;
+	}
+
+	if (ScenarioId == TEXT("S01_Handover") || ScenarioId == TEXT("S01"))
+	{
+		return NSLOCTEXT("Aeterna", "StartDayCardS01", "Day 1");
+	}
+
+	if (ScenarioId == TEXT("S02_GrandHallFossil"))
+	{
+		return NSLOCTEXT("Aeterna", "StartDayCardS02", "Day 2");
+	}
+
+	if (ScenarioId == TEXT("S03_ForbiddenLight"))
+	{
+		return NSLOCTEXT("Aeterna", "StartDayCardS03", "Day 3");
+	}
+
+	return FText::FromName(ScenarioId);
+}
+
+UTexture2D* AScenarioLoopStarterActor::ResolveStartDayCardTexture() const
+{
+	if (StartDayCardTexture)
+	{
+		return StartDayCardTexture;
+	}
+
+	TArray<const TCHAR*> TexturePaths;
+	if (ScenarioId == TEXT("S01_Handover") || ScenarioId == TEXT("S01"))
+	{
+		TexturePaths.Add(TEXT("/Game/Resource/Texture/Day1.Day1"));
+		TexturePaths.Add(TEXT("/Game/Resource/Texture/Day1"));
+	}
+	else if (ScenarioId == TEXT("S02_GrandHallFossil"))
+	{
+		TexturePaths.Add(TEXT("/Game/Resource/Texture/Day2.Day2"));
+		TexturePaths.Add(TEXT("/Game/Resource/Texture/Day2"));
+	}
+	else if (ScenarioId == TEXT("S03_ForbiddenLight"))
+	{
+		TexturePaths.Add(TEXT("/Game/Resource/Texture/Day3.Day3"));
+		TexturePaths.Add(TEXT("/Game/Resource/Texture/Day3"));
+	}
+
+	for (const TCHAR* TexturePath : TexturePaths)
+	{
+		if (UTexture2D* Texture = LoadObject<UTexture2D>(nullptr, TexturePath))
+		{
+			return Texture;
+		}
+	}
+
+	return nullptr;
 }
 
 void AScenarioLoopStarterActor::ConfigurePlayerScanProgress()

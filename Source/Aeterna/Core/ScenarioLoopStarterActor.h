@@ -6,9 +6,11 @@
 #include "Core/GameClockSubsystem.h"
 #include "Core/ScenarioManagerSubsystem.h"
 #include "GameFramework/Actor.h"
+#include "TimerManager.h"
 #include "ScenarioLoopStarterActor.generated.h"
 
 class UAeternaScanProgressComponent;
+class UTexture2D;
 
 UCLASS()
 class AETERNA_API AScenarioLoopStarterActor : public AActor
@@ -61,6 +63,33 @@ protected:
 	/** 밤이 시작될 때 헤드램프를 꺼진 상태로 되돌립니다 (M-05 재기동). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario")
 	bool bTurnOffHeadlampOnStart = true;
+
+	/** 밤 시작 직전에 검은 화면 위에 Day 카드를 띄운 뒤 페이드인합니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Start Card")
+	bool bShowDayCardOnStart = true;
+
+	/** 비워두면 ScenarioId에 따라 Day 1~3을 자동으로 고릅니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Start Card")
+	FText StartDayCardText;
+
+	/** 비워두면 ScenarioId에 따라 /Game/Resource/Texture/Day1~3 텍스처를 자동으로 찾습니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Start Card")
+	TObjectPtr<UTexture2D> StartDayCardTexture;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Start Card", meta=(ClampMin="0.0"))
+	float StartDayCardTextureDelaySeconds = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Start Card", meta=(ClampMin="0.0"))
+	float StartDayCardTextureFadeInSeconds = 3.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Start Card", meta=(ClampMin="0.0"))
+	float StartDayCardHoldSeconds = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Start Card", meta=(ClampMin="0.0"))
+	float StartDayCardFadeInSeconds = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Start Card")
+	FLinearColor StartDayCardFadeColor = FLinearColor::Black;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Scan")
 	bool bCompleteScenarioOnRequiredScans = false;
@@ -134,6 +163,11 @@ private:
 	void MovePlayerTo(AActor* TargetActor);
 	void MovePlayerToNextScenarioStart();
 	void SetPlayerInputLocked(bool bLocked);
+	void StartScenarioLoopInternal();
+	bool PlayStartDayCard();
+	void FinishStartDayCard();
+	FText BuildStartDayCardText() const;
+	UTexture2D* ResolveStartDayCardTexture() const;
 
 	void ConfigurePlayerScanProgress();
 	void BindScanCompletion();
@@ -152,4 +186,8 @@ private:
 
 	/** 진행 중인 전환이 재시작인지(true) 다음 밤으로 넘어가는 것인지(false) 구분합니다. */
 	bool bRestartPending = false;
+
+	bool bPlayedStartDayCardLastStart = false;
+	bool bStartScenarioAfterDayCardPending = false;
+	FTimerHandle StartDayCardTimerHandle;
 };
