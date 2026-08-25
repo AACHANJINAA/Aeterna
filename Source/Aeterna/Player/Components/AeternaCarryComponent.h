@@ -7,6 +7,7 @@
 #include "AeternaCarryComponent.generated.h"
 
 class UStaticMesh;
+class UScenarioManagerSubsystem;
 
 /**
  *  E를 누르고 있는 동안 물체를 들고, 제자리에 가까이 대면 자동으로 설치합니다.
@@ -32,6 +33,8 @@ class AETERNA_API UAeternaCarryComponent : public UAeternaPlayerComponent
 public:
 	UAeternaCarryComponent();
 
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	/** 운반 대상을 표시하는 기본 태그입니다. */
@@ -74,6 +77,10 @@ public:
 	void ResetInstallProgress();
 
 protected:
+	/** 운반이 가능한 시나리오 목록입니다. 비우면 모든 밤에서 가능합니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Carry")
+	TArray<FName> ActiveScenarioIds;
+
 	/** 카메라 기준 운반 위치입니다 (X 전방 / Y 우측 / Z 상단). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Carry", meta=(Units="cm"))
 	FVector CarryOffset = FVector(110.0f, 0.0f, -60.0f);
@@ -111,6 +118,9 @@ protected:
 	float GroundTraceDistance = 500.0f;
 
 private:
+	UFUNCTION()
+	void HandleScenarioStarted(FName ScenarioId);
+
 	AActor* FindCarryTargetUnderCrosshair() const;
 	AActor* FindCarryTargetByBounds() const;
 	bool IsCarryTargetOccluded(const AActor* TargetActor, const FVector& RayStart) const;
@@ -147,6 +157,9 @@ private:
 	UPROPERTY(Transient)
 	TSet<FName> InstalledIds;
 
+	TWeakObjectPtr<UScenarioManagerSubsystem> BoundScenarioManager;
+
 	FName CarriedId;
 	bool bCarriedCollisionEnabled = true;
+	bool bCarryEnabled = true;
 };

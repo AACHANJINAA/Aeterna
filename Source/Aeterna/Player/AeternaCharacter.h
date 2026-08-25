@@ -23,6 +23,7 @@ class UAeternaInteractionPromptComponent;
 class UAeternaScanProgressComponent;
 class UAeternaCarryComponent;
 class UAeternaGazeRuleComponent;
+class UAeternaVanishRuleComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -82,6 +83,10 @@ class AAeternaCharacter : public ACharacter
 	/** 눈구멍 응시 규칙 판정 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UAeternaGazeRuleComponent* GazeRuleComponent;
+
+	/** 화석 사라짐 규칙 판정 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaVanishRuleComponent* VanishRuleComponent;
 
 protected:
 
@@ -196,6 +201,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void ToggleHeadlamp();
 
+	/** 헤드램프를 직접 켜거나 끕니다. 방전 상태에서는 켜지지 않습니다. */
+	UFUNCTION(BlueprintCallable, Category="Headlamp")
+	virtual void SetHeadlampOn(bool bOn);
+
 	/** 속도 상태에 맞춰 1인칭 카메라 헤드밥을 갱신합니다. */
 	UFUNCTION(BlueprintCallable, Category="Camera|Head Bob")
 	virtual void UpdateHeadBob(float DeltaSeconds);
@@ -287,6 +296,18 @@ public:
 	/** 눈구멍 응시 규칙을 어겼을 때 BP에서 연출을 연결합니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Gaze Rule", meta = (DisplayName = "Gaze Rule Violated"))
 	void BP_GazeRuleViolated(AActor* EyeActor);
+
+	/** 화석이 사라져 정지 구간이 시작될 때 BP에서 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Vanish Rule", meta = (DisplayName = "Vanish Rule Started"))
+	void BP_VanishRuleStarted(float FreezeSeconds);
+
+	/** 정지 구간을 버텨 화석이 돌아올 때 BP에서 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Vanish Rule", meta = (DisplayName = "Vanish Rule Survived"))
+	void BP_VanishRuleSurvived();
+
+	/** 정지 구간에서 움직여 위반했을 때 BP에서 연출을 연결합니다. 턱 닫히는 소리를 여기 붙입니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Vanish Rule", meta = (DisplayName = "Vanish Rule Violated"))
+	void BP_VanishRuleViolated();
 
 protected:
 

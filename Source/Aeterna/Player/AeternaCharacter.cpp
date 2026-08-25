@@ -14,6 +14,7 @@
 #include "Player/Components/AeternaScanProgressComponent.h"
 #include "Player/Components/AeternaCarryComponent.h"
 #include "Player/Components/AeternaGazeRuleComponent.h"
+#include "Player/Components/AeternaVanishRuleComponent.h"
 
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
@@ -68,6 +69,7 @@ AAeternaCharacter::AAeternaCharacter()
 	ScanProgressComponent = CreateDefaultSubobject<UAeternaScanProgressComponent>(TEXT("ScanProgressComponent"));
 	CarryComponent = CreateDefaultSubobject<UAeternaCarryComponent>(TEXT("CarryComponent"));
 	GazeRuleComponent = CreateDefaultSubobject<UAeternaGazeRuleComponent>(TEXT("GazeRuleComponent"));
+	VanishRuleComponent = CreateDefaultSubobject<UAeternaVanishRuleComponent>(TEXT("VanishRuleComponent"));
 
 	// configure the character comps
 	GetMesh()->SetOwnerNoSee(true);
@@ -143,6 +145,15 @@ void AAeternaCharacter::BeginPlay()
 	}
 
 	GazeRuleComponent->InitializePlayerComponent(this);
+
+	if (!VanishRuleComponent || VanishRuleComponent->GetOwner() != this)
+	{
+		VanishRuleComponent = NewObject<UAeternaVanishRuleComponent>(this, UAeternaVanishRuleComponent::StaticClass(), TEXT("VanishRuleComponentRuntime"));
+		VanishRuleComponent->RegisterComponent();
+		UE_LOG(LogAeterna, Warning, TEXT("[Vanish] VanishRuleComponent를 런타임에 생성했습니다. BP_Player를 열어 Compile 후 Save 하십시오."));
+	}
+
+	VanishRuleComponent->InitializePlayerComponent(this);
 
 	if (ScanProgressComponent)
 	{
@@ -387,24 +398,29 @@ void AAeternaCharacter::UpdateFocusedInteractable()
 
 void AAeternaCharacter::ToggleHeadlamp()
 {
-	if (!BatteryComponent)
-	{
-		return;
-	}
+	SetHeadlampOn(!bHeadlampOn);
+}
 
-	if (!bHeadlampOn && BatteryComponent->GetCurrentBattery() <= 0.0f)
-	{
-		return;
-	}
+void AAeternaCharacter::SetHeadlampOn(bool bOn)
+{
+	// 끄는 것은 언제나 되지만, 켜는 것은 배터리가 남아 있어야 합니다.
+	const bool bTargetOn = bOn && BatteryComponent && BatteryComponent->GetCurrentBattery() > 0.0f;
+	const bool bStateChanged = (bHeadlampOn != bTargetOn);
 
-	bHeadlampOn = !bHeadlampOn;
+	bHeadlampOn = bTargetOn;
+
+	// 상태가 그대로여도 조명 가시성은 매번 다시 맞춥니다.
+	// 부모 메시의 SetVisibility가 자식까지 전파되면서 램프만 따로 켜져 있을 수 있습니다.
 	if (HeadlampComponent)
 	{
 		HeadlampComponent->SetVisibility(bHeadlampOn);
 	}
 	UpdateHeadlampBrightness();
 
-	BP_HeadlampStateChanged(bHeadlampOn);
+	if (bStateChanged)
+	{
+		BP_HeadlampStateChanged(bHeadlampOn);
+	}
 }
 
 void AAeternaCharacter::AddPlayerBattery(float Amount)

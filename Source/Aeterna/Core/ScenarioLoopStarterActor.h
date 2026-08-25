@@ -58,6 +58,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Scan")
 	bool bResetScanProgressOnStart = true;
 
+	/** 밤이 시작될 때 헤드램프를 꺼진 상태로 되돌립니다 (M-05 재기동). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario")
+	bool bTurnOffHeadlampOnStart = true;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Scan")
 	bool bCompleteScenarioOnRequiredScans = false;
 

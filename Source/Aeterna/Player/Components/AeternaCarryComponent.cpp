@@ -6,6 +6,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Core/ScenarioManagerSubsystem.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
@@ -17,6 +18,49 @@ UAeternaCarryComponent::UAeternaCarryComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = true;
 	bAutoActivate = true;
+
+	// 운반은 밤2의 업무입니다. 밤1에서 화석 뼈가 집히면 스캔 상호작용을 가로챕니다.
+	ActiveScenarioIds.Add(TEXT("S02_GrandHallFossil"));
+}
+
+void UAeternaCarryComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (UScenarioManagerSubsystem* ScenarioManager = GetWorld() ? GetWorld()->GetSubsystem<UScenarioManagerSubsystem>() : nullptr)
+	{
+		BoundScenarioManager = ScenarioManager;
+		ScenarioManager->OnScenarioStarted.AddUniqueDynamic(this, &UAeternaCarryComponent::HandleScenarioStarted);
+
+		if (ScenarioManager->HasCurrentScenario())
+		{
+			HandleScenarioStarted(ScenarioManager->GetCurrentScenarioId());
+		}
+	}
+}
+
+void UAeternaCarryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (UScenarioManagerSubsystem* ScenarioManager = BoundScenarioManager.Get())
+	{
+		ScenarioManager->OnScenarioStarted.RemoveDynamic(this, &UAeternaCarryComponent::HandleScenarioStarted);
+	}
+	BoundScenarioManager.Reset();
+
+	Super::EndPlay(EndPlayReason);
+}
+
+void UAeternaCarryComponent::HandleScenarioStarted(FName ScenarioId)
+{
+	bCarryEnabled = (ActiveScenarioIds.Num() == 0) || ActiveScenarioIds.Contains(ScenarioId);
+
+	if (!bCarryEnabled && IsCarrying())
+	{
+		PlaceCarriedActorOnGround();
+		ReleaseCarriedActor();
+	}
+
+	ResetInstallProgress();
 }
 
 void UAeternaCarryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -32,12 +76,15 @@ void UAeternaCarryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 		return;
 	}
 
-	UpdateCarryTarget();
+	if (bCarryEnabled)
+	{
+		UpdateCarryTarget();
+	}
 }
 
 bool UAeternaCarryComponent::TryStartCarry()
 {
-	if (IsCarrying())
+	if (!bCarryEnabled || IsCarrying())
 	{
 		return false;
 	}

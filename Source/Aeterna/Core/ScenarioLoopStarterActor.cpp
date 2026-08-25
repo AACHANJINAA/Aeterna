@@ -9,6 +9,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "Player/AeternaCharacter.h"
 #include "Player/Components/AeternaCarryComponent.h"
 #include "Player/Components/AeternaScanProgressComponent.h"
 
@@ -45,6 +46,15 @@ void AScenarioLoopStarterActor::StartScenarioLoop()
 	}
 
 	ConfigurePlayerScanProgress();
+
+	// 배터리는 이어지므로, 램프가 켜진 채 재기동되면 암전 구간 내내 잔량이 샙니다.
+	if (bTurnOffHeadlampOnStart)
+	{
+		if (AAeternaCharacter* AeternaCharacter = Cast<AAeternaCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+		{
+			AeternaCharacter->SetHeadlampOn(false);
+		}
+	}
 }
 
 void AScenarioLoopStarterActor::CompleteScenario()
