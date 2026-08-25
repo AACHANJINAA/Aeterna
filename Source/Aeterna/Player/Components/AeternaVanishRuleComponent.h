@@ -6,7 +6,6 @@
 #include "Player/Components/AeternaPlayerComponent.h"
 #include "AeternaVanishRuleComponent.generated.h"
 
-class USceneComponent;
 class UScenarioManagerSubsystem;
 
 UENUM(BlueprintType)
@@ -87,18 +86,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Vanish Rule", meta=(ClampMin="0.0"))
 	float MoveInputThreshold = 0.1f;
 
-	/** 카메라가 바닥까지 쓰러지는 데 걸리는 시간입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Vanish Rule|Fall", meta=(ClampMin="0.0", Units="s"))
-	float FallSeconds = 1.2f;
-
-	/** 쓰러진 카메라가 바닥에서 뜨는 높이입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Vanish Rule|Fall", meta=(ClampMin="0.0", Units="cm"))
-	float FallHeightAboveFloor = 25.0f;
-
-	/** 쓰러진 카메라의 기울기입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Vanish Rule|Fall", meta=(Units="deg"))
-	float FallRollDegrees = 85.0f;
-
 private:
 	UFUNCTION()
 	void HandleScenarioStarted(FName ScenarioId);
@@ -112,10 +99,6 @@ private:
 	void BeginFreeze();
 	void SurviveFreeze();
 	void TriggerViolation();
-	void BeginCameraFall();
-	void UpdateCameraFall(float DeltaTime);
-	void RestoreViewTarget();
-	void SetCharacterMeshesVisible(bool bVisible);
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<AActor>> VanishActors;
@@ -126,18 +109,6 @@ private:
 	float FreezeRemainingSeconds = 0.0f;
 	float FreezeGraceRemainingSeconds = 0.0f;
 	float CooldownRemainingSeconds = 0.0f;
-	float FallElapsedSeconds = 0.0f;
-
-	FVector FallStartLocation = FVector::ZeroVector;
-	FVector FallTargetLocation = FVector::ZeroVector;
-	FRotator FallStartRotation = FRotator::ZeroRotator;
-	FRotator FallTargetRotation = FRotator::ZeroRotator;
-
-	/** 낙하 전 카메라 부착 상태입니다. 재시작 시 이대로 되돌립니다. */
-	TWeakObjectPtr<USceneComponent> SavedCameraParent;
-	FName SavedCameraSocket = NAME_None;
-	FTransform SavedCameraRelativeTransform = FTransform::Identity;
-	bool bSavedUsePawnControlRotation = true;
 
 	bool bRuleActive = false;
 };

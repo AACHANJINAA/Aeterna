@@ -15,6 +15,8 @@
 #include "Player/Components/AeternaCarryComponent.h"
 #include "Player/Components/AeternaGazeRuleComponent.h"
 #include "Player/Components/AeternaVanishRuleComponent.h"
+#include "Player/Components/AeternaClockFreezeRuleComponent.h"
+#include "Player/Components/AeternaCameraFallComponent.h"
 
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
@@ -70,6 +72,8 @@ AAeternaCharacter::AAeternaCharacter()
 	CarryComponent = CreateDefaultSubobject<UAeternaCarryComponent>(TEXT("CarryComponent"));
 	GazeRuleComponent = CreateDefaultSubobject<UAeternaGazeRuleComponent>(TEXT("GazeRuleComponent"));
 	VanishRuleComponent = CreateDefaultSubobject<UAeternaVanishRuleComponent>(TEXT("VanishRuleComponent"));
+	ClockFreezeRuleComponent = CreateDefaultSubobject<UAeternaClockFreezeRuleComponent>(TEXT("ClockFreezeRuleComponent"));
+	CameraFallComponent = CreateDefaultSubobject<UAeternaCameraFallComponent>(TEXT("CameraFallComponent"));
 
 	// configure the character comps
 	GetMesh()->SetOwnerNoSee(true);
@@ -154,6 +158,25 @@ void AAeternaCharacter::BeginPlay()
 	}
 
 	VanishRuleComponent->InitializePlayerComponent(this);
+
+	// 낙하 연출은 규칙들이 공용하므로 규칙 컴포넌트보다 먼저 준비돼 있어야 합니다.
+	if (!CameraFallComponent || CameraFallComponent->GetOwner() != this)
+	{
+		CameraFallComponent = NewObject<UAeternaCameraFallComponent>(this, UAeternaCameraFallComponent::StaticClass(), TEXT("CameraFallComponentRuntime"));
+		CameraFallComponent->RegisterComponent();
+		UE_LOG(LogAeterna, Warning, TEXT("[CameraFall] 런타임에 생성했습니다. BP_Player를 열어 Compile 후 Save 하십시오."));
+	}
+
+	CameraFallComponent->InitializePlayerComponent(this);
+
+	if (!ClockFreezeRuleComponent || ClockFreezeRuleComponent->GetOwner() != this)
+	{
+		ClockFreezeRuleComponent = NewObject<UAeternaClockFreezeRuleComponent>(this, UAeternaClockFreezeRuleComponent::StaticClass(), TEXT("ClockFreezeRuleComponentRuntime"));
+		ClockFreezeRuleComponent->RegisterComponent();
+		UE_LOG(LogAeterna, Warning, TEXT("[ClockFreeze] 런타임에 생성했습니다. BP_Player를 열어 Compile 후 Save 하십시오."));
+	}
+
+	ClockFreezeRuleComponent->InitializePlayerComponent(this);
 
 	if (ScanProgressComponent)
 	{

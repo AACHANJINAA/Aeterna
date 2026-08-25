@@ -24,6 +24,8 @@ class UAeternaScanProgressComponent;
 class UAeternaCarryComponent;
 class UAeternaGazeRuleComponent;
 class UAeternaVanishRuleComponent;
+class UAeternaClockFreezeRuleComponent;
+class UAeternaCameraFallComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -87,6 +89,14 @@ class AAeternaCharacter : public ACharacter
 	/** 화석 사라짐 규칙 판정 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UAeternaVanishRuleComponent* VanishRuleComponent;
+
+	/** 매시 특정 분 정지 규칙 판정 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaClockFreezeRuleComponent* ClockFreezeRuleComponent;
+
+	/** 위반 시 카메라 낙하 연출 처리 (규칙 공용) */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaCameraFallComponent* CameraFallComponent;
 
 protected:
 
@@ -309,6 +319,14 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category="Vanish Rule", meta = (DisplayName = "Vanish Rule Violated"))
 	void BP_VanishRuleViolated();
 
+	/** 매시 정지 창이 열리거나 닫힐 때 BP에서 신호 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Clock Freeze Rule", meta = (DisplayName = "Clock Freeze Window Changed"))
+	void BP_ClockFreezeWindowChanged(bool bWindowOpen);
+
+	/** 정지 창에서 움직여 위반했을 때 BP에서 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Clock Freeze Rule", meta = (DisplayName = "Clock Freeze Rule Violated"))
+	void BP_ClockFreezeRuleViolated();
+
 protected:
 
 	/** Set up input action bindings */
@@ -378,5 +396,9 @@ public:
 	/** Returns the actor currently being carried. **/
 	UFUNCTION(BlueprintPure, Category="Carry")
 	AActor* GetCarriedActor() const;
+
+	/** Returns the shared camera fall component. **/
+	UFUNCTION(BlueprintPure, Category="Camera Fall")
+	UAeternaCameraFallComponent* GetCameraFallComponent() const { return CameraFallComponent; }
 
 };
