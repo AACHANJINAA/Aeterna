@@ -12,6 +12,11 @@
 #include "Player/Components/AeternaInteractionComponent.h"
 #include "Player/Components/AeternaInteractionPromptComponent.h"
 #include "Player/Components/AeternaScanProgressComponent.h"
+#include "Player/Components/AeternaCarryComponent.h"
+#include "Player/Components/AeternaGazeRuleComponent.h"
+#include "Player/Components/AeternaVanishRuleComponent.h"
+#include "Player/Components/AeternaClockFreezeRuleComponent.h"
+#include "Player/Components/AeternaCameraFallComponent.h"
 
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
@@ -64,6 +69,11 @@ AAeternaCharacter::AAeternaCharacter()
 	InteractionComponent = CreateDefaultSubobject<UAeternaInteractionComponent>(TEXT("InteractionComponent"));
 	InteractionPromptComponent = CreateDefaultSubobject<UAeternaInteractionPromptComponent>(TEXT("InteractionPromptComponent"));
 	ScanProgressComponent = CreateDefaultSubobject<UAeternaScanProgressComponent>(TEXT("ScanProgressComponent"));
+	CarryComponent = CreateDefaultSubobject<UAeternaCarryComponent>(TEXT("CarryComponent"));
+	GazeRuleComponent = CreateDefaultSubobject<UAeternaGazeRuleComponent>(TEXT("GazeRuleComponent"));
+	VanishRuleComponent = CreateDefaultSubobject<UAeternaVanishRuleComponent>(TEXT("VanishRuleComponent"));
+	ClockFreezeRuleComponent = CreateDefaultSubobject<UAeternaClockFreezeRuleComponent>(TEXT("ClockFreezeRuleComponent"));
+	CameraFallComponent = CreateDefaultSubobject<UAeternaCameraFallComponent>(TEXT("CameraFallComponent"));
 
 	// configure the character comps
 	GetMesh()->SetOwnerNoSee(true);
@@ -111,6 +121,63 @@ void AAeternaCharacter::BeginPlay()
 	{
 		InteractionPromptComponent->InitializePlayerComponent(this);
 	}
+	// BP가 이 컴포넌트보다 먼저 컴파일됐으면 인스턴싱이 갱신되지 않아,
+	// 인스턴스가 CDO 아키타입의 컴포넌트를 그대로 가리킬 수 있습니다.
+	// 그 컴포넌트는 월드에 속하지 않아 트레이스가 불가능하므로 여기서 갈아끼웁니다.
+	if (!CarryComponent || CarryComponent->GetOwner() != this)
+	{
+		const TCHAR* FallbackReason = CarryComponent ? TEXT("아키타입 컴포넌트를 가리킴") : TEXT("컴포넌트 없음");
+
+		CarryComponent = NewObject<UAeternaCarryComponent>(this, UAeternaCarryComponent::StaticClass(), TEXT("CarryComponentRuntime"));
+		CarryComponent->RegisterComponent();
+
+		UE_LOG(LogAeterna, Warning,
+			TEXT("[Carry] CarryComponent를 런타임에 생성했습니다 (%s). BP_Player를 열어 Compile 후 Save 하십시오."),
+			FallbackReason);
+	}
+
+	if (CarryComponent)
+	{
+		CarryComponent->InitializePlayerComponent(this);
+	}
+
+	if (!GazeRuleComponent || GazeRuleComponent->GetOwner() != this)
+	{
+		GazeRuleComponent = NewObject<UAeternaGazeRuleComponent>(this, UAeternaGazeRuleComponent::StaticClass(), TEXT("GazeRuleComponentRuntime"));
+		GazeRuleComponent->RegisterComponent();
+		UE_LOG(LogAeterna, Warning, TEXT("[Gaze] GazeRuleComponent를 런타임에 생성했습니다. BP_Player를 열어 Compile 후 Save 하십시오."));
+	}
+
+	GazeRuleComponent->InitializePlayerComponent(this);
+
+	if (!VanishRuleComponent || VanishRuleComponent->GetOwner() != this)
+	{
+		VanishRuleComponent = NewObject<UAeternaVanishRuleComponent>(this, UAeternaVanishRuleComponent::StaticClass(), TEXT("VanishRuleComponentRuntime"));
+		VanishRuleComponent->RegisterComponent();
+		UE_LOG(LogAeterna, Warning, TEXT("[Vanish] VanishRuleComponent를 런타임에 생성했습니다. BP_Player를 열어 Compile 후 Save 하십시오."));
+	}
+
+	VanishRuleComponent->InitializePlayerComponent(this);
+
+	// 낙하 연출은 규칙들이 공용하므로 규칙 컴포넌트보다 먼저 준비돼 있어야 합니다.
+	if (!CameraFallComponent || CameraFallComponent->GetOwner() != this)
+	{
+		CameraFallComponent = NewObject<UAeternaCameraFallComponent>(this, UAeternaCameraFallComponent::StaticClass(), TEXT("CameraFallComponentRuntime"));
+		CameraFallComponent->RegisterComponent();
+		UE_LOG(LogAeterna, Warning, TEXT("[CameraFall] 런타임에 생성했습니다. BP_Player를 열어 Compile 후 Save 하십시오."));
+	}
+
+	CameraFallComponent->InitializePlayerComponent(this);
+
+	if (!ClockFreezeRuleComponent || ClockFreezeRuleComponent->GetOwner() != this)
+	{
+		ClockFreezeRuleComponent = NewObject<UAeternaClockFreezeRuleComponent>(this, UAeternaClockFreezeRuleComponent::StaticClass(), TEXT("ClockFreezeRuleComponentRuntime"));
+		ClockFreezeRuleComponent->RegisterComponent();
+		UE_LOG(LogAeterna, Warning, TEXT("[ClockFreeze] 런타임에 생성했습니다. BP_Player를 열어 Compile 후 Save 하십시오."));
+	}
+
+	ClockFreezeRuleComponent->InitializePlayerComponent(this);
+
 	if (ScanProgressComponent)
 	{
 		ScanProgressComponent->InitializePlayerComponent(this);
@@ -177,6 +244,8 @@ void AAeternaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 		if (InteractAction)
 		{
 			EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &AAeternaCharacter::TryInteract);
+			EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &AAeternaCharacter::EndInteract);
+			EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Canceled, this, &AAeternaCharacter::EndInteract);
 		}
 
 		// Headlamp
@@ -287,6 +356,12 @@ void AAeternaCharacter::ToggleNotebook()
 
 void AAeternaCharacter::TryInteract()
 {
+	// 운반 대상을 조준 중이면 상호작용보다 먼저 집습니다. E를 누르고 있는 동안 들려 있습니다.
+	if (CarryComponent && CarryComponent->TryStartCarry())
+	{
+		return;
+	}
+
 	if (!InteractionComponent)
 	{
 		BP_InteractionFailed();
@@ -303,6 +378,14 @@ void AAeternaCharacter::TryInteract()
 		return;
 	}
 	BP_InteractionFailed();
+}
+
+void AAeternaCharacter::EndInteract()
+{
+	if (CarryComponent)
+	{
+		CarryComponent->StopCarry();
+	}
 }
 
 void AAeternaCharacter::UpdateHeadBob(float DeltaSeconds)
@@ -338,24 +421,29 @@ void AAeternaCharacter::UpdateFocusedInteractable()
 
 void AAeternaCharacter::ToggleHeadlamp()
 {
-	if (!BatteryComponent)
-	{
-		return;
-	}
+	SetHeadlampOn(!bHeadlampOn);
+}
 
-	if (!bHeadlampOn && BatteryComponent->GetCurrentBattery() <= 0.0f)
-	{
-		return;
-	}
+void AAeternaCharacter::SetHeadlampOn(bool bOn)
+{
+	// 끄는 것은 언제나 되지만, 켜는 것은 배터리가 남아 있어야 합니다.
+	const bool bTargetOn = bOn && BatteryComponent && BatteryComponent->GetCurrentBattery() > 0.0f;
+	const bool bStateChanged = (bHeadlampOn != bTargetOn);
 
-	bHeadlampOn = !bHeadlampOn;
+	bHeadlampOn = bTargetOn;
+
+	// 상태가 그대로여도 조명 가시성은 매번 다시 맞춥니다.
+	// 부모 메시의 SetVisibility가 자식까지 전파되면서 램프만 따로 켜져 있을 수 있습니다.
 	if (HeadlampComponent)
 	{
 		HeadlampComponent->SetVisibility(bHeadlampOn);
 	}
 	UpdateHeadlampBrightness();
 
-	BP_HeadlampStateChanged(bHeadlampOn);
+	if (bStateChanged)
+	{
+		BP_HeadlampStateChanged(bHeadlampOn);
+	}
 }
 
 void AAeternaCharacter::AddPlayerBattery(float Amount)
@@ -498,4 +586,14 @@ AActor* AAeternaCharacter::GetFocusedInteractableActor() const
 FAeternaInteractionInfo AAeternaCharacter::GetFocusedInteractionInfo() const
 {
 	return InteractionComponent ? InteractionComponent->GetFocusedInteractionInfo() : FAeternaInteractionInfo();
+}
+
+bool AAeternaCharacter::IsCarrying() const
+{
+	return CarryComponent && CarryComponent->IsCarrying();
+}
+
+AActor* AAeternaCharacter::GetCarriedActor() const
+{
+	return CarryComponent ? CarryComponent->GetCarriedActor() : nullptr;
 }

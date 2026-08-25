@@ -21,6 +21,11 @@ class UAeternaHeadBobComponent;
 class UAeternaInteractionComponent;
 class UAeternaInteractionPromptComponent;
 class UAeternaScanProgressComponent;
+class UAeternaCarryComponent;
+class UAeternaGazeRuleComponent;
+class UAeternaVanishRuleComponent;
+class UAeternaClockFreezeRuleComponent;
+class UAeternaCameraFallComponent;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -72,6 +77,26 @@ class AAeternaCharacter : public ACharacter
 	/** 스캔 진행도 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UAeternaScanProgressComponent* ScanProgressComponent;
+
+	/** E 홀드 운반과 제자리 설치 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaCarryComponent* CarryComponent;
+
+	/** 눈구멍 응시 규칙 판정 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaGazeRuleComponent* GazeRuleComponent;
+
+	/** 화석 사라짐 규칙 판정 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaVanishRuleComponent* VanishRuleComponent;
+
+	/** 매시 특정 분 정지 규칙 판정 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaClockFreezeRuleComponent* ClockFreezeRuleComponent;
+
+	/** 위반 시 카메라 낙하 연출 처리 (규칙 공용) */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaCameraFallComponent* CameraFallComponent;
 
 protected:
 
@@ -178,9 +203,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void TryInteract();
 
+	/** E 입력을 뗄 때 들고 있던 물체를 놓습니다. */
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void EndInteract();
+
 	/** F 입력 시 헤드램프 상태를 전환합니다. */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void ToggleHeadlamp();
+
+	/** 헤드램프를 직접 켜거나 끕니다. 방전 상태에서는 켜지지 않습니다. */
+	UFUNCTION(BlueprintCallable, Category="Headlamp")
+	virtual void SetHeadlampOn(bool bOn);
 
 	/** 속도 상태에 맞춰 1인칭 카메라 헤드밥을 갱신합니다. */
 	UFUNCTION(BlueprintCallable, Category="Camera|Head Bob")
@@ -254,6 +287,46 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category="Scan", meta = (DisplayName = "All Required Scans Completed"))
 	void BP_AllRequiredScansCompleted();
 
+	/** 물체를 들기 시작할 때 BP에서 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Carry", meta = (DisplayName = "Carry Started"))
+	void BP_CarryStarted(AActor* CarriedActor, FName CarryId);
+
+	/** 물체를 제자리가 아닌 곳에 놓을 때 BP에서 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Carry", meta = (DisplayName = "Carry Stopped"))
+	void BP_CarryStopped(AActor* DroppedActor, FName CarryId);
+
+	/** 물체가 제자리에 설치될 때 BP에서 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Carry", meta = (DisplayName = "Carry Installed"))
+	void BP_CarryInstalled(AActor* InstalledActor, FName CarryId);
+
+	/** 조준 중인 운반 후보가 바뀔 때 BP에서 프롬프트 표시를 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Carry", meta = (DisplayName = "Carry Target Changed"))
+	void BP_CarryTargetChanged(AActor* NewTargetActor, FName CarryId);
+
+	/** 눈구멍 응시 규칙을 어겼을 때 BP에서 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Gaze Rule", meta = (DisplayName = "Gaze Rule Violated"))
+	void BP_GazeRuleViolated(AActor* EyeActor);
+
+	/** 화석이 사라져 정지 구간이 시작될 때 BP에서 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Vanish Rule", meta = (DisplayName = "Vanish Rule Started"))
+	void BP_VanishRuleStarted(float FreezeSeconds);
+
+	/** 정지 구간을 버텨 화석이 돌아올 때 BP에서 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Vanish Rule", meta = (DisplayName = "Vanish Rule Survived"))
+	void BP_VanishRuleSurvived();
+
+	/** 정지 구간에서 움직여 위반했을 때 BP에서 연출을 연결합니다. 턱 닫히는 소리를 여기 붙입니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Vanish Rule", meta = (DisplayName = "Vanish Rule Violated"))
+	void BP_VanishRuleViolated();
+
+	/** 매시 정지 창이 열리거나 닫힐 때 BP에서 신호 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Clock Freeze Rule", meta = (DisplayName = "Clock Freeze Window Changed"))
+	void BP_ClockFreezeWindowChanged(bool bWindowOpen);
+
+	/** 정지 창에서 움직여 위반했을 때 BP에서 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Clock Freeze Rule", meta = (DisplayName = "Clock Freeze Rule Violated"))
+	void BP_ClockFreezeRuleViolated();
+
 protected:
 
 	/** Set up input action bindings */
@@ -315,5 +388,17 @@ public:
 	/** Returns currently focused interaction info. **/
 	UFUNCTION(BlueprintPure, Category="Interaction")
 	FAeternaInteractionInfo GetFocusedInteractionInfo() const;
+
+	/** Returns whether the player is currently carrying an object. **/
+	UFUNCTION(BlueprintPure, Category="Carry")
+	bool IsCarrying() const;
+
+	/** Returns the actor currently being carried. **/
+	UFUNCTION(BlueprintPure, Category="Carry")
+	AActor* GetCarriedActor() const;
+
+	/** Returns the shared camera fall component. **/
+	UFUNCTION(BlueprintPure, Category="Camera Fall")
+	UAeternaCameraFallComponent* GetCameraFallComponent() const { return CameraFallComponent; }
 
 };
