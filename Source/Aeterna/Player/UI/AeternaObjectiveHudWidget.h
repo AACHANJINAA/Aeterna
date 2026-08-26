@@ -57,19 +57,25 @@ protected:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Objective|HUD|Layout")
-	FVector2D WidgetSize = FVector2D(300.0f, 98.0f);
+	FVector2D WidgetSize = FVector2D(360.0f, 126.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Objective|HUD|Color")
-	FLinearColor BackgroundColor = FLinearColor(0.0f, 0.0f, 0.0f, 0.46f);
+	FLinearColor PanelColor = FLinearColor(0.015f, 0.06f, 0.055f, 0.34f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Objective|HUD|Color")
-	FLinearColor BorderColor = FLinearColor(0.9f, 0.95f, 0.9f, 0.18f);
+	FLinearColor BackgroundColor = FLinearColor(0.006f, 0.02f, 0.018f, 0.55f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Objective|HUD|Color")
-	FLinearColor IncompleteTextColor = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
+	FLinearColor BorderColor = FLinearColor(0.15f, 1.0f, 0.78f, 0.82f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Objective|HUD|Color")
-	FLinearColor CompleteTextColor = FLinearColor(1.0f, 0.82f, 0.12f, 1.0f);
+	FLinearColor AccentColor = FLinearColor(0.82f, 1.0f, 0.94f, 0.92f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Objective|HUD|Color")
+	FLinearColor IncompleteTextColor = FLinearColor(0.82f, 1.0f, 0.94f, 0.70f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Objective|HUD|Color")
+	FLinearColor CompleteTextColor = FLinearColor(0.42f, 1.0f, 0.82f, 1.0f);
 
 private:
 	FText BuildObjectiveLine(const FText& ItemText, bool bCompleted) const;

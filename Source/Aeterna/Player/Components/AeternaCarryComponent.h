@@ -47,6 +47,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Carry")
 	bool TryStartCarry();
 
+	/** 이미 상호작용 포커스가 잡힌 운반 대상을 집습니다. */
+	UFUNCTION(BlueprintCallable, Category="Carry")
+	bool TryStartCarryTarget(AActor* TargetActor);
+
 	/** 들고 있던 물체를 그 자리에 놓습니다. */
 	UFUNCTION(BlueprintCallable, Category="Carry")
 	void StopCarry();

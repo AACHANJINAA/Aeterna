@@ -21,6 +21,7 @@ class UAeternaHeadBobComponent;
 class UAeternaInteractionComponent;
 class UAeternaInteractionPromptComponent;
 class UAeternaObjectiveHudComponent;
+class UAeternaRadarHudComponent;
 class UAeternaScanProgressComponent;
 class UAeternaCarryComponent;
 class UAeternaGazeRuleComponent;
@@ -85,6 +86,10 @@ class AAeternaCharacter : public ACharacter
 	/** 현재 시나리오 목표 HUD 표시 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UAeternaObjectiveHudComponent* ObjectiveHudComponent;
+
+	/** 목표 위치를 기계식 레이더 HUD로 표시합니다. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaRadarHudComponent* RadarHudComponent;
 
 	/** 스캔 진행도 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))

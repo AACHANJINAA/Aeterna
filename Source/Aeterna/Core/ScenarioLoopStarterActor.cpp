@@ -3,6 +3,7 @@
 #include "Core/ScenarioLoopStarterActor.h"
 
 #include "Core/BgmSubsystem.h"
+#include "Core/GameClockSubsystem.h"
 #include "Core/ScenarioManagerSubsystem.h"
 #include "Core/ScenarioVariantSubsystem.h"
 #include "Core/ScreenFadeSubsystem.h"
@@ -303,6 +304,11 @@ bool AScenarioLoopStarterActor::PlayStartDayCard()
 	if (!ScreenFadeSubsystem)
 	{
 		return false;
+	}
+
+	if (UGameClockSubsystem* GameClockSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UGameClockSubsystem>() : nullptr)
+	{
+		GameClockSubsystem->PauseClock();
 	}
 
 	GetWorldTimerManager().ClearTimer(StartDayCardTimerHandle);

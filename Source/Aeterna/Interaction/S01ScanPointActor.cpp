@@ -25,6 +25,8 @@ void AS01ScanPointActor::OnConstruction(const FTransform& Transform)
 void AS01ScanPointActor::ApplyScanPointDefaults()
 {
 	bRepeatable = false;
+	ActiveScenarioIds.Reset();
+	ActiveScenarioIds.Add(TEXT("S01_Handover"));
 
 	switch (ScanPointKind)
 	{

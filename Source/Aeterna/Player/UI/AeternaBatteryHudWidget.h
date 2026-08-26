@@ -25,7 +25,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Layout")
-	FVector2D WidgetSize = FVector2D(420.0f, 82.0f);
+	FVector2D WidgetSize = FVector2D(282.0f, 78.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Layout")
 	int32 SegmentCount = 10;
@@ -34,22 +34,28 @@ protected:
 	FText LabelText = FText::FromString(TEXT("BATTERY"));
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Color")
-	FLinearColor BackgroundColor = FLinearColor(0.005f, 0.006f, 0.006f, 1.0f);
+	FLinearColor PanelColor = FLinearColor(0.015f, 0.06f, 0.055f, 0.34f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Color")
-	FLinearColor BorderColor = FLinearColor(0.42f, 0.42f, 0.36f, 1.0f);
+	FLinearColor BackgroundColor = FLinearColor(0.006f, 0.02f, 0.018f, 0.72f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Color")
-	FLinearColor FullBatteryColor = FLinearColor(0.98f, 0.72f, 0.08f, 1.0f);
+	FLinearColor BorderColor = FLinearColor(0.15f, 1.0f, 0.78f, 0.82f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Color")
-	FLinearColor LowBatteryColor = FLinearColor(0.9f, 0.08f, 0.04f, 1.0f);
+	FLinearColor AccentColor = FLinearColor(0.82f, 1.0f, 0.94f, 0.92f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Color")
-	FLinearColor EmptySegmentColor = FLinearColor(0.035f, 0.038f, 0.035f, 1.0f);
+	FLinearColor FullBatteryColor = FLinearColor(0.42f, 1.0f, 0.82f, 1.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Color")
-	FLinearColor TextColor = FLinearColor(0.96f, 0.98f, 0.9f, 1.0f);
+	FLinearColor LowBatteryColor = FLinearColor(1.0f, 0.18f, 0.12f, 1.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Color")
+	FLinearColor EmptySegmentColor = FLinearColor(0.035f, 0.09f, 0.08f, 0.72f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Color")
+	FLinearColor TextColor = FLinearColor(0.82f, 1.0f, 0.94f, 0.92f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Color", meta=(ClampMin="0.1"))
 	float BatteryColorExponent = 1.8f;

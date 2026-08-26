@@ -6,6 +6,7 @@
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/SBoxPanel.h"
+#include "Widgets/SOverlay.h"
 #include "Widgets/Text/STextBlock.h"
 
 void UAeternaObjectiveHudUserWidget::SetObjectiveEntries(const TArray<FAeternaObjectiveHudEntry>& InEntries)
@@ -33,6 +34,7 @@ TSharedRef<SWidget> UAeternaObjectiveHudWidget::RebuildWidget()
 			[
 				SAssignNew(ObjectiveTextWidget, STextBlock)
 				.Justification(ETextJustify::Right)
+				.Font(FCoreStyle::GetDefaultFontStyle(TEXT("Mono"), 18))
 				.ColorAndOpacity(FSlateColor(IncompleteTextColor))
 				.Text(FText::GetEmpty())
 			];
@@ -44,15 +46,95 @@ TSharedRef<SWidget> UAeternaObjectiveHudWidget::RebuildWidget()
 		.WidthOverride(WidgetSize.X)
 		.HeightOverride(WidgetSize.Y)
 		[
-			SNew(SBorder)
-			.BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush"))
-			.BorderBackgroundColor(FSlateColor(BorderColor))
-			.Padding(FMargin(1.0f))
+			SNew(SOverlay)
+
+			+ SOverlay::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			.Padding(FMargin(10.0f, 8.0f))
+			[
+				SNew(SBorder)
+				.BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush"))
+				.BorderBackgroundColor(FSlateColor(PanelColor))
+			]
+
+			+ SOverlay::Slot()
+			.HAlign(HAlign_Left)
+			.VAlign(VAlign_Top)
+			[
+				SNew(SHorizontalBox)
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SBox)
+					.WidthOverride(72.0f)
+					.HeightOverride(2.0f)
+					[
+						SNew(SBorder)
+						.BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush"))
+						.BorderBackgroundColor(FSlateColor(BorderColor))
+					]
+				]
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(FMargin(8.0f, 0.0f, 0.0f, 0.0f))
+				[
+					SNew(SBox)
+					.WidthOverride(18.0f)
+					.HeightOverride(2.0f)
+					[
+						SNew(SBorder)
+						.BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush"))
+						.BorderBackgroundColor(FSlateColor(AccentColor))
+					]
+				]
+			]
+
+			+ SOverlay::Slot()
+			.HAlign(HAlign_Right)
+			.VAlign(VAlign_Bottom)
+			[
+				SNew(SHorizontalBox)
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SBox)
+					.WidthOverride(18.0f)
+					.HeightOverride(2.0f)
+					[
+						SNew(SBorder)
+						.BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush"))
+						.BorderBackgroundColor(FSlateColor(AccentColor))
+					]
+				]
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(FMargin(8.0f, 0.0f, 0.0f, 0.0f))
+				[
+					SNew(SBox)
+					.WidthOverride(72.0f)
+					.HeightOverride(2.0f)
+					[
+						SNew(SBorder)
+						.BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush"))
+						.BorderBackgroundColor(FSlateColor(BorderColor))
+					]
+				]
+			]
+
+			+ SOverlay::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			.Padding(FMargin(22.0f, 18.0f, 22.0f, 18.0f))
 			[
 				SNew(SBorder)
 				.BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush"))
 				.BorderBackgroundColor(FSlateColor(BackgroundColor))
-				.Padding(FMargin(14.0f, 9.0f))
+				.Padding(FMargin(14.0f, 10.0f))
 				[
 					ObjectiveList
 				]

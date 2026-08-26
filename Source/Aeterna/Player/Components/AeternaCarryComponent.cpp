@@ -11,6 +11,7 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "GameFramework/Actor.h"
+#include "Interaction/AeternaInteractableActor.h"
 #include "Player/AeternaCharacter.h"
 
 UAeternaCarryComponent::UAeternaCarryComponent()
@@ -84,19 +85,13 @@ void UAeternaCarryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 bool UAeternaCarryComponent::TryStartCarry()
 {
-	if (!bCarryEnabled || IsCarrying())
-	{
-		return false;
-	}
+	return TryStartCarryTarget(FindCarryTargetUnderCrosshair());
+}
 
-	AActor* TargetActor = FindCarryTargetUnderCrosshair();
-	if (!TargetActor)
-	{
-		return false;
-	}
-
+bool UAeternaCarryComponent::TryStartCarryTarget(AActor* TargetActor)
+{
 	const FName CarryId = GetCarryId(TargetActor);
-	if (CarryId.IsNone() || InstalledIds.Contains(CarryId))
+	if (!bCarryEnabled || IsCarrying() || !TargetActor || TargetActor->IsHidden() || CarryId.IsNone() || InstalledIds.Contains(CarryId))
 	{
 		return false;
 	}
@@ -421,6 +416,10 @@ void UAeternaCarryComponent::InstallCarriedActor(AActor* SocketActor)
 
 	// 진행도는 기존 스캔 진행도 컴포넌트를 그대로 씁니다 (목표 지점 N개 달성이라는 구조가 같습니다).
 	AeternaCharacter->RegisterScanPoint(InstalledId);
+	if (AAeternaInteractableActor* InteractableActor = Cast<AAeternaInteractableActor>(InstalledActor))
+	{
+		InteractableActor->MarkInteractionCompleted();
+	}
 	AeternaCharacter->BP_CarryInstalled(InstalledActor, InstalledId);
 }
 

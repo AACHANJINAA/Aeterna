@@ -8,7 +8,6 @@ void UGameClockSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 	ResetClock();
-	StartClock();
 }
 
 void UGameClockSubsystem::Tick(float DeltaTime)

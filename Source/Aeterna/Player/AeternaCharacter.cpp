@@ -3,6 +3,7 @@
 #include "Player/AeternaCharacter.h"
 
 #include "Aeterna.h"
+#include "Interaction/AeternaCarryInteractableActor.h"
 #include "Interaction/AeternaInteractableActor.h"
 #include "Interaction/AeternaInteractableInterface.h"
 #include "Player/Components/AeternaBatteryComponent.h"
@@ -12,6 +13,7 @@
 #include "Player/Components/AeternaInteractionComponent.h"
 #include "Player/Components/AeternaInteractionPromptComponent.h"
 #include "Player/Components/AeternaObjectiveHudComponent.h"
+#include "Player/Components/AeternaRadarHudComponent.h"
 #include "Player/Components/AeternaScanProgressComponent.h"
 #include "Player/Components/AeternaCarryComponent.h"
 #include "Player/Components/AeternaGazeRuleComponent.h"
@@ -75,6 +77,7 @@ AAeternaCharacter::AAeternaCharacter()
 	InteractionComponent = CreateDefaultSubobject<UAeternaInteractionComponent>(TEXT("InteractionComponent"));
 	InteractionPromptComponent = CreateDefaultSubobject<UAeternaInteractionPromptComponent>(TEXT("InteractionPromptComponent"));
 	ObjectiveHudComponent = CreateDefaultSubobject<UAeternaObjectiveHudComponent>(TEXT("ObjectiveHudComponent"));
+	RadarHudComponent = CreateDefaultSubobject<UAeternaRadarHudComponent>(TEXT("RadarHudComponent"));
 	ScanProgressComponent = CreateDefaultSubobject<UAeternaScanProgressComponent>(TEXT("ScanProgressComponent"));
 	CarryComponent = CreateDefaultSubobject<UAeternaCarryComponent>(TEXT("CarryComponent"));
 	GazeRuleComponent = CreateDefaultSubobject<UAeternaGazeRuleComponent>(TEXT("GazeRuleComponent"));
@@ -208,6 +211,16 @@ void AAeternaCharacter::BeginPlay()
 
 	ObjectiveHudComponent->InitializePlayerComponent(this);
 	ObjectiveHudComponent->RefreshObjectiveHud();
+
+	if (!RadarHudComponent || RadarHudComponent->GetOwner() != this)
+	{
+		RadarHudComponent = NewObject<UAeternaRadarHudComponent>(this, UAeternaRadarHudComponent::StaticClass(), TEXT("RadarHudComponentRuntime"));
+		RadarHudComponent->RegisterComponent();
+		UE_LOG(LogAeterna, Warning, TEXT("[RadarHUD] 런타임에 생성했습니다. BP_Player를 열어 Compile 후 Save 하십시오."));
+	}
+
+	RadarHudComponent->InitializePlayerComponent(this);
+	RadarHudComponent->RefreshRadarTargets();
 }
 
 void AAeternaCharacter::Tick(float DeltaSeconds)
@@ -388,7 +401,25 @@ void AAeternaCharacter::ToggleNotebook()
 
 void AAeternaCharacter::TryInteract()
 {
-	// 운반 대상을 조준 중이면 상호작용보다 먼저 집습니다. E를 누르고 있는 동안 들려 있습니다.
+	if (InteractionComponent)
+	{
+		InteractionComponent->UpdateFocusedInteractable(this);
+		if (AActor* FocusedActor = InteractionComponent->GetFocusedInteractableActor())
+		{
+			if (FocusedActor->IsA<AAeternaCarryInteractableActor>())
+			{
+				if (CarryComponent && CarryComponent->TryStartCarryTarget(FocusedActor))
+				{
+					return;
+				}
+
+				BP_InteractionFailed();
+				return;
+			}
+		}
+	}
+
+	// 기존 태그 기반 운반 대상도 fallback으로 유지합니다.
 	if (CarryComponent && CarryComponent->TryStartCarry())
 	{
 		return;
