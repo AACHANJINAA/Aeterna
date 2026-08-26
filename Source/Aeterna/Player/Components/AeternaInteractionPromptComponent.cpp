@@ -126,6 +126,7 @@ void UAeternaInteractionPromptComponent::CreatePromptWidget()
 		if (PromptWidget)
 		{
 			PromptWidget->AddToViewport(ViewportZOrder);
+			PromptWidget->SetAlignmentInViewport(FVector2D(0.5f, 0.5f));
 			CacheDefaultPromptTextColor();
 		}
 	}

@@ -46,6 +46,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery", meta=(ClampMin="0.0"))
 	float BatteryChargeAmount = 35.0f;
 
+	/** 비어 있으면 모든 시나리오에서 활성화됩니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario")
+	TArray<FName> ActiveScenarioIds;
+
 public:
 	virtual void Interact_Implementation(AActor* Interactor) override;
 	virtual bool CanInteract_Implementation(AActor* Interactor) const override;
@@ -65,4 +69,16 @@ public:
 	/** 현재 완료 여부를 반환합니다. */
 	UFUNCTION(BlueprintPure, Category="Interaction")
 	bool IsInteractionCompleted() const { return bInteractionCompleted; }
+
+	UFUNCTION(BlueprintCallable, Category="Interaction")
+	void MarkInteractionCompleted() { bInteractionCompleted = true; }
+
+	UFUNCTION(BlueprintPure, Category="Interaction")
+	EAeternaInteractionType GetInteractionType() const { return InteractionType; }
+
+	UFUNCTION(BlueprintPure, Category="Scan")
+	FName GetResolvedScanPointId() const { return ScanPointId.IsNone() ? GetFName() : ScanPointId; }
+
+	UFUNCTION(BlueprintPure, Category="Scenario")
+	bool IsActiveForScenario(FName ScenarioId) const { return ActiveScenarioIds.Num() == 0 || ActiveScenarioIds.Contains(ScenarioId); }
 };

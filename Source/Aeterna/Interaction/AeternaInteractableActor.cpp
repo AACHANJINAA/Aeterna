@@ -2,6 +2,7 @@
 
 #include "Interaction/AeternaInteractableActor.h"
 
+#include "Core/ScenarioManagerSubsystem.h"
 #include "Player/AeternaCharacter.h"
 
 AAeternaInteractableActor::AAeternaInteractableActor()
@@ -82,7 +83,9 @@ bool AAeternaInteractableActor::RegisterScanProgress(AAeternaCharacter* AeternaC
 
 bool AAeternaInteractableActor::CanInteract_Implementation(AActor* Interactor) const
 {
-	return bRepeatable || !bInteractionCompleted;
+	const UScenarioManagerSubsystem* ScenarioManager = GetWorld() ? GetWorld()->GetSubsystem<UScenarioManagerSubsystem>() : nullptr;
+	const FName CurrentScenarioId = ScenarioManager ? ScenarioManager->GetCurrentScenarioId() : NAME_None;
+	return IsActiveForScenario(CurrentScenarioId) && (bRepeatable || !bInteractionCompleted);
 }
 
 FAeternaInteractionInfo AAeternaInteractableActor::GetInteractionInfo_Implementation(AActor* Interactor) const
