@@ -118,6 +118,7 @@ void UAeternaVanishRuleComponent::ResetVanishRule()
 	FreezeRemainingSeconds = 0.0f;
 	FreezeGraceRemainingSeconds = 0.0f;
 	CooldownRemainingSeconds = 0.0f;
+	bAlreadyTriggered = false;
 }
 
 void UAeternaVanishRuleComponent::HandleScenarioStarted(FName ScenarioId)
@@ -184,6 +185,12 @@ void UAeternaVanishRuleComponent::SetVanishActorsHidden(bool bHidden)
 
 bool UAeternaVanishRuleComponent::ShouldTriggerVanish() const
 {
+	// 한 밤에 한 번만. 다시 무장하는 곳은 ResetVanishRule 하나뿐입니다.
+	if (bTriggerOnce && bAlreadyTriggered)
+	{
+		return false;
+	}
+
 	const AAeternaCharacter* AeternaCharacter = GetAeternaCharacter();
 	if (!AeternaCharacter)
 	{
@@ -268,6 +275,8 @@ bool UAeternaVanishRuleComponent::HasMovementInput() const
 
 void UAeternaVanishRuleComponent::BeginFreeze()
 {
+	bAlreadyTriggered = true;
+
 	VanishState = EAeternaVanishState::Frozen;
 	FreezeRemainingSeconds = FreezeSeconds;
 	FreezeGraceRemainingSeconds = FreezeGraceSeconds;

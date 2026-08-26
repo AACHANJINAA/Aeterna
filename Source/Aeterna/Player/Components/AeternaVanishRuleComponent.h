@@ -28,7 +28,8 @@ enum class EAeternaVanishState : uint8
  *  그것이 시야에 보이는 상태면 즉시 사라지고, FreezeSeconds 동안 이동 입력이
  *  들어오면 위반입니다. 시점 회전은 허용합니다.
  *
- *  버티면 화석이 제자리에 다시 나타나고 쿨다운에 들어갑니다.
+ *  버티면 화석이 제자리에 다시 나타납니다. 기본은 한 밤에 한 번만
+ *  발동하며(bTriggerOnce), 밤이 시작되거나 재시작될 때 다시 무장합니다.
  *  위반하면 카메라가 바닥으로 쓰러지고 시나리오 실패로 넘깁니다.
  */
 UCLASS(ClassGroup=(Aeterna), meta=(BlueprintSpawnableComponent))
@@ -78,8 +79,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Vanish Rule", meta=(ClampMin="0.0", Units="s"))
 	float FreezeSeconds = 2.0f;
 
-	/** 한 번 발동한 뒤 다시 발동하기까지의 시간입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Vanish Rule", meta=(ClampMin="0.0", Units="s"))
+	/**
+	 *  한 밤에 한 번만 발동시킵니다. 밤이 시작되거나 재시작될 때 다시 무장합니다.
+	 *  끄면 CooldownSeconds 간격으로 계속 반복됩니다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Vanish Rule")
+	bool bTriggerOnce = true;
+
+	/** bTriggerOnce가 꺼져 있을 때, 한 번 발동한 뒤 다시 발동하기까지의 시간입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Vanish Rule", meta=(ClampMin="0.0", Units="s", EditCondition="!bTriggerOnce"))
 	float CooldownSeconds = 45.0f;
 
 	/** 이 크기를 넘는 이동 입력이 들어오면 움직인 것으로 봅니다. */
@@ -111,4 +119,7 @@ private:
 	float CooldownRemainingSeconds = 0.0f;
 
 	bool bRuleActive = false;
+
+	/** 이번 밤에 이미 발동했는지. bTriggerOnce일 때 재발동을 막습니다. */
+	bool bAlreadyTriggered = false;
 };
