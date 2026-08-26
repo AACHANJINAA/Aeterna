@@ -53,7 +53,7 @@ protected:
 
 	/** 시야 중앙으로 인정하는 반각입니다. 좁을수록 "들여다봐야" 걸립니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Gaze Rule", meta=(ClampMin="0.5", ClampMax="90.0", Units="deg"))
-	float CenterConeHalfAngle = 6.0f;
+	float CenterConeHalfAngle = 12.0f;
 
 	/** 이 시간만큼 연속으로 비추면 위반입니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Gaze Rule", meta=(ClampMin="0.0", Units="s"))
@@ -62,6 +62,14 @@ protected:
 	/** 헤드램프 빛이 닿는다고 보는 최대 거리입니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Gaze Rule", meta=(ClampMin="0.0", Units="cm"))
 	float MaxGazeDistance = 1200.0f;
+
+	/**
+	 *  눈구멍과 플레이어 사이가 막혔는지 검사합니다.
+	 *  눈알이 두개골이나 벽 안쪽에 박혀 있으면 자기 자신을 가린 것으로 잡혀
+	 *  영원히 걸리지 않으므로 기본은 꺼둡니다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Gaze Rule")
+	bool bRequireLineOfSight = false;
 
 	/** 눈구멍이 나타나는 데 걸리는 시간입니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Gaze Rule|Reveal", meta=(ClampMin="0.0", Units="s"))
