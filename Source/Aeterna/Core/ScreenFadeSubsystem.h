@@ -58,6 +58,9 @@ public:
 	void StartTitleFadeIn(float DurationSeconds = 1.5f, float DelaySeconds = 0.0f);
 
 	UFUNCTION(BlueprintCallable, Category="Fade|Title")
+	void StartTitleFadeOut(float DurationSeconds = 1.5f, float DelaySeconds = 0.0f);
+
+	UFUNCTION(BlueprintCallable, Category="Fade|Title")
 	void ClearTitleText();
 
 	UFUNCTION(BlueprintPure, Category="Fade")

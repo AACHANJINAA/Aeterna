@@ -27,6 +27,12 @@ public:
 	UFUNCTION(BlueprintCallable, CallInEditor, Category="Scenario")
 	void StartScenarioLoop();
 
+	UFUNCTION(BlueprintCallable, Category="Scenario|Debug")
+	void DebugStartScenarioFromBeginning();
+
+	UFUNCTION(BlueprintPure, Category="Scenario")
+	FName GetScenarioId() const { return ScenarioId; }
+
 	UFUNCTION(BlueprintCallable, CallInEditor, Category="Scenario")
 	void CompleteScenario();
 
@@ -188,8 +194,11 @@ private:
 	void SetPlayerInputLocked(bool bLocked);
 	void StartScenarioLoopInternal();
 	bool PlayStartDayCard();
+	void ShowStartDayCardAfterLogoIntro();
 	void FinishStartDayCard();
 	FText BuildStartDayCardText() const;
+	bool ShouldPlayTitleLogoIntro() const;
+	UTexture2D* ResolveTitleLogoTexture() const;
 	UTexture2D* ResolveStartDayCardTexture() const;
 
 	void PlayScenarioBgm();
@@ -215,5 +224,6 @@ private:
 
 	bool bPlayedStartDayCardLastStart = false;
 	bool bStartScenarioAfterDayCardPending = false;
+	FTimerHandle StartLogoIntroTimerHandle;
 	FTimerHandle StartDayCardTimerHandle;
 };

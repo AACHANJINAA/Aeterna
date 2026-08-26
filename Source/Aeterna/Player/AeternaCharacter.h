@@ -262,6 +262,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Battery")
 	virtual void AddPlayerBattery(float Amount);
 
+	/** 플레이어 배터리를 최대치로 초기화합니다. */
+	UFUNCTION(BlueprintCallable, Category="Battery")
+	virtual void ResetPlayerBattery();
+
 	/** 스캔 지점 완료를 기록합니다. */
 	UFUNCTION(BlueprintCallable, Category="Scan")
 	virtual bool RegisterScanPoint(FName ScanPointId);
@@ -297,6 +301,18 @@ public:
 	/** 개발 테스트용으로 화면 시계를 30분 진행합니다. */
 	UFUNCTION(BlueprintCallable, Category="Clock|Debug")
 	virtual void AdvanceDebugClock();
+
+	UFUNCTION(BlueprintCallable, Category="Scenario|Debug")
+	virtual void DebugStartScenarioDay1();
+
+	UFUNCTION(BlueprintCallable, Category="Scenario|Debug")
+	virtual void DebugStartScenarioDay2();
+
+	UFUNCTION(BlueprintCallable, Category="Scenario|Debug")
+	virtual void DebugStartScenarioDay3();
+
+	UFUNCTION(BlueprintCallable, Category="Scenario|Debug")
+	virtual void DebugStartScenarioById(FName ScenarioId);
 
 	/** 수첩 상태가 바뀔 때 BP에서 UI 표시를 연결합니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Notebook", meta = (DisplayName = "Notebook State Changed"))

@@ -57,11 +57,20 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt")
 	int32 ViewportZOrder = 10;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt")
+	FVector2D PromptViewportSize = FVector2D(420.0f, 120.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt")
+	FVector2D PromptScreenOffset = FVector2D(200.0f, 0.0f);
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt", meta=(ClampMin="0.0", Units="s"))
 	float PromptHideDelay = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt", meta=(Units="cm"))
-	float PromptWorldVerticalOffset = 35.0f;
+	float PromptWorldVerticalOffset = 15.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt")
+	bool bProjectPromptToWorldLocation = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt", meta=(ClampMin="0.0", Units="s"))
 	float SuccessFeedbackDuration = 0.7f;
@@ -75,6 +84,7 @@ private:
 	void SetPromptText(const FText& InActionText, const FText& InPromptText);
 	void SetPromptTextColor(const FSlateColor& InTextColor);
 	void CacheDefaultPromptTextColor();
+	FVector2D GetPromptContentDesiredSize() const;
 	void UpdatePromptScreenPosition();
 	void HidePromptImmediately();
 

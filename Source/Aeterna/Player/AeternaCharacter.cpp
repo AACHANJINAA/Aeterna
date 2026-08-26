@@ -3,6 +3,7 @@
 #include "Player/AeternaCharacter.h"
 
 #include "Aeterna.h"
+#include "Core/ScenarioLoopStarterActor.h"
 #include "Interaction/AeternaCarryInteractableActor.h"
 #include "Interaction/AeternaInteractableActor.h"
 #include "Interaction/AeternaInteractableInterface.h"
@@ -29,6 +30,7 @@
 #include "Components/AudioComponent.h"
 #include "Components/SpotLightComponent.h"
 #include "EnhancedInputComponent.h"
+#include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "InputActionValue.h"
 #include "InputCoreTypes.h"
@@ -310,6 +312,9 @@ void AAeternaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 
 #if !UE_BUILD_SHIPPING
 	PlayerInputComponent->BindKey(EKeys::P, IE_Pressed, this, &AAeternaCharacter::AdvanceDebugClock);
+	PlayerInputComponent->BindKey(EKeys::One, IE_Pressed, this, &AAeternaCharacter::DebugStartScenarioDay1);
+	PlayerInputComponent->BindKey(EKeys::Two, IE_Pressed, this, &AAeternaCharacter::DebugStartScenarioDay2);
+	PlayerInputComponent->BindKey(EKeys::Three, IE_Pressed, this, &AAeternaCharacter::DebugStartScenarioDay3);
 #endif
 }
 
@@ -565,6 +570,22 @@ void AAeternaCharacter::AddPlayerBattery(float Amount)
 	BP_BatteryChanged(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
 }
 
+void AAeternaCharacter::ResetPlayerBattery()
+{
+	if (!BatteryComponent)
+	{
+		return;
+	}
+
+	BatteryComponent->ResetBatteryToFull();
+	BatteryComponent->UpdateBatteryDebugString(bHeadlampOn);
+	if (BatteryHudComponent)
+	{
+		BatteryHudComponent->UpdateBatteryHud(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
+	}
+	BP_BatteryChanged(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
+}
+
 bool AAeternaCharacter::RegisterScanPoint(FName ScanPointId)
 {
 	if (!ScanProgressComponent || !ScanProgressComponent->RegisterScanPoint(ScanPointId))
@@ -634,6 +655,46 @@ void AAeternaCharacter::AdvanceDebugClock()
 	{
 		ClockComponent->AdvanceDebugClockStep();
 	}
+}
+
+void AAeternaCharacter::DebugStartScenarioDay1()
+{
+	DebugStartScenarioById(TEXT("S01_Handover"));
+}
+
+void AAeternaCharacter::DebugStartScenarioDay2()
+{
+	DebugStartScenarioById(TEXT("S02_GrandHallFossil"));
+}
+
+void AAeternaCharacter::DebugStartScenarioDay3()
+{
+	DebugStartScenarioById(TEXT("S03_ForbiddenLight"));
+}
+
+void AAeternaCharacter::DebugStartScenarioById(FName ScenarioId)
+{
+#if !UE_BUILD_SHIPPING
+	UWorld* World = GetWorld();
+	if (!World || ScenarioId.IsNone())
+	{
+		return;
+	}
+
+	for (TActorIterator<AScenarioLoopStarterActor> StarterIterator(World); StarterIterator; ++StarterIterator)
+	{
+		AScenarioLoopStarterActor* StarterActor = *StarterIterator;
+		if (StarterActor && StarterActor->GetScenarioId() == ScenarioId)
+		{
+			StarterActor->DebugStartScenarioFromBeginning();
+			return;
+		}
+	}
+
+	UE_LOG(LogAeterna, Warning, TEXT("[ScenarioDebug] %s ScenarioLoopStarterActor를 찾지 못했습니다."), *ScenarioId.ToString());
+#else
+	(void)ScenarioId;
+#endif
 }
 
 bool AAeternaCharacter::IsNotebookOpen() const

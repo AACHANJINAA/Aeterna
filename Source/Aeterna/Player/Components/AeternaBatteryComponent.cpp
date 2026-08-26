@@ -48,6 +48,14 @@ void UAeternaBatteryComponent::AddBattery(float Amount)
 	UpdateBatteryDebugString(false);
 }
 
+void UAeternaBatteryComponent::ResetBatteryToFull()
+{
+	CurrentBattery = MaxBattery;
+	LastBatteryChargeAmount = 0.0f;
+	UpdateHeadlampBrightness();
+	UpdateBatteryDebugString(false);
+}
+
 void UAeternaBatteryComponent::UpdateHeadlampBrightness()
 {
 	if (!HeadlampComponent)
