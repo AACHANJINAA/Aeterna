@@ -9,6 +9,11 @@
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/PlayerController.h"
 
+namespace
+{
+	const FVector2D FixedBatteryHudSize(442.0f, 122.0f);
+}
+
 UAeternaBatteryHudComponent::UAeternaBatteryHudComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
@@ -19,6 +24,9 @@ UAeternaBatteryHudComponent::UAeternaBatteryHudComponent()
 void UAeternaBatteryHudComponent::BeginPlay()
 {
 	Super::BeginPlay();
+
+	HudWidgetSize = FixedBatteryHudSize;
+	bHudLayoutLocked = false;
 
 	if (!GetAeternaCharacter())
 	{
@@ -41,6 +49,7 @@ void UAeternaBatteryHudComponent::BeginPlay()
 void UAeternaBatteryHudComponent::InitializePlayerComponent(AAeternaCharacter* InPlayerCharacter)
 {
 	Super::InitializePlayerComponent(InPlayerCharacter);
+	HudWidgetSize = FixedBatteryHudSize;
 	CreateBatteryHudWidget();
 }
 
@@ -89,7 +98,6 @@ void UAeternaBatteryHudComponent::ApplyBatteryHud()
 		const float BatteryPercent = FMath::Clamp(LastBatteryNormalized, 0.0f, 1.0f);
 		NativeBatteryHudWidget->SetBatteryLabel(BatteryLabelText);
 		NativeBatteryHudWidget->SetBattery(LastCurrentBattery, LastMaxBattery, BatteryPercent);
-		UpdateBatteryHudPosition();
 	}
 }
 
@@ -118,6 +126,10 @@ void UAeternaBatteryHudComponent::CreateBatteryHudWidget()
 		BatteryHudWidget->AddToViewport(ViewportZOrder);
 		BatteryHudWidget->SetAlignmentInViewport(FVector2D::ZeroVector);
 		BatteryHudWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
+		if (UAeternaBatteryHudWidget* NativeBatteryHudWidget = Cast<UAeternaBatteryHudWidget>(BatteryHudWidget))
+		{
+			NativeBatteryHudWidget->SetWidgetSize(FixedBatteryHudSize);
+		}
 		BatteryHudWidget->ForceLayoutPrepass();
 		UpdateBatteryHudPosition();
 	}
@@ -125,7 +137,7 @@ void UAeternaBatteryHudComponent::CreateBatteryHudWidget()
 
 void UAeternaBatteryHudComponent::UpdateBatteryHudPosition()
 {
-	if (!BatteryHudWidget)
+	if (!BatteryHudWidget || bHudLayoutLocked)
 	{
 		return;
 	}
@@ -152,8 +164,13 @@ void UAeternaBatteryHudComponent::UpdateBatteryHudPosition()
 
 	const FVector2D ViewportSize(static_cast<float>(ViewportSizeX), static_cast<float>(ViewportSizeY));
 	const float ViewportScale = AeternaHudLayout::GetViewportScale(ViewportSize, ReferenceViewportSize);
-	const FVector2D WidgetPosition = AeternaHudLayout::GetAnchoredPosition(ViewportSize, ViewportAnchorNormalized, ViewportOffset, HudWidgetSize, ViewportScale);
-	AeternaHudLayout::ApplyScaledViewportLayout(BatteryHudWidget, WidgetPosition, HudWidgetSize, ViewportScale);
+	const FVector2D WidgetPosition = AeternaHudLayout::GetAnchoredPosition(ViewportSize, ViewportAnchorNormalized, ViewportOffset, FixedBatteryHudSize, ViewportScale);
+	if (UAeternaBatteryHudWidget* NativeBatteryHudWidget = Cast<UAeternaBatteryHudWidget>(BatteryHudWidget))
+	{
+		NativeBatteryHudWidget->SetWidgetSize(FixedBatteryHudSize);
+	}
+	AeternaHudLayout::ApplyScaledViewportLayout(BatteryHudWidget, WidgetPosition, FixedBatteryHudSize, ViewportScale);
+	bHudLayoutLocked = true;
 }
 
 bool UAeternaBatteryHudComponent::HasBatteryHudValueChanged(float Current, float Max, float Normalized) const

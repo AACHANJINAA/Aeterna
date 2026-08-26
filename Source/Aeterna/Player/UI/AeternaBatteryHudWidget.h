@@ -7,6 +7,7 @@
 #include "AeternaBatteryHudWidget.generated.h"
 
 class SWidget;
+class SBox;
 
 UCLASS()
 class AETERNA_API UAeternaBatteryHudWidget : public UUserWidget
@@ -23,9 +24,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Battery|HUD")
 	void SetBatteryLabel(const FText& InLabelText);
 
+	UFUNCTION(BlueprintCallable, Category="Battery|HUD")
+	void SetWidgetSize(FVector2D InWidgetSize);
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Layout")
-	FVector2D WidgetSize = FVector2D(340.0f, 94.0f);
+	FVector2D WidgetSize = FVector2D(442.0f, 122.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Layout")
 	int32 SegmentCount = 10;
@@ -64,6 +68,7 @@ private:
 	FLinearColor GetFillColor(float Normalized) const;
 
 	TArray<TSharedPtr<class SBorder>> SegmentWidgets;
+	TSharedPtr<SBox> RootSizeBox;
 	TSharedPtr<class STextBlock> LabelTextWidget;
 	TSharedPtr<class STextBlock> PercentTextWidget;
 };

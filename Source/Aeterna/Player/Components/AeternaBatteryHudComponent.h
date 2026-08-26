@@ -34,7 +34,7 @@ protected:
 	FVector2D ViewportOffset = FVector2D(42.0f, 46.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Position")
-	FVector2D HudWidgetSize = FVector2D(340.0f, 94.0f);
+	FVector2D HudWidgetSize = FVector2D(442.0f, 122.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Position")
 	FVector2D ReferenceViewportSize = FVector2D(1920.0f, 1080.0f);
@@ -51,6 +51,7 @@ private:
 	float LastCurrentBattery = 1.0f;
 	float LastMaxBattery = 1.0f;
 	float LastBatteryNormalized = 1.0f;
+	bool bHudLayoutLocked = false;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UUserWidget> BatteryHudWidget;
