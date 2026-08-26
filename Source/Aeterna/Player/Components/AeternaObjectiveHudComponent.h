@@ -63,10 +63,10 @@ protected:
 	FVector2D ViewportAnchorNormalized = FVector2D(1.0f, 0.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Objective|HUD|Position")
-	FVector2D ViewportOffset = FVector2D(112.0f, 64.0f);
+	FVector2D ViewportOffset = FVector2D(92.0f, 44.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Objective|HUD|Position")
-	FVector2D HudWidgetSize = FVector2D(300.0f, 98.0f);
+	FVector2D HudWidgetSize = FVector2D(360.0f, 126.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Objective|HUD")
 	int32 ViewportZOrder = 7;

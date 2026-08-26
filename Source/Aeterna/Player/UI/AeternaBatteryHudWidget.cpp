@@ -6,6 +6,7 @@
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/SBoxPanel.h"
+#include "Widgets/SOverlay.h"
 #include "Widgets/Text/STextBlock.h"
 
 TSharedRef<SWidget> UAeternaBatteryHudWidget::RebuildWidget()
@@ -34,44 +35,132 @@ TSharedRef<SWidget> UAeternaBatteryHudWidget::RebuildWidget()
 		.WidthOverride(WidgetSize.X)
 		.HeightOverride(WidgetSize.Y)
 		[
-			SNew(SVerticalBox)
+			SNew(SOverlay)
 
-			+ SVerticalBox::Slot()
-			.AutoHeight()
-			.Padding(FMargin(2.0f, 0.0f, 24.0f, 6.0f))
+			+ SOverlay::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			.Padding(FMargin(10.0f, 8.0f))
+			[
+				SNew(SBorder)
+				.BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush"))
+				.BorderBackgroundColor(FSlateColor(PanelColor))
+			]
+
+			+ SOverlay::Slot()
+			.HAlign(HAlign_Left)
+			.VAlign(VAlign_Top)
 			[
 				SNew(SHorizontalBox)
 
 				+ SHorizontalBox::Slot()
-				.FillWidth(1.0f)
+				.AutoWidth()
 				[
-					SAssignNew(LabelTextWidget, STextBlock)
-					.Text(LabelText)
-					.ColorAndOpacity(FSlateColor(TextColor))
+					SNew(SBox)
+					.WidthOverride(72.0f)
+					.HeightOverride(2.0f)
+					[
+						SNew(SBorder)
+						.BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush"))
+						.BorderBackgroundColor(FSlateColor(BorderColor))
+					]
 				]
 
 				+ SHorizontalBox::Slot()
 				.AutoWidth()
+				.Padding(FMargin(8.0f, 0.0f, 0.0f, 0.0f))
 				[
-					SAssignNew(PercentTextWidget, STextBlock)
-					.ColorAndOpacity(FSlateColor(TextColor))
+					SNew(SBox)
+					.WidthOverride(18.0f)
+					.HeightOverride(2.0f)
+					[
+						SNew(SBorder)
+						.BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush"))
+						.BorderBackgroundColor(FSlateColor(AccentColor))
+					]
 				]
 			]
 
-			+ SVerticalBox::Slot()
-			.FillHeight(1.0f)
+			+ SOverlay::Slot()
+			.HAlign(HAlign_Right)
+			.VAlign(VAlign_Bottom)
 			[
-				SNew(SBorder)
-				.BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush"))
-				.BorderBackgroundColor(FSlateColor(BorderColor))
-				.Padding(FMargin(3.0f))
+				SNew(SHorizontalBox)
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				[
+					SNew(SBox)
+					.WidthOverride(18.0f)
+					.HeightOverride(2.0f)
+					[
+						SNew(SBorder)
+						.BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush"))
+						.BorderBackgroundColor(FSlateColor(AccentColor))
+					]
+				]
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(FMargin(8.0f, 0.0f, 0.0f, 0.0f))
+				[
+					SNew(SBox)
+					.WidthOverride(72.0f)
+					.HeightOverride(2.0f)
+					[
+						SNew(SBorder)
+						.BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush"))
+						.BorderBackgroundColor(FSlateColor(BorderColor))
+					]
+				]
+			]
+
+			+ SOverlay::Slot()
+			.HAlign(HAlign_Fill)
+			.VAlign(VAlign_Fill)
+			.Padding(FMargin(22.0f, 14.0f, 22.0f, 14.0f))
+			[
+				SNew(SVerticalBox)
+
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.Padding(FMargin(0.0f, 0.0f, 0.0f, 6.0f))
+				[
+					SNew(SHorizontalBox)
+
+					+ SHorizontalBox::Slot()
+					.FillWidth(1.0f)
+					[
+						SAssignNew(LabelTextWidget, STextBlock)
+						.Text(LabelText)
+						.Font(FCoreStyle::GetDefaultFontStyle(TEXT("Mono"), 12))
+						.ColorAndOpacity(FSlateColor(TextColor))
+					]
+
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
+					[
+						SAssignNew(PercentTextWidget, STextBlock)
+						.Font(FCoreStyle::GetDefaultFontStyle(TEXT("Mono"), 12))
+						.ColorAndOpacity(FSlateColor(TextColor))
+					]
+				]
+
+				+ SVerticalBox::Slot()
+				.FillHeight(1.0f)
 				[
 					SNew(SBorder)
 					.BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush"))
-					.BorderBackgroundColor(FSlateColor(BackgroundColor))
-					.Padding(FMargin(5.0f))
+					.BorderBackgroundColor(FSlateColor(BorderColor))
+					.Padding(FMargin(2.0f))
 					[
-						SegmentBox
+						SNew(SBorder)
+						.BorderImage(FCoreStyle::Get().GetBrush("WhiteBrush"))
+						.BorderBackgroundColor(FSlateColor(BackgroundColor))
+						.Padding(FMargin(4.0f))
+						[
+							SegmentBox
+						]
 					]
 				]
 			]

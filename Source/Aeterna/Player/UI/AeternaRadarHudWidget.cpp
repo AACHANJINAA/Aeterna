@@ -3,6 +3,7 @@
 #include "Player/UI/AeternaRadarHudWidget.h"
 
 #include "Rendering/DrawElements.h"
+#include "Styling/CoreStyle.h"
 #include "Widgets/Layout/SBox.h"
 
 TSharedRef<SWidget> UAeternaRadarHudWidget::RebuildWidget()
@@ -22,6 +23,24 @@ int32 UAeternaRadarHudWidget::NativePaint(const FPaintArgs& Args, const FGeometr
 	const float PaintRadius = FMath::Max(8.0f, FMath::Min(RadarRadius, FMath::Min(MaxHorizontalRadius, MaxVerticalRadius)));
 
 	const FPaintGeometry PaintGeometry = AllottedGeometry.ToPaintGeometry();
+
+	FSlateDrawElement::MakeBox(
+		OutDrawElements,
+		BaseLayer,
+		PaintGeometry,
+		FCoreStyle::Get().GetBrush("WhiteBrush"),
+		ESlateDrawEffect::None,
+		PanelColor);
+
+	TArray<FVector2D> TopAccent;
+	TopAccent.Add(FVector2D(12.0f, 8.0f));
+	TopAccent.Add(FVector2D(72.0f, 8.0f));
+	FSlateDrawElement::MakeLines(OutDrawElements, BaseLayer + 1, PaintGeometry, TopAccent, ESlateDrawEffect::None, OuterRingColor, true, 2.0f);
+
+	TArray<FVector2D> BottomAccent;
+	BottomAccent.Add(LocalSize - FVector2D(72.0f, 8.0f));
+	BottomAccent.Add(LocalSize - FVector2D(12.0f, 8.0f));
+	FSlateDrawElement::MakeLines(OutDrawElements, BaseLayer + 1, PaintGeometry, BottomAccent, ESlateDrawEffect::None, OuterRingColor, true, 2.0f);
 
 	DrawCircle(OutDrawElements, BaseLayer + 1, AllottedGeometry, Center, PaintRadius, OuterRingColor, OuterRingThickness);
 	for (int32 RingIndex = 1; RingIndex <= 6; ++RingIndex)

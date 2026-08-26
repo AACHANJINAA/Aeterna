@@ -43,19 +43,25 @@ protected:
 	int32 CircleSegments = 80;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Radar|Style")
-	FLinearColor RingColor = FLinearColor(0.0f, 1.0f, 0.18f, 0.62f);
+	FLinearColor PanelColor = FLinearColor(0.015f, 0.06f, 0.055f, 0.26f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Radar|Style")
-	FLinearColor OuterRingColor = FLinearColor(0.1f, 1.0f, 0.2f, 0.95f);
+	FLinearColor RingColor = FLinearColor(0.15f, 1.0f, 0.78f, 0.50f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Radar|Style")
-	FLinearColor SweepColor = FLinearColor(0.0f, 1.0f, 0.16f, 0.34f);
+	FLinearColor OuterRingColor = FLinearColor(0.15f, 1.0f, 0.78f, 0.82f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Radar|Style")
+	FLinearColor AccentColor = FLinearColor(0.82f, 1.0f, 0.94f, 0.92f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Radar|Style")
+	FLinearColor SweepColor = FLinearColor(0.42f, 1.0f, 0.82f, 0.32f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Radar|Style")
 	FLinearColor PlayerColor = FLinearColor(0.92f, 0.98f, 1.0f, 1.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Radar|Style")
-	FLinearColor QuestColor = FLinearColor(0.08f, 1.0f, 0.18f, 1.0f);
+	FLinearColor QuestColor = FLinearColor(0.42f, 1.0f, 0.82f, 1.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Radar|Style", meta=(ClampMin="0.0"))
 	float RingThickness = 1.0f;

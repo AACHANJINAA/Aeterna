@@ -50,7 +50,7 @@ protected:
 	FVector2D ViewportAnchorNormalized = FVector2D(1.0f, 1.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Radar|Position")
-	FVector2D ViewportOffset = FVector2D(46.0f, 46.0f);
+	FVector2D ViewportOffset = FVector2D(72.0f, 86.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Radar|Position")
 	FVector2D RadarWidgetSize = FVector2D(184.0f, 184.0f);
