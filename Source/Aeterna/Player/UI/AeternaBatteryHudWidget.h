@@ -25,7 +25,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Layout")
-	FVector2D WidgetSize = FVector2D(282.0f, 78.0f);
+	FVector2D WidgetSize = FVector2D(340.0f, 94.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Layout")
 	int32 SegmentCount = 10;

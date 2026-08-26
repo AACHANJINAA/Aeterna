@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Player/AeternaCharacter.h"
 #include "Player/Components/AeternaScanProgressComponent.h"
+#include "Player/UI/AeternaHudLayoutUtils.h"
 #include "Player/UI/AeternaObjectiveHudWidget.h"
 
 UAeternaObjectiveHudComponent::UAeternaObjectiveHudComponent()
@@ -286,17 +287,15 @@ void UAeternaObjectiveHudComponent::UpdateObjectiveHudPosition()
 	int32 ViewportSizeX = 0;
 	int32 ViewportSizeY = 0;
 	PlayerController->GetViewportSize(ViewportSizeX, ViewportSizeY);
+	if (ViewportSizeX <= 0 || ViewportSizeY <= 0)
+	{
+		return;
+	}
 
-	const FVector2D WidgetPosition(
-		ViewportAnchorNormalized.X >= 0.5f
-			? static_cast<float>(ViewportSizeX) - HudWidgetSize.X - ViewportOffset.X
-			: ViewportOffset.X,
-		ViewportAnchorNormalized.Y >= 0.5f
-			? static_cast<float>(ViewportSizeY) - HudWidgetSize.Y - ViewportOffset.Y
-			: ViewportOffset.Y);
-
-	ObjectiveHudWidget->SetAlignmentInViewport(FVector2D::ZeroVector);
-	ObjectiveHudWidget->SetPositionInViewport(WidgetPosition, true);
+	const FVector2D ViewportSize(static_cast<float>(ViewportSizeX), static_cast<float>(ViewportSizeY));
+	const float ViewportScale = AeternaHudLayout::GetViewportScale(ViewportSize, ReferenceViewportSize);
+	const FVector2D WidgetPosition = AeternaHudLayout::GetAnchoredPosition(ViewportSize, ViewportAnchorNormalized, ViewportOffset, HudWidgetSize, ViewportScale);
+	AeternaHudLayout::ApplyScaledViewportLayout(ObjectiveHudWidget, WidgetPosition, HudWidgetSize, ViewportScale);
 }
 
 void UAeternaObjectiveHudComponent::UpdateObjectiveHudVisibility()

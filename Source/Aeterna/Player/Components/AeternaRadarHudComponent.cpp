@@ -9,6 +9,7 @@
 #include "Interaction/AeternaInteractableActor.h"
 #include "Player/AeternaCharacter.h"
 #include "Player/Components/AeternaScanProgressComponent.h"
+#include "Player/UI/AeternaHudLayoutUtils.h"
 #include "Player/UI/AeternaRadarHudWidget.h"
 
 UAeternaRadarHudComponent::UAeternaRadarHudComponent()
@@ -134,17 +135,10 @@ void UAeternaRadarHudComponent::UpdateRadarWidgetPosition()
 		return;
 	}
 
-	const FVector2D WidgetPosition(
-		ViewportAnchorNormalized.X >= 0.5f
-			? static_cast<float>(ViewportSizeX) - RadarWidgetSize.X - ViewportOffset.X
-			: ViewportOffset.X,
-		ViewportAnchorNormalized.Y >= 0.5f
-			? static_cast<float>(ViewportSizeY) - RadarWidgetSize.Y - ViewportOffset.Y
-			: ViewportOffset.Y);
-
-	RadarHudWidget->SetDesiredSizeInViewport(RadarWidgetSize);
-	RadarHudWidget->SetAlignmentInViewport(FVector2D::ZeroVector);
-	RadarHudWidget->SetPositionInViewport(WidgetPosition, true);
+	const FVector2D ViewportSize(static_cast<float>(ViewportSizeX), static_cast<float>(ViewportSizeY));
+	const float ViewportScale = AeternaHudLayout::GetViewportScale(ViewportSize, ReferenceViewportSize);
+	const FVector2D WidgetPosition = AeternaHudLayout::GetAnchoredPosition(ViewportSize, ViewportAnchorNormalized, ViewportOffset, RadarWidgetSize, ViewportScale);
+	AeternaHudLayout::ApplyScaledViewportLayout(RadarHudWidget, WidgetPosition, RadarWidgetSize, ViewportScale);
 }
 
 void UAeternaRadarHudComponent::UpdateRadarState()

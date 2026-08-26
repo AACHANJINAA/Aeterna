@@ -68,6 +68,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Objective|HUD|Position")
 	FVector2D HudWidgetSize = FVector2D(360.0f, 126.0f);
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Objective|HUD|Position")
+	FVector2D ReferenceViewportSize = FVector2D(1920.0f, 1080.0f);
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Objective|HUD")
 	int32 ViewportZOrder = 7;
 

@@ -55,6 +55,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Radar|Position")
 	FVector2D RadarWidgetSize = FVector2D(184.0f, 184.0f);
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Radar|Position")
+	FVector2D ReferenceViewportSize = FVector2D(1920.0f, 1080.0f);
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Radar")
 	int32 ViewportZOrder = 6;
 

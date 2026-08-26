@@ -34,7 +34,10 @@ protected:
 	FVector2D ViewportOffset = FVector2D(42.0f, 46.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Position")
-	FVector2D HudWidgetSize = FVector2D(282.0f, 78.0f);
+	FVector2D HudWidgetSize = FVector2D(340.0f, 94.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD|Position")
+	FVector2D ReferenceViewportSize = FVector2D(1920.0f, 1080.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery|HUD")
 	int32 ViewportZOrder = 5;

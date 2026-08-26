@@ -4,6 +4,7 @@
 
 #include "Player/AeternaCharacter.h"
 #include "Player/UI/AeternaBatteryHudWidget.h"
+#include "Player/UI/AeternaHudLayoutUtils.h"
 
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/PlayerController.h"
@@ -144,17 +145,15 @@ void UAeternaBatteryHudComponent::UpdateBatteryHudPosition()
 	int32 ViewportSizeX = 0;
 	int32 ViewportSizeY = 0;
 	PlayerController->GetViewportSize(ViewportSizeX, ViewportSizeY);
+	if (ViewportSizeX <= 0 || ViewportSizeY <= 0)
+	{
+		return;
+	}
 
-	const FVector2D WidgetPosition(
-		ViewportAnchorNormalized.X >= 0.5f
-			? static_cast<float>(ViewportSizeX) - HudWidgetSize.X - ViewportOffset.X
-			: ViewportOffset.X,
-		ViewportAnchorNormalized.Y >= 0.5f
-			? static_cast<float>(ViewportSizeY) - HudWidgetSize.Y - ViewportOffset.Y
-			: ViewportOffset.Y);
-
-	BatteryHudWidget->SetAlignmentInViewport(FVector2D::ZeroVector);
-	BatteryHudWidget->SetPositionInViewport(WidgetPosition, true);
+	const FVector2D ViewportSize(static_cast<float>(ViewportSizeX), static_cast<float>(ViewportSizeY));
+	const float ViewportScale = AeternaHudLayout::GetViewportScale(ViewportSize, ReferenceViewportSize);
+	const FVector2D WidgetPosition = AeternaHudLayout::GetAnchoredPosition(ViewportSize, ViewportAnchorNormalized, ViewportOffset, HudWidgetSize, ViewportScale);
+	AeternaHudLayout::ApplyScaledViewportLayout(BatteryHudWidget, WidgetPosition, HudWidgetSize, ViewportScale);
 }
 
 bool UAeternaBatteryHudComponent::HasBatteryHudValueChanged(float Current, float Max, float Normalized) const

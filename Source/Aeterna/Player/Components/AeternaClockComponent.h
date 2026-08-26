@@ -43,6 +43,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Clock|HUD|Position")
 	FVector2D TopCenterOffset = FVector2D(0.0f, 32.0f);
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Clock|HUD|Position")
+	FVector2D HudWidgetSize = FVector2D(282.0f, 92.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Clock|HUD|Position")
+	FVector2D ReferenceViewportSize = FVector2D(1920.0f, 1080.0f);
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Clock|HUD")
 	int32 ViewportZOrder = 6;
 

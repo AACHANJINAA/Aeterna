@@ -5,6 +5,7 @@
 #include "Aeterna.h"
 #include "Core/GameClockSubsystem.h"
 #include "Player/AeternaCharacter.h"
+#include "Player/UI/AeternaHudLayoutUtils.h"
 #include "Player/UI/AeternaClockHudWidget.h"
 
 #include "Blueprint/UserWidget.h"
@@ -122,7 +123,7 @@ void UAeternaClockComponent::CreateClockHudWidget()
 	if (ClockHudWidget)
 	{
 		ClockHudWidget->AddToViewport(ViewportZOrder);
-		ClockHudWidget->SetAlignmentInViewport(FVector2D(0.5f, 0.0f));
+		ClockHudWidget->SetAlignmentInViewport(FVector2D::ZeroVector);
 		ClockHudWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
 		ClockHudWidget->ForceLayoutPrepass();
 		UpdateClockHudPosition();
@@ -167,10 +168,10 @@ bool UAeternaClockComponent::UpdateClockHudPosition()
 		return false;
 	}
 
-	ClockHudWidget->SetAlignmentInViewport(FVector2D(0.5f, 0.0f));
-	ClockHudWidget->SetPositionInViewport(
-		FVector2D((static_cast<float>(ViewportSizeX) * 0.5f) + TopCenterOffset.X, TopCenterOffset.Y),
-		true);
+	const FVector2D ViewportSize(static_cast<float>(ViewportSizeX), static_cast<float>(ViewportSizeY));
+	const float ViewportScale = AeternaHudLayout::GetViewportScale(ViewportSize, ReferenceViewportSize);
+	const FVector2D WidgetPosition = AeternaHudLayout::GetTopCenterPosition(ViewportSize, TopCenterOffset, HudWidgetSize, ViewportScale);
+	AeternaHudLayout::ApplyScaledViewportLayout(ClockHudWidget, WidgetPosition, HudWidgetSize, ViewportScale);
 	return true;
 }
 
