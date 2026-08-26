@@ -256,8 +256,8 @@ void UAeternaObjectiveHudComponent::ApplyObjectiveHud()
 		FAeternaObjectiveHudEntry Entry;
 		Entry.ItemText = CurrentItemTexts[Index];
 		Entry.bCompleted = CurrentItemCompleted.IsValidIndex(Index) && CurrentItemCompleted[Index];
-		Entry.CurrentCount = Entry.bCompleted ? 1 : 0;
-		Entry.RequiredCount = 1;
+		Entry.CurrentCount = CurrentItemCurrentCounts.IsValidIndex(Index) ? CurrentItemCurrentCounts[Index] : (Entry.bCompleted ? 1 : 0);
+		Entry.RequiredCount = CurrentItemRequiredCounts.IsValidIndex(Index) ? CurrentItemRequiredCounts[Index] : 1;
 		Entries.Add(Entry);
 	}
 
@@ -330,6 +330,8 @@ void UAeternaObjectiveHudComponent::BuildCurrentObjectiveItems()
 {
 	CurrentItemTexts.Reset();
 	CurrentItemCompleted.Reset();
+	CurrentItemCurrentCounts.Reset();
+	CurrentItemRequiredCounts.Reset();
 
 	const FAeternaScenarioObjectiveHudDefinition* ObjectiveDefinition = FindObjectiveDefinition(CurrentScenarioId);
 	if (!ObjectiveDefinition)
@@ -338,6 +340,18 @@ void UAeternaObjectiveHudComponent::BuildCurrentObjectiveItems()
 	}
 
 	const UAeternaScanProgressComponent* ScanProgressComponent = BoundScanProgressComponent.Get();
+	if (CurrentScenarioId == TEXT("S02_GrandHallFossil"))
+	{
+		const int32 ObjectiveRequiredCount = RequiredCount > 0 ? RequiredCount : FMath::Max(ObjectiveDefinition->Items.Num(), 1);
+		const int32 ObjectiveCurrentCount = FMath::Clamp(ScanProgressComponent ? ScanProgressComponent->GetCompletedScanCount() : CurrentCount, 0, ObjectiveRequiredCount);
+
+		CurrentItemTexts.Add(FText::FromString(TEXT("뼈 원상복구")));
+		CurrentItemCompleted.Add(ObjectiveCurrentCount >= ObjectiveRequiredCount);
+		CurrentItemCurrentCounts.Add(ObjectiveCurrentCount);
+		CurrentItemRequiredCounts.Add(ObjectiveRequiredCount);
+		return;
+	}
+
 	for (int32 Index = 0; Index < ObjectiveDefinition->Items.Num(); ++Index)
 	{
 		const FAeternaScenarioObjectiveHudItem& Item = ObjectiveDefinition->Items[Index];
@@ -352,5 +366,7 @@ void UAeternaObjectiveHudComponent::BuildCurrentObjectiveItems()
 			? ScanProgressComponent->HasScannedPoint(Item.ProgressId)
 			: Index < CurrentCount;
 		CurrentItemCompleted.Add(bCompleted);
+		CurrentItemCurrentCounts.Add(bCompleted ? 1 : 0);
+		CurrentItemRequiredCounts.Add(1);
 	}
 }

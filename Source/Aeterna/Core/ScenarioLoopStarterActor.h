@@ -27,6 +27,12 @@ public:
 	UFUNCTION(BlueprintCallable, CallInEditor, Category="Scenario")
 	void StartScenarioLoop();
 
+	UFUNCTION(BlueprintCallable, Category="Scenario|Debug")
+	void DebugStartScenarioFromBeginning();
+
+	UFUNCTION(BlueprintPure, Category="Scenario")
+	FName GetScenarioId() const { return ScenarioId; }
+
 	UFUNCTION(BlueprintCallable, CallInEditor, Category="Scenario")
 	void CompleteScenario();
 

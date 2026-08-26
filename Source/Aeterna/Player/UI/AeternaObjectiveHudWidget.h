@@ -78,7 +78,7 @@ protected:
 	FLinearColor CompleteTextColor = FLinearColor(0.42f, 1.0f, 0.82f, 1.0f);
 
 private:
-	FText BuildObjectiveLine(const FText& ItemText, bool bCompleted) const;
+	FText BuildObjectiveLine(const FText& ItemText, int32 CurrentCount, int32 RequiredCount) const;
 
 	TArray<TSharedPtr<class STextBlock>> ObjectiveTextWidgets;
 };

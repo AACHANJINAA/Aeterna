@@ -298,6 +298,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Clock|Debug")
 	virtual void AdvanceDebugClock();
 
+	UFUNCTION(BlueprintCallable, Category="Scenario|Debug")
+	virtual void DebugStartScenarioDay1();
+
+	UFUNCTION(BlueprintCallable, Category="Scenario|Debug")
+	virtual void DebugStartScenarioDay2();
+
+	UFUNCTION(BlueprintCallable, Category="Scenario|Debug")
+	virtual void DebugStartScenarioDay3();
+
+	UFUNCTION(BlueprintCallable, Category="Scenario|Debug")
+	virtual void DebugStartScenarioById(FName ScenarioId);
+
 	/** 수첩 상태가 바뀔 때 BP에서 UI 표시를 연결합니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Notebook", meta = (DisplayName = "Notebook State Changed"))
 	void BP_NotebookStateChanged(bool bOpen);

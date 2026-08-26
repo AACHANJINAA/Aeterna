@@ -2,6 +2,8 @@
 
 #include "Player/UI/AeternaObjectiveHudWidget.h"
 
+#include "Blueprint/WidgetTree.h"
+#include "Components/TextBlock.h"
 #include "Styling/CoreStyle.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
@@ -12,6 +14,26 @@
 void UAeternaObjectiveHudUserWidget::SetObjectiveEntries(const TArray<FAeternaObjectiveHudEntry>& InEntries)
 {
 	HandleObjectiveEntriesChanged(InEntries);
+
+	if (!WidgetTree)
+	{
+		return;
+	}
+
+	for (int32 Index = InEntries.Num(); Index < 8; ++Index)
+	{
+		const FName NumberedTextBlockName(*FString::Printf(TEXT("ObjectiveText%d"), Index));
+		if (UTextBlock* StaleTextBlock = WidgetTree->FindWidget<UTextBlock>(NumberedTextBlockName))
+		{
+			StaleTextBlock->SetText(FText::GetEmpty());
+		}
+
+		const FName CopiedTextBlockName(*FString::Printf(TEXT("ObjectiveText0_%d"), Index));
+		if (UTextBlock* StaleTextBlock = WidgetTree->FindWidget<UTextBlock>(CopiedTextBlockName))
+		{
+			StaleTextBlock->SetText(FText::GetEmpty());
+		}
+	}
 }
 
 void UAeternaObjectiveHudUserWidget::HandleObjectiveEntriesChanged_Implementation(const TArray<FAeternaObjectiveHudEntry>& InEntries)
@@ -165,31 +187,41 @@ void UAeternaObjectiveHudWidget::SetObjectiveItems(const TArray<FText>& InItemTe
 		}
 
 		const bool bCompleted = InItemCompleted.IsValidIndex(Index) && InItemCompleted[Index];
-		ObjectiveTextWidget->SetText(BuildObjectiveLine(InItemTexts[Index], bCompleted));
+		ObjectiveTextWidget->SetText(BuildObjectiveLine(InItemTexts[Index], bCompleted ? 1 : 0, 1));
 		ObjectiveTextWidget->SetColorAndOpacity(FSlateColor(bCompleted ? CompleteTextColor : IncompleteTextColor));
 	}
 }
 
 void UAeternaObjectiveHudWidget::HandleObjectiveEntriesChanged_Implementation(const TArray<FAeternaObjectiveHudEntry>& InEntries)
 {
-	TArray<FText> ItemTexts;
-	TArray<bool> ItemCompleted;
-	ItemTexts.Reserve(InEntries.Num());
-	ItemCompleted.Reserve(InEntries.Num());
-
-	for (const FAeternaObjectiveHudEntry& Entry : InEntries)
+	for (int32 Index = 0; Index < ObjectiveTextWidgets.Num(); ++Index)
 	{
-		ItemTexts.Add(Entry.ItemText);
-		ItemCompleted.Add(Entry.bCompleted);
-	}
+		TSharedPtr<STextBlock> ObjectiveTextWidget = ObjectiveTextWidgets[Index];
+		if (!ObjectiveTextWidget)
+		{
+			continue;
+		}
 
-	SetObjectiveItems(ItemTexts, ItemCompleted);
+		if (!InEntries.IsValidIndex(Index))
+		{
+			ObjectiveTextWidget->SetText(FText::GetEmpty());
+			continue;
+		}
+
+		const FAeternaObjectiveHudEntry& Entry = InEntries[Index];
+		const int32 SafeRequiredCount = FMath::Max(Entry.RequiredCount, 1);
+		const int32 SafeCurrentCount = FMath::Clamp(Entry.CurrentCount, 0, SafeRequiredCount);
+		const bool bCompleted = Entry.bCompleted || SafeCurrentCount >= SafeRequiredCount;
+		ObjectiveTextWidget->SetText(BuildObjectiveLine(Entry.ItemText, SafeCurrentCount, SafeRequiredCount));
+		ObjectiveTextWidget->SetColorAndOpacity(FSlateColor(bCompleted ? CompleteTextColor : IncompleteTextColor));
+	}
 }
 
-FText UAeternaObjectiveHudWidget::BuildObjectiveLine(const FText& ItemText, bool bCompleted) const
+FText UAeternaObjectiveHudWidget::BuildObjectiveLine(const FText& ItemText, int32 CurrentCount, int32 RequiredCount) const
 {
 	return FText::Format(
-		NSLOCTEXT("Aeterna", "NativeObjectiveHudItemLine", "{0}  {1} / 1"),
+		NSLOCTEXT("Aeterna", "NativeObjectiveHudItemLine", "{0}  {1} / {2}"),
 		ItemText,
-		FText::AsNumber(bCompleted ? 1 : 0));
+		FText::AsNumber(CurrentCount),
+		FText::AsNumber(RequiredCount));
 }

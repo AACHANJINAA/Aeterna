@@ -101,6 +101,8 @@ private:
 	FName CurrentScenarioId;
 	TArray<FText> CurrentItemTexts;
 	TArray<bool> CurrentItemCompleted;
+	TArray<int32> CurrentItemCurrentCounts;
+	TArray<int32> CurrentItemRequiredCounts;
 	int32 CurrentCount = 0;
 	int32 RequiredCount = 0;
 	EScenarioRunState CurrentRunState = EScenarioRunState::None;

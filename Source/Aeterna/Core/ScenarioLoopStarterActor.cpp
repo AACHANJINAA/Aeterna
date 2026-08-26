@@ -58,6 +58,26 @@ void AScenarioLoopStarterActor::StartScenarioLoop()
 	StartScenarioLoopInternal();
 }
 
+void AScenarioLoopStarterActor::DebugStartScenarioFromBeginning()
+{
+#if !UE_BUILD_SHIPPING
+	GetWorldTimerManager().ClearTimer(StartDayCardTimerHandle);
+	bTransitionPending = false;
+	bRestartPending = false;
+	bStartScenarioAfterDayCardPending = false;
+	SetPlayerInputLocked(false);
+
+	MovePlayerTo(RestartPlayerStart);
+
+	if (UScenarioVariantSubsystem* ScenarioVariantSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScenarioVariantSubsystem>() : nullptr)
+	{
+		ScenarioVariantSubsystem->RestoreAuthoredTransforms();
+	}
+
+	StartScenarioLoop();
+#endif
+}
+
 void AScenarioLoopStarterActor::StartScenarioLoopInternal()
 {
 	if (UScenarioManagerSubsystem* ScenarioManager = GetWorld() ? GetWorld()->GetSubsystem<UScenarioManagerSubsystem>() : nullptr)
