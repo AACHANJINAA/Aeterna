@@ -10,6 +10,7 @@
 #include "ScenarioLoopStarterActor.generated.h"
 
 class UAeternaScanProgressComponent;
+class USoundBase;
 class UTexture2D;
 
 UCLASS()
@@ -91,6 +92,21 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Start Card")
 	FLinearColor StartDayCardFadeColor = FLinearColor::Black;
 
+	/** 밤이 시작될 때 배경음을 켭니다. 같은 곡이면 재시작해도 끊기지 않습니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|BGM")
+	bool bPlayBgmOnStart = true;
+
+	/** 비워두면 ScenarioId에 따라 /Game/Resource/Audio/BGM3·BGM2·BGM1을 자동으로 찾습니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|BGM")
+	TObjectPtr<USoundBase> ScenarioBgm;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|BGM", meta=(ClampMin="0.0"))
+	float BgmFadeInSeconds = 2.0f;
+
+	/** 이전 밤의 곡을 걷어내는 시간. 곡이 바뀔 때만 씁니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|BGM", meta=(ClampMin="0.0"))
+	float BgmCrossFadeOutSeconds = 2.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Scan")
 	bool bCompleteScenarioOnRequiredScans = false;
 
@@ -168,6 +184,9 @@ private:
 	void FinishStartDayCard();
 	FText BuildStartDayCardText() const;
 	UTexture2D* ResolveStartDayCardTexture() const;
+
+	void PlayScenarioBgm();
+	USoundBase* ResolveScenarioBgm() const;
 
 	void ConfigurePlayerScanProgress();
 	void BindScanCompletion();

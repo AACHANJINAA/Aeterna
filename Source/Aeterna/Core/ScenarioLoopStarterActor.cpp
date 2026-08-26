@@ -2,6 +2,7 @@
 
 #include "Core/ScenarioLoopStarterActor.h"
 
+#include "Core/BgmSubsystem.h"
 #include "Core/ScenarioManagerSubsystem.h"
 #include "Core/ScenarioVariantSubsystem.h"
 #include "Core/ScreenFadeSubsystem.h"
@@ -14,6 +15,7 @@
 #include "Player/Components/AeternaObjectiveHudComponent.h"
 #include "Player/Components/AeternaCarryComponent.h"
 #include "Player/Components/AeternaScanProgressComponent.h"
+#include "Sound/SoundBase.h"
 
 AScenarioLoopStarterActor::AScenarioLoopStarterActor()
 {
@@ -43,6 +45,9 @@ void AScenarioLoopStarterActor::EndPlay(const EEndPlayReason::Type EndPlayReason
 
 void AScenarioLoopStarterActor::StartScenarioLoop()
 {
+	// Day 카드보다 먼저 켭니다. 카드가 뜨는 동안 이미 음악이 흐르고 있어야 합니다.
+	PlayScenarioBgm();
+
 	if (PlayStartDayCard())
 	{
 		bStartScenarioAfterDayCardPending = true;
@@ -391,6 +396,61 @@ UTexture2D* AScenarioLoopStarterActor::ResolveStartDayCardTexture() const
 		if (UTexture2D* Texture = LoadObject<UTexture2D>(nullptr, TexturePath))
 		{
 			return Texture;
+		}
+	}
+
+	return nullptr;
+}
+
+void AScenarioLoopStarterActor::PlayScenarioBgm()
+{
+	if (!bPlayBgmOnStart)
+	{
+		return;
+	}
+
+	UBgmSubsystem* BgmSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UBgmSubsystem>() : nullptr;
+	if (!BgmSubsystem)
+	{
+		return;
+	}
+
+	// 같은 곡이면 UBgmSubsystem이 알아서 무시하므로, 재시작에서도 그냥 다시 부릅니다.
+	if (USoundBase* Bgm = ResolveScenarioBgm())
+	{
+		BgmSubsystem->PlayBgm(Bgm, BgmFadeInSeconds, BgmCrossFadeOutSeconds);
+	}
+}
+
+USoundBase* AScenarioLoopStarterActor::ResolveScenarioBgm() const
+{
+	if (ScenarioBgm)
+	{
+		return ScenarioBgm;
+	}
+
+	TArray<const TCHAR*> BgmPaths;
+	if (ScenarioId == TEXT("S01_Handover") || ScenarioId == TEXT("S01"))
+	{
+		BgmPaths.Add(TEXT("/Game/Resource/Audio/BGM3.BGM3"));
+		BgmPaths.Add(TEXT("/Game/Resource/Audio/BGM3"));
+	}
+	else if (ScenarioId == TEXT("S02_GrandHallFossil"))
+	{
+		BgmPaths.Add(TEXT("/Game/Resource/Audio/BGM2.BGM2"));
+		BgmPaths.Add(TEXT("/Game/Resource/Audio/BGM2"));
+	}
+	else if (ScenarioId == TEXT("S03_ForbiddenLight"))
+	{
+		BgmPaths.Add(TEXT("/Game/Resource/Audio/BGM1.BGM1"));
+		BgmPaths.Add(TEXT("/Game/Resource/Audio/BGM1"));
+	}
+
+	for (const TCHAR* BgmPath : BgmPaths)
+	{
+		if (USoundBase* Bgm = LoadObject<USoundBase>(nullptr, BgmPath))
+		{
+			return Bgm;
 		}
 	}
 
