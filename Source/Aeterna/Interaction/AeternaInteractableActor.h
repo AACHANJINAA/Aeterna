@@ -54,8 +54,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction")
 	TObjectPtr<USoundBase> InteractionSound;
 
+	/** 스캔·배터리 원본이 피크 -16dBFS 언저리라 그대로 쓰면 작습니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction", meta=(ClampMin="0.0"))
-	float InteractionSoundVolume = 1.0f;
+	float InteractionSoundVolume = 2.6f;
 
 	/** 비어 있으면 모든 시나리오에서 활성화됩니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario")

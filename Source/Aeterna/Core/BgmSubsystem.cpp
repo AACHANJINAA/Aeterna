@@ -26,7 +26,7 @@ bool UBgmSubsystem::IsPlayingBgm() const
 	return BgmComponent != nullptr && BgmComponent->IsPlaying();
 }
 
-void UBgmSubsystem::PlayBgm(USoundBase* Bgm, float FadeInSeconds, float CrossFadeOutSeconds)
+void UBgmSubsystem::PlayBgm(USoundBase* Bgm, float Volume, float FadeInSeconds, float CrossFadeOutSeconds)
 {
 	if (!Bgm)
 	{
@@ -55,7 +55,7 @@ void UBgmSubsystem::PlayBgm(USoundBase* Bgm, float FadeInSeconds, float CrossFad
 		BgmComponent = nullptr;
 	}
 
-	UAudioComponent* NewBgmComponent = UGameplayStatics::CreateSound2D(this, Bgm, 1.0f, 1.0f, 0.0f, nullptr, false, false);
+	UAudioComponent* NewBgmComponent = UGameplayStatics::CreateSound2D(this, Bgm, FMath::Max(0.0f, Volume), 1.0f, 0.0f, nullptr, false, false);
 	if (!NewBgmComponent)
 	{
 		UE_LOG(LogAeterna, Warning, TEXT("[BGM] %s 재생용 오디오 컴포넌트를 만들지 못했습니다."), *Bgm->GetName());

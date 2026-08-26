@@ -100,6 +100,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|BGM")
 	TObjectPtr<USoundBase> ScenarioBgm;
 
+	/**
+	 *  배경음 크기. BGM은 깔리는 바닥이라 효과음보다 아래에 있어야 합니다.
+	 *  에셋 자체 음량이 서로 다르면 여기 말고 에셋 Volume으로 먼저 맞추십시오.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|BGM", meta=(ClampMin="0.0"))
+	float BgmVolume = 0.5f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|BGM", meta=(ClampMin="0.0"))
 	float BgmFadeInSeconds = 2.0f;
 
