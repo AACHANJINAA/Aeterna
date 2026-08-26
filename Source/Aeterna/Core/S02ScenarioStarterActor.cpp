@@ -9,10 +9,10 @@ AS02ScenarioStarterActor::AS02ScenarioStarterActor()
 	// 밤1이 끝난 뒤 S01 스타터가 시작시킵니다.
 	bStartOnBeginPlay = false;
 
-	// SPEC_NIGHT2 5: 01:00~05:00, 1 게임분 = 실시간 5초
+	// SPEC_NIGHT2 5: 01:00~05:00, 1 게임분 = 실시간 1초
 	StartClockMinutes = 60;
 	EndClockMinutes = 300;
-	GameMinutesPerRealSecond = 0.2f;
+	GameMinutesPerRealSecond = 1.0f;
 
 	// 밤2의 목표는 뼈 12개 원상복구입니다. 진행도 컴포넌트를 그대로 씁니다.
 	bConfigurePlayerScanProgress = true;

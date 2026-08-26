@@ -83,7 +83,8 @@ void AScenarioLoopStarterActor::StartScenarioLoopInternal()
 {
 	if (UScenarioManagerSubsystem* ScenarioManager = GetWorld() ? GetWorld()->GetSubsystem<UScenarioManagerSubsystem>() : nullptr)
 	{
-		ScenarioManager->StartScenarioLoop(ScenarioId, StartClockMinutes, EndClockMinutes, GameMinutesPerRealSecond, ClockEvents);
+		const float EffectiveGameMinutesPerRealSecond = ScenarioId == TEXT("S02_GrandHallFossil") ? 1.0f : GameMinutesPerRealSecond;
+		ScenarioManager->StartScenarioLoop(ScenarioId, StartClockMinutes, EndClockMinutes, EffectiveGameMinutesPerRealSecond, ClockEvents);
 	}
 
 	ConfigurePlayerScanProgress();
