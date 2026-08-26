@@ -9,6 +9,7 @@
 
 class AAeternaCharacter;
 class USoundBase;
+class UScenarioManagerSubsystem;
 
 UCLASS()
 class AETERNA_API AAeternaInteractableActor : public AActor, public IAeternaInteractableInterface
@@ -17,6 +18,9 @@ class AETERNA_API AAeternaInteractableActor : public AActor, public IAeternaInte
 
 public:
 	AAeternaInteractableActor();
+
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 protected:
 	/** 이 Actor가 수행하는 상호작용 종류입니다. */
@@ -30,6 +34,13 @@ protected:
 	/** false면 한 번 상호작용한 뒤 다시 상호작용되지 않습니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction")
 	bool bRepeatable = false;
+
+	/**
+	 *  밤이 시작되거나 재시작될 때 다시 상호작용할 수 있게 되돌립니다.
+	 *  끄면 한 번 쓴 뒤 그 세션 내내 잠긴 채로 남습니다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction")
+	bool bResetOnScenarioStart = true;
 
 	/** 이미 상호작용 완료됐는지 여부입니다. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Interaction")
@@ -78,6 +89,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Interaction")
 	void PlayInteractionSound();
 
+	/** 상호작용을 아직 쓰지 않은 상태로 되돌립니다. */
+	UFUNCTION(BlueprintCallable, Category="Interaction")
+	void ResetInteraction();
+
+	/** 되돌릴 때 BP에서 숨겨둔 메시를 다시 보이게 하는 등 연출을 복구합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Interaction", meta=(DisplayName="Interaction Reset"))
+	void BP_InteractionReset();
+
 	/** BP에서 추가 연출이나 로그를 연결합니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Interaction", meta=(DisplayName="Interacted"))
 	void BP_Interacted(AActor* Interactor);
@@ -97,4 +116,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category="Scenario")
 	bool IsActiveForScenario(FName ScenarioId) const { return ActiveScenarioIds.Num() == 0 || ActiveScenarioIds.Contains(ScenarioId); }
+
+private:
+	UFUNCTION()
+	void HandleScenarioStarted(FName ScenarioId);
+
+	TWeakObjectPtr<UScenarioManagerSubsystem> BoundScenarioManager;
 };

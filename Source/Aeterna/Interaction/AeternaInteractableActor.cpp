@@ -12,6 +12,49 @@ AAeternaInteractableActor::AAeternaInteractableActor()
 	PrimaryActorTick.bCanEverTick = false;
 }
 
+void AAeternaInteractableActor::BeginPlay()
+{
+	Super::BeginPlay();
+
+	if (UScenarioManagerSubsystem* ScenarioManager = GetWorld() ? GetWorld()->GetSubsystem<UScenarioManagerSubsystem>() : nullptr)
+	{
+		BoundScenarioManager = ScenarioManager;
+		ScenarioManager->OnScenarioStarted.AddUniqueDynamic(this, &AAeternaInteractableActor::HandleScenarioStarted);
+	}
+}
+
+void AAeternaInteractableActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if (UScenarioManagerSubsystem* ScenarioManager = BoundScenarioManager.Get())
+	{
+		ScenarioManager->OnScenarioStarted.RemoveDynamic(this, &AAeternaInteractableActor::HandleScenarioStarted);
+	}
+	BoundScenarioManager.Reset();
+
+	Super::EndPlay(EndPlayReason);
+}
+
+void AAeternaInteractableActor::HandleScenarioStarted(FName ScenarioId)
+{
+	(void)ScenarioId;
+
+	if (!bResetOnScenarioStart)
+	{
+		return;
+	}
+
+	ResetInteraction();
+}
+
+void AAeternaInteractableActor::ResetInteraction()
+{
+	// 스캔 진행도는 밤이 시작될 때 초기화되는데 여기가 잠긴 채로 남으면,
+	// 재시작한 밤에서 같은 지점을 다시 스캔할 수 없어 목표를 채울 방법이 없어집니다.
+	bInteractionCompleted = false;
+
+	BP_InteractionReset();
+}
+
 void AAeternaInteractableActor::Interact_Implementation(AActor* Interactor)
 {
 	PerformInteraction(Interactor);
