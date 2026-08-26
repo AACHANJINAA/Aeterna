@@ -18,16 +18,20 @@
 #include "Player/Components/AeternaVanishRuleComponent.h"
 #include "Player/Components/AeternaClockFreezeRuleComponent.h"
 #include "Player/Components/AeternaCameraFallComponent.h"
+#include "Player/Components/AeternaFootstepComponent.h"
 
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/AudioComponent.h"
 #include "Components/SpotLightComponent.h"
 #include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "InputActionValue.h"
 #include "InputCoreTypes.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
 
 AAeternaCharacter::AAeternaCharacter()
 {
@@ -64,6 +68,7 @@ AAeternaCharacter::AAeternaCharacter()
 	HeadlampComponent->SetOuterConeAngle(36.0f);
 
 	HeadBobComponent = CreateDefaultSubobject<UAeternaHeadBobComponent>(TEXT("HeadBobComponent"));
+	FootstepComponent = CreateDefaultSubobject<UAeternaFootstepComponent>(TEXT("FootstepComponent"));
 	BatteryComponent = CreateDefaultSubobject<UAeternaBatteryComponent>(TEXT("BatteryComponent"));
 	BatteryHudComponent = CreateDefaultSubobject<UAeternaBatteryHudComponent>(TEXT("BatteryHudComponent"));
 	ClockComponent = CreateDefaultSubobject<UAeternaClockComponent>(TEXT("ClockComponent"));
@@ -123,6 +128,15 @@ void AAeternaCharacter::BeginPlay()
 	{
 		InteractionPromptComponent->InitializePlayerComponent(this);
 	}
+
+	if (!FootstepComponent || FootstepComponent->GetOwner() != this)
+	{
+		FootstepComponent = NewObject<UAeternaFootstepComponent>(this, UAeternaFootstepComponent::StaticClass(), TEXT("FootstepComponentRuntime"));
+		FootstepComponent->RegisterComponent();
+		UE_LOG(LogAeterna, Warning, TEXT("[Footstep] FootstepComponent를 런타임에 생성했습니다. BP_Player를 열어 Compile 후 Save 하십시오."));
+	}
+
+	FootstepComponent->InitializePlayerComponent(this);
 	// BP가 이 컴포넌트보다 먼저 컴파일됐으면 인스턴싱이 갱신되지 않아,
 	// 인스턴스가 CDO 아키타입의 컴포넌트를 그대로 가리킬 수 있습니다.
 	// 그 컴포넌트는 월드에 속하지 않아 트레이스가 불가능하므로 여기서 갈아끼웁니다.
@@ -203,6 +217,11 @@ void AAeternaCharacter::Tick(float DeltaSeconds)
 	UpdateHeadBob(DeltaSeconds);
 	UpdateFocusedInteractable();
 
+	if (FootstepComponent)
+	{
+		FootstepComponent->UpdateFootsteps(DeltaSeconds);
+	}
+
 	if (BatteryComponent && BatteryComponent->TickBattery(DeltaSeconds, bHeadlampOn))
 	{
 		if (BatteryHudComponent)
@@ -219,6 +238,7 @@ void AAeternaCharacter::Tick(float DeltaSeconds)
 			{
 				HeadlampComponent->SetVisibility(false);
 			}
+			UpdateHeadlampLoopAudio();
 			BP_HeadlampStateChanged(false);
 		}
 	}
@@ -408,6 +428,44 @@ void AAeternaCharacter::UpdateHeadBob(float DeltaSeconds)
 	}
 }
 
+void AAeternaCharacter::UpdateHeadlampLoopAudio()
+{
+	if (!HeadlampLoopSound)
+	{
+		return;
+	}
+
+	if (!HeadlampLoopAudio)
+	{
+		if (!HeadlampLoopSound->IsLooping())
+		{
+			UE_LOG(LogAeterna, Warning,
+				TEXT("[Headlamp] %s 에 Looping이 꺼져 있어 한 번만 재생됩니다. 에셋을 열어 Looping을 켜십시오."),
+				*HeadlampLoopSound->GetName());
+		}
+
+		// 런타임에 만들어 붙입니다. BP_Player를 다시 저장하지 않아도 됩니다.
+		HeadlampLoopAudio = NewObject<UAudioComponent>(this, TEXT("HeadlampLoopAudio"));
+		HeadlampLoopAudio->bAutoActivate = false;
+		HeadlampLoopAudio->bAutoDestroy = false;
+		HeadlampLoopAudio->SetSound(HeadlampLoopSound);
+		HeadlampLoopAudio->SetupAttachment(GetRootComponent());
+		HeadlampLoopAudio->RegisterComponent();
+	}
+
+	if (bHeadlampOn)
+	{
+		if (!HeadlampLoopAudio->IsPlaying())
+		{
+			HeadlampLoopAudio->FadeIn(HeadlampLoopFadeSeconds);
+		}
+	}
+	else if (HeadlampLoopAudio->IsPlaying())
+	{
+		HeadlampLoopAudio->FadeOut(HeadlampLoopFadeSeconds, 0.0f);
+	}
+}
+
 void AAeternaCharacter::UpdateFocusedInteractable()
 {
 	if (InteractionComponent && InteractionComponent->UpdateFocusedInteractable(this))
@@ -451,6 +509,7 @@ void AAeternaCharacter::SetHeadlampOn(bool bOn)
 		HeadlampComponent->SetVisibility(bHeadlampOn);
 	}
 	UpdateHeadlampBrightness();
+	UpdateHeadlampLoopAudio();
 
 	if (bStateChanged)
 	{

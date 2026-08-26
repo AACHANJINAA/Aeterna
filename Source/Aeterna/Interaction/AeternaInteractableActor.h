@@ -8,6 +8,7 @@
 #include "AeternaInteractableActor.generated.h"
 
 class AAeternaCharacter;
+class USoundBase;
 
 UCLASS()
 class AETERNA_API AAeternaInteractableActor : public AActor, public IAeternaInteractableInterface
@@ -46,6 +47,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery", meta=(ClampMin="0.0"))
 	float BatteryChargeAmount = 35.0f;
 
+	/**
+	 *  상호작용이 실제로 처리됐을 때 이 자리에서 재생할 소리입니다.
+	 *  스캔·충전·전등 버튼 등 종류를 가리지 않고 여기 하나로 처리합니다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction")
+	TObjectPtr<USoundBase> InteractionSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction", meta=(ClampMin="0.0"))
+	float InteractionSoundVolume = 1.0f;
+
 public:
 	virtual void Interact_Implementation(AActor* Interactor) override;
 	virtual bool CanInteract_Implementation(AActor* Interactor) const override;
@@ -57,6 +68,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Scan")
 	bool RegisterScanProgress(AAeternaCharacter* AeternaCharacter);
+
+	/** InteractionSound를 이 액터 위치에서 재생합니다. 비어 있으면 아무것도 하지 않습니다. */
+	UFUNCTION(BlueprintCallable, Category="Interaction")
+	void PlayInteractionSound();
 
 	/** BP에서 추가 연출이나 로그를 연결합니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Interaction", meta=(DisplayName="Interacted"))

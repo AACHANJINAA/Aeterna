@@ -3,6 +3,8 @@
 #include "Interaction/AeternaInteractableActor.h"
 
 #include "Player/AeternaCharacter.h"
+#include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
 
 AAeternaInteractableActor::AAeternaInteractableActor()
 {
@@ -57,6 +59,7 @@ bool AAeternaInteractableActor::PerformInteraction(AActor* Interactor)
 
 	if (bHandledInteraction)
 	{
+		PlayInteractionSound();
 		BP_Interacted(Interactor);
 		return true;
 	}
@@ -126,4 +129,14 @@ FAeternaInteractionInfo AAeternaInteractableActor::GetInteractionInfo_Implementa
 	}
 
 	return InteractionInfo;
+}
+
+void AAeternaInteractableActor::PlayInteractionSound()
+{
+	if (!InteractionSound)
+	{
+		return;
+	}
+
+	UGameplayStatics::PlaySoundAtLocation(this, InteractionSound, GetActorLocation(), InteractionSoundVolume);
 }

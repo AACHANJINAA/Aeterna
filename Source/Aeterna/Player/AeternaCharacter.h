@@ -27,6 +27,9 @@ class UAeternaGazeRuleComponent;
 class UAeternaVanishRuleComponent;
 class UAeternaClockFreezeRuleComponent;
 class UAeternaCameraFallComponent;
+class UAeternaFootstepComponent;
+class UAudioComponent;
+class USoundBase;
 struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
@@ -54,6 +57,10 @@ class AAeternaCharacter : public ACharacter
 	/** 1인칭 카메라 흔들림 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UAeternaHeadBobComponent* HeadBobComponent;
+
+	/** 걸음마다 좌우 발소리 재생 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaFootstepComponent* FootstepComponent;
 
 	/** 플레이어 배터리와 헤드램프 밝기 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
@@ -160,6 +167,17 @@ protected:
 	/** 현재 헤드램프가 켜져 있는지 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Headlamp", meta = (AllowPrivateAccess = "true"))
 	bool bHeadlampOn = false;
+
+	/** 헤드램프가 켜져 있는 동안 계속 도는 소리입니다. Looping이 켜진 에셋을 넣으십시오. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USoundBase> HeadlampLoopSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp", meta = (AllowPrivateAccess = "true", ClampMin="0.0"))
+	float HeadlampLoopFadeSeconds = 0.25f;
+
+	/** 처음 필요할 때 런타임에 만들어 붙입니다. BP_Player를 다시 저장할 필요가 없습니다. */
+	UPROPERTY(Transient)
+	TObjectPtr<UAudioComponent> HeadlampLoopAudio;
 	
 public:
 	AAeternaCharacter();
@@ -255,6 +273,10 @@ public:
 	/** 헤드램프 조명 값을 현재 배터리 잔량에 맞춰 갱신합니다. */
 	UFUNCTION(BlueprintCallable, Category="Headlamp")
 	virtual void UpdateHeadlampBrightness();
+
+	/** 헤드램프 상태에 맞춰 켜져 있는 동안의 소리를 맞춥니다. */
+	UFUNCTION(BlueprintCallable, Category="Headlamp")
+	void UpdateHeadlampLoopAudio();
 
 	/** 배터리 디버그 문자열을 현재 값으로 갱신합니다. */
 	UFUNCTION(BlueprintCallable, Category="Battery|Debug")
