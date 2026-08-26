@@ -23,7 +23,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Clock|HUD|Layout")
-	FVector2D WidgetSize = FVector2D(282.0f, 92.0f);
+	FVector2D WidgetSize = FVector2D(338.0f, 110.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Clock|HUD|Color")
 	FLinearColor PanelColor = FLinearColor(0.015f, 0.06f, 0.055f, 0.34f);
@@ -38,7 +38,7 @@ protected:
 	FLinearColor AccentColor = FLinearColor(0.82f, 1.0f, 0.94f, 0.92f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Clock|HUD|Text")
-	int32 DigitFontSize = 42;
+	int32 DigitFontSize = 50;
 
 private:
 	FText BuildClockText(int32 InClockMinutes) const;

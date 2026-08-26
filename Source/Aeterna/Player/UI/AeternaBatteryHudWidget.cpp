@@ -31,7 +31,7 @@ TSharedRef<SWidget> UAeternaBatteryHudWidget::RebuildWidget()
 		SegmentWidgets.Add(SegmentWidget);
 	}
 
-	return SNew(SBox)
+	return SAssignNew(RootSizeBox, SBox)
 		.WidthOverride(WidgetSize.X)
 		.HeightOverride(WidgetSize.Y)
 		[
@@ -209,6 +209,16 @@ void UAeternaBatteryHudWidget::SetBatteryLabel(const FText& InLabelText)
 	if (LabelTextWidget)
 	{
 		LabelTextWidget->SetText(LabelText);
+	}
+}
+
+void UAeternaBatteryHudWidget::SetWidgetSize(FVector2D InWidgetSize)
+{
+	WidgetSize = FVector2D(FMath::Max(1.0f, InWidgetSize.X), FMath::Max(1.0f, InWidgetSize.Y));
+	if (RootSizeBox)
+	{
+		RootSizeBox->SetWidthOverride(WidgetSize.X);
+		RootSizeBox->SetHeightOverride(WidgetSize.Y);
 	}
 }
 

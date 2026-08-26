@@ -34,10 +34,10 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Radar|Layout")
-	FVector2D WidgetSize = FVector2D(184.0f, 184.0f);
+	FVector2D WidgetSize = FVector2D(239.0f, 239.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Radar|Layout", meta=(ClampMin="8.0"))
-	float RadarRadius = 72.0f;
+	float RadarRadius = 94.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Radar|Layout", meta=(ClampMin="1"))
 	int32 CircleSegments = 80;
