@@ -200,6 +200,11 @@ bool UAeternaGazeRuleComponent::IsGazingAtEye(const AActor* EyeActor) const
 		return false;
 	}
 
+	if (!bRequireLineOfSight)
+	{
+		return true;
+	}
+
 	// 가림 판정. 눈구멍은 뚫려 있으므로 복합 콜리전으로 봅니다.
 	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(AeternaGazeOcclusion), true, AeternaCharacter);
 	QueryParams.AddIgnoredActor(EyeActor);
