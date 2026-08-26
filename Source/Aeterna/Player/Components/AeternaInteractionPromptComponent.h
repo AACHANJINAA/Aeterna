@@ -57,11 +57,17 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt")
 	int32 ViewportZOrder = 10;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt")
+	FVector2D PromptViewportSize = FVector2D(420.0f, 120.0f);
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt", meta=(ClampMin="0.0", Units="s"))
 	float PromptHideDelay = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt", meta=(Units="cm"))
-	float PromptWorldVerticalOffset = 35.0f;
+	float PromptWorldVerticalOffset = 15.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt")
+	bool bProjectPromptToWorldLocation = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Interaction|Prompt", meta=(ClampMin="0.0", Units="s"))
 	float SuccessFeedbackDuration = 0.7f;
