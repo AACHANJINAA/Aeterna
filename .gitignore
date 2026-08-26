@@ -148,7 +148,6 @@ Profiling/
 *.mp4
 *.mov
 *.mkv
-*.wav
 
 # OS files
 .DS_Store
