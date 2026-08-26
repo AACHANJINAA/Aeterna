@@ -37,6 +37,7 @@ void AScenarioLoopStarterActor::BeginPlay()
 
 void AScenarioLoopStarterActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	GetWorldTimerManager().ClearTimer(StartLogoIntroTimerHandle);
 	GetWorldTimerManager().ClearTimer(StartDayCardTimerHandle);
 	UnbindScanCompletion();
 	UnbindScenarioCompletion();
@@ -332,11 +333,39 @@ bool AScenarioLoopStarterActor::PlayStartDayCard()
 	}
 
 	GetWorldTimerManager().ClearTimer(StartDayCardTimerHandle);
+	GetWorldTimerManager().ClearTimer(StartLogoIntroTimerHandle);
 	SetPlayerInputLocked(true);
 	ScreenFadeSubsystem->SetFadeColor(StartDayCardFadeColor);
 	ScreenFadeSubsystem->SetFadeAlphaImmediate(1.0f);
-	UTexture2D* DayCardTexture = ResolveStartDayCardTexture();
+
 	ScreenFadeSubsystem->SetTitleText(FText::GetEmpty());
+
+	if (ShouldPlayTitleLogoIntro())
+	{
+		if (UTexture2D* TitleLogoTexture = ResolveTitleLogoTexture())
+		{
+			constexpr float TitleLogoHoldSeconds = 2.0f;
+			constexpr float TitleLogoFadeOutSeconds = 2.0f;
+			ScreenFadeSubsystem->SetTitleTexture(TitleLogoTexture);
+			ScreenFadeSubsystem->SetTitleAlphaImmediate(1.0f);
+			ScreenFadeSubsystem->StartTitleFadeOut(TitleLogoFadeOutSeconds, TitleLogoHoldSeconds);
+
+			const float DayCardStartDelay = TitleLogoHoldSeconds + TitleLogoFadeOutSeconds;
+			GetWorldTimerManager().SetTimer(StartLogoIntroTimerHandle, this, &AScenarioLoopStarterActor::ShowStartDayCardAfterLogoIntro, DayCardStartDelay, false);
+
+			const float DayCardFadeInSeconds = 2.0f;
+			const float FadeInDelay = DayCardStartDelay + DayCardFadeInSeconds;
+			ScreenFadeSubsystem->StartFadeIn(StartDayCardFadeInSeconds, FadeInDelay);
+
+			const float UnlockDelay = FMath::Max(0.0f, FadeInDelay + StartDayCardFadeInSeconds);
+			GetWorldTimerManager().SetTimer(StartDayCardTimerHandle, this, &AScenarioLoopStarterActor::FinishStartDayCard, UnlockDelay, false);
+
+			bPlayedStartDayCardLastStart = true;
+			return true;
+		}
+	}
+
+	UTexture2D* DayCardTexture = ResolveStartDayCardTexture();
 	ScreenFadeSubsystem->SetTitleTexture(DayCardTexture);
 	ScreenFadeSubsystem->SetTitleAlphaImmediate(0.0f);
 	ScreenFadeSubsystem->StartTitleFadeIn(StartDayCardTextureFadeInSeconds, StartDayCardTextureDelaySeconds);
@@ -349,6 +378,17 @@ bool AScenarioLoopStarterActor::PlayStartDayCard()
 
 	bPlayedStartDayCardLastStart = true;
 	return true;
+}
+
+void AScenarioLoopStarterActor::ShowStartDayCardAfterLogoIntro()
+{
+	if (UScreenFadeSubsystem* ScreenFadeSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScreenFadeSubsystem>() : nullptr)
+	{
+		ScreenFadeSubsystem->SetTitleText(FText::GetEmpty());
+		ScreenFadeSubsystem->SetTitleTexture(ResolveStartDayCardTexture());
+		ScreenFadeSubsystem->SetTitleAlphaImmediate(0.0f);
+		ScreenFadeSubsystem->StartTitleFadeIn(2.0f, 0.0f);
+	}
 }
 
 void AScenarioLoopStarterActor::FinishStartDayCard()
@@ -391,6 +431,30 @@ FText AScenarioLoopStarterActor::BuildStartDayCardText() const
 	}
 
 	return FText::FromName(ScenarioId);
+}
+
+bool AScenarioLoopStarterActor::ShouldPlayTitleLogoIntro() const
+{
+	return ScenarioId == TEXT("S01_Handover") || ScenarioId == TEXT("S01");
+}
+
+UTexture2D* AScenarioLoopStarterActor::ResolveTitleLogoTexture() const
+{
+	TArray<const TCHAR*> TexturePaths;
+	TexturePaths.Add(TEXT("/Game/Resource/Texture/title_logo.title_logo"));
+	TexturePaths.Add(TEXT("/Game/Resource/Texture/title_logo"));
+	TexturePaths.Add(TEXT("/Game/Resource/Texture/Title_logo.Title_logo"));
+	TexturePaths.Add(TEXT("/Game/Resource/Texture/Title_logo"));
+
+	for (const TCHAR* TexturePath : TexturePaths)
+	{
+		if (UTexture2D* Texture = LoadObject<UTexture2D>(nullptr, TexturePath))
+		{
+			return Texture;
+		}
+	}
+
+	return nullptr;
 }
 
 UTexture2D* AScenarioLoopStarterActor::ResolveStartDayCardTexture() const
@@ -506,13 +570,19 @@ void AScenarioLoopStarterActor::ConfigurePlayerScanProgress()
 	{
 		ScanProgressComponent->ResetScanProgress();
 
+		if (AAeternaCharacter* AeternaCharacter = Cast<AAeternaCharacter>(PlayerCharacter))
+		{
+			AeternaCharacter->ResetPlayerBattery();
+		}
+
 		if (UAeternaCarryComponent* CarryComponent = PlayerCharacter->FindComponentByClass<UAeternaCarryComponent>())
 		{
 			CarryComponent->ResetInstallProgress();
 		}
 	}
 
-	ScanProgressComponent->SetRequiredScanCount(RequiredScanCount);
+	const int32 EffectiveRequiredScanCount = ScenarioId == TEXT("S02_GrandHallFossil") ? 12 : RequiredScanCount;
+	ScanProgressComponent->SetRequiredScanCount(EffectiveRequiredScanCount);
 	BindScanCompletion();
 
 	if (bCompleteScenarioOnRequiredScans && ScanProgressComponent->HasCompletedRequiredScans())

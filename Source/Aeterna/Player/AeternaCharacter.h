@@ -262,6 +262,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Battery")
 	virtual void AddPlayerBattery(float Amount);
 
+	/** 플레이어 배터리를 최대치로 초기화합니다. */
+	UFUNCTION(BlueprintCallable, Category="Battery")
+	virtual void ResetPlayerBattery();
+
 	/** 스캔 지점 완료를 기록합니다. */
 	UFUNCTION(BlueprintCallable, Category="Scan")
 	virtual bool RegisterScanPoint(FName ScanPointId);

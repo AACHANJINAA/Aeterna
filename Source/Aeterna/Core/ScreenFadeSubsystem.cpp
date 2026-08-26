@@ -188,6 +188,11 @@ void UScreenFadeSubsystem::StartTitleFadeIn(float DurationSeconds, float DelaySe
 	StartTitleFade(1.0f, DurationSeconds, DelaySeconds);
 }
 
+void UScreenFadeSubsystem::StartTitleFadeOut(float DurationSeconds, float DelaySeconds)
+{
+	StartTitleFade(0.0f, DurationSeconds, DelaySeconds);
+}
+
 void UScreenFadeSubsystem::ClearTitleText()
 {
 	SetTitleText(FText::GetEmpty());

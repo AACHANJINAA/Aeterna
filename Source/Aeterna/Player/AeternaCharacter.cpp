@@ -570,6 +570,22 @@ void AAeternaCharacter::AddPlayerBattery(float Amount)
 	BP_BatteryChanged(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
 }
 
+void AAeternaCharacter::ResetPlayerBattery()
+{
+	if (!BatteryComponent)
+	{
+		return;
+	}
+
+	BatteryComponent->ResetBatteryToFull();
+	BatteryComponent->UpdateBatteryDebugString(bHeadlampOn);
+	if (BatteryHudComponent)
+	{
+		BatteryHudComponent->UpdateBatteryHud(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
+	}
+	BP_BatteryChanged(BatteryComponent->GetCurrentBattery(), BatteryComponent->GetMaxBattery(), BatteryComponent->GetBatteryNormalized());
+}
+
 bool AAeternaCharacter::RegisterScanPoint(FName ScanPointId)
 {
 	if (!ScanProgressComponent || !ScanProgressComponent->RegisterScanPoint(ScanPointId))

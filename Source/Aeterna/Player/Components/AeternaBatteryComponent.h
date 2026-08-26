@@ -24,6 +24,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Battery")
 	void AddBattery(float Amount);
 
+	UFUNCTION(BlueprintCallable, Category="Battery")
+	void ResetBatteryToFull();
+
 	UFUNCTION(BlueprintCallable, Category="Headlamp")
 	void UpdateHeadlampBrightness();
 

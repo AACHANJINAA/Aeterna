@@ -219,11 +219,13 @@ void UAeternaInteractionPromptComponent::SetPromptText(const FText& InActionText
 	if (UTextBlock* ActionTextBlock = FindTextBlock(ActionTextBlockName))
 	{
 		ActionTextBlock->SetText(InActionText);
+		ActionTextBlock->SetJustification(ETextJustify::Center);
 	}
 
 	if (UTextBlock* PromptTextBlock = FindTextBlock(PromptTextBlockName))
 	{
 		PromptTextBlock->SetText(InPromptText);
+		PromptTextBlock->SetJustification(ETextJustify::Center);
 	}
 }
 
@@ -247,6 +249,34 @@ void UAeternaInteractionPromptComponent::CacheDefaultPromptTextColor()
 		DefaultPromptTextColor = PromptTextBlock->GetColorAndOpacity();
 		bDefaultPromptTextColorCached = true;
 	}
+}
+
+FVector2D UAeternaInteractionPromptComponent::GetPromptContentDesiredSize() const
+{
+	FVector2D ContentSize = FVector2D::ZeroVector;
+
+	if (const UTextBlock* PromptTextBlock = FindTextBlock(PromptTextBlockName))
+	{
+		const FVector2D PromptTextSize = PromptTextBlock->GetDesiredSize();
+		ContentSize.X = FMath::Max(ContentSize.X, PromptTextSize.X);
+		ContentSize.Y += PromptTextSize.Y;
+	}
+
+	if (const UTextBlock* ActionTextBlock = FindTextBlock(ActionTextBlockName))
+	{
+		const FVector2D ActionTextSize = ActionTextBlock->GetDesiredSize();
+		ContentSize.X = FMath::Max(ContentSize.X, ActionTextSize.X);
+		ContentSize.Y += ActionTextSize.Y;
+	}
+
+	if (ContentSize.X <= 1.0f || ContentSize.Y <= 1.0f)
+	{
+		return PromptViewportSize;
+	}
+
+	constexpr float ContentPaddingX = 24.0f;
+	constexpr float ContentPaddingY = 12.0f;
+	return ContentSize + FVector2D(ContentPaddingX, ContentPaddingY);
 }
 
 void UAeternaInteractionPromptComponent::UpdatePromptScreenPosition()
@@ -275,9 +305,10 @@ void UAeternaInteractionPromptComponent::UpdatePromptScreenPosition()
 	FVector2D ScreenPosition;
 	if (UWidgetLayoutLibrary::ProjectWorldLocationToWidgetPosition(PlayerController, PromptWorldLocation, ScreenPosition, true))
 	{
-		PromptWidget->SetDesiredSizeInViewport(PromptViewportSize);
+		PromptWidget->ForceLayoutPrepass();
+		PromptWidget->SetDesiredSizeInViewport(GetPromptContentDesiredSize());
 		PromptWidget->SetAlignmentInViewport(FVector2D(0.5f, 0.5f));
-		PromptWidget->SetPositionInViewport(ScreenPosition, true);
+		PromptWidget->SetPositionInViewport(ScreenPosition + PromptScreenOffset, true);
 	}
 }
 

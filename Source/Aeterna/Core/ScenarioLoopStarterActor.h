@@ -194,8 +194,11 @@ private:
 	void SetPlayerInputLocked(bool bLocked);
 	void StartScenarioLoopInternal();
 	bool PlayStartDayCard();
+	void ShowStartDayCardAfterLogoIntro();
 	void FinishStartDayCard();
 	FText BuildStartDayCardText() const;
+	bool ShouldPlayTitleLogoIntro() const;
+	UTexture2D* ResolveTitleLogoTexture() const;
 	UTexture2D* ResolveStartDayCardTexture() const;
 
 	void PlayScenarioBgm();
@@ -221,5 +224,6 @@ private:
 
 	bool bPlayedStartDayCardLastStart = false;
 	bool bStartScenarioAfterDayCardPending = false;
+	FTimerHandle StartLogoIntroTimerHandle;
 	FTimerHandle StartDayCardTimerHandle;
 };
