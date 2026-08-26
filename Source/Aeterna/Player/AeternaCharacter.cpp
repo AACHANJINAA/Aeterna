@@ -480,6 +480,7 @@ void AAeternaCharacter::UpdateHeadlampLoopAudio()
 		HeadlampLoopAudio->bAutoActivate = false;
 		HeadlampLoopAudio->bAutoDestroy = false;
 		HeadlampLoopAudio->SetSound(HeadlampLoopSound);
+		HeadlampLoopAudio->SetVolumeMultiplier(FMath::Max(0.0f, HeadlampLoopVolume));
 		HeadlampLoopAudio->SetupAttachment(GetRootComponent());
 		HeadlampLoopAudio->RegisterComponent();
 	}

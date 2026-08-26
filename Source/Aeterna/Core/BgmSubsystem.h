@@ -27,7 +27,7 @@ public:
 	 *  이미 같은 곡이 흐르고 있으면 아무것도 하지 않습니다 — 밤을 재시작해도 음악이 끊기지 않습니다.
 	 */
 	UFUNCTION(BlueprintCallable, Category="BGM")
-	void PlayBgm(USoundBase* Bgm, float FadeInSeconds = 2.0f, float CrossFadeOutSeconds = 2.0f);
+	void PlayBgm(USoundBase* Bgm, float Volume = 1.0f, float FadeInSeconds = 2.0f, float CrossFadeOutSeconds = 2.0f);
 
 	/** 흐르던 배경음을 서서히 걷어냅니다. */
 	UFUNCTION(BlueprintCallable, Category="BGM")

@@ -424,7 +424,7 @@ void AScenarioLoopStarterActor::PlayScenarioBgm()
 	// 같은 곡이면 UBgmSubsystem이 알아서 무시하므로, 재시작에서도 그냥 다시 부릅니다.
 	if (USoundBase* Bgm = ResolveScenarioBgm())
 	{
-		BgmSubsystem->PlayBgm(Bgm, BgmFadeInSeconds, BgmCrossFadeOutSeconds);
+		BgmSubsystem->PlayBgm(Bgm, BgmVolume, BgmFadeInSeconds, BgmCrossFadeOutSeconds);
 	}
 }
 

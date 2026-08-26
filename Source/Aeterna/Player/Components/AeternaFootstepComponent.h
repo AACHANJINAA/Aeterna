@@ -49,8 +49,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Footstep", meta=(ClampMin="0.0"))
 	float MinimumWalkSpeed = 10.0f;
 
+	/**
+	 *  발소리 크기. 원본이 피크 -17dBFS로 녹음돼 있어 그대로 쓰면 묻힙니다.
+	 *  2.2배는 약 +7dB로, 올려도 피크가 -10dBFS라 클리핑되지 않습니다.
+	 */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Footstep", meta=(ClampMin="0.0"))
-	float FootstepVolume = 1.0f;
+	float FootstepVolume = 2.2f;
 
 private:
 	void PlayNextFootstep();

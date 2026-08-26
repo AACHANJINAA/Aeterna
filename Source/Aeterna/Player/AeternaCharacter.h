@@ -177,6 +177,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USoundBase> HeadlampLoopSound;
 
+	/**
+	 *  램프 루프 크기. 원본이 RMS -58dBFS로 거의 무음이라 크게 올려야 들립니다.
+	 *  5배는 약 +14dB로, 올려도 피크가 -29dBFS라 클리핑되지 않습니다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp", meta = (AllowPrivateAccess = "true", ClampMin="0.0"))
+	float HeadlampLoopVolume = 5.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp", meta = (AllowPrivateAccess = "true", ClampMin="0.0"))
 	float HeadlampLoopFadeSeconds = 0.25f;
 
