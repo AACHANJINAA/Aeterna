@@ -99,7 +99,7 @@ protected:
 	FLinearColor StartDayCardFadeColor = FLinearColor::Black;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Title Logo", meta=(ClampMin="0.01"))
-	float TitleLogoTextureScale = 0.5f;
+	float TitleLogoTextureScale = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Title Logo", meta=(ClampMin="0.0"))
 	float TitleLogoFadeInSeconds = 0.75f;

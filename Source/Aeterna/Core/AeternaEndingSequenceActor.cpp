@@ -6,6 +6,7 @@
 #include "Core/ScreenFadeSubsystem.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "UI/AeternaOpeningMovieWidget.h"
 
 AAeternaEndingSequenceActor::AAeternaEndingSequenceActor()
@@ -23,6 +24,7 @@ void AAeternaEndingSequenceActor::EndPlay(const EEndPlayReason::Type EndPlayReas
 {
 	GetWorldTimerManager().ClearTimer(PreMovieFadeTimerHandle);
 	GetWorldTimerManager().ClearTimer(RemoveWidgetTimerHandle);
+	GetWorldTimerManager().ClearTimer(ExitGameTimerHandle);
 	UnbindScenarioEvents();
 	Super::EndPlay(EndPlayReason);
 }
@@ -115,6 +117,7 @@ void AAeternaEndingSequenceActor::FinishEndingSequence()
 	bEndingMovieStarted = false;
 	GetWorldTimerManager().ClearTimer(PreMovieFadeTimerHandle);
 	GetWorldTimerManager().ClearTimer(RemoveWidgetTimerHandle);
+	GetWorldTimerManager().ClearTimer(ExitGameTimerHandle);
 
 	if (UScreenFadeSubsystem* ScreenFadeSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScreenFadeSubsystem>() : nullptr)
 	{
@@ -128,6 +131,19 @@ void AAeternaEndingSequenceActor::FinishEndingSequence()
 		&AAeternaEndingSequenceActor::RemoveEndingWidgetAfterFade,
 		0.05f,
 		false);
+
+	if (ExitDelayAfterEndingSeconds <= 0.0f)
+	{
+		QuitGameAfterEnding();
+		return;
+	}
+
+	GetWorldTimerManager().SetTimer(
+		ExitGameTimerHandle,
+		this,
+		&AAeternaEndingSequenceActor::QuitGameAfterEnding,
+		ExitDelayAfterEndingSeconds,
+		false);
 }
 
 void AAeternaEndingSequenceActor::RemoveEndingWidgetAfterFade()
@@ -140,6 +156,12 @@ void AAeternaEndingSequenceActor::RemoveEndingWidgetAfterFade()
 	}
 
 	SetPlayerInputLocked(false);
+}
+
+void AAeternaEndingSequenceActor::QuitGameAfterEnding()
+{
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	UKismetSystemLibrary::QuitGame(this, PlayerController, EQuitPreference::Quit, false);
 }
 
 void AAeternaEndingSequenceActor::HandleScenarioCompleted(FName ScenarioId)

@@ -62,6 +62,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ending|Fade", meta=(ClampMin="0.0"))
 	float MovieFadeOutSeconds = 1.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ending|Exit", meta=(ClampMin="0.0"))
+	float ExitDelayAfterEndingSeconds = 3.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ending")
 	TSubclassOf<UAeternaOpeningMovieWidget> EndingWidgetClass;
 
@@ -71,6 +74,7 @@ private:
 
 	void PlayEndingMovieAfterPreFade();
 	void RemoveEndingWidgetAfterFade();
+	void QuitGameAfterEnding();
 	void BindScenarioEvents();
 	void UnbindScenarioEvents();
 	void SetPlayerInputLocked(bool bLocked) const;
@@ -81,6 +85,7 @@ private:
 	TWeakObjectPtr<UScenarioManagerSubsystem> BoundScenarioManager;
 	FTimerHandle PreMovieFadeTimerHandle;
 	FTimerHandle RemoveWidgetTimerHandle;
+	FTimerHandle ExitGameTimerHandle;
 	bool bEndingFinished = false;
 	bool bEndingMovieStarted = false;
 };
