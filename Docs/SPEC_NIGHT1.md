@@ -224,3 +224,57 @@ BP_AllRequiredScansCompleted 수신
 | §10 #16 (오늘의 업무 위젯) | 밤1 미사용 — 밤2부터 도입 제안 (§3-0) |
 | §10 #10 (배터리 소프트락) | 발광 마킹 규격을 후보 ①의 시제품으로 겸용 (§6) |
 | 클럭 배속 | 구현 기본값 1.0 유지 제안 — §10 #2 튜닝의 출발값 (§4) |
+
+---
+
+## 13. 구현 반영 (2026-08-27)
+
+> 본 절은 스펙과 실제 코드가 다른 지점만 기록한다. 언급 없는 항목은 스펙대로다.
+
+### 13-1. 배터리가 둘로 나뉘었다
+
+스펙 §3-2는 배터리 하나가 "충전 + 스캔 등록"을 겸한다. 그대로 밤2·밤3에
+배터리를 놓으면 **밤2가 깨진다** — 뼈 12개를 세는 집합과 스캔 진행도가 같아서,
+배터리 하나가 뼈 하나로 세어져 11개만 맞춰도 밤이 끝난다.
+
+그래서 역할을 나눴다.
+
+| 액터 | 역할 | 진행도 | 활성 밤 |
+|---|---|---|---|
+| `BP_S01_ScanPoint_Battery` (`AS01ScanPointActor`) | 밤1 목표 3곳 중 하나 | 1 더함 | 밤1 |
+| `BP_BatteryPickup` (`AAeternaBatteryPickupActor`) | 순수 충전 자원 | 관여 안 함 | 전부 |
+
+- `[정리 예정]` `AS01ScanPointActor`의 `ApplyScanPointDefaults()`가 매 `OnConstruction`마다
+  값을 덮어써서 인스턴스별 설정이 불가능한 것이 별도 클래스를 만든 이유다.
+  종류를 하나 추가해 클래스를 합칠 수 있다 — 이때 `S01` 접두도 함께 정리한다
+
+### 13-2. 상호작용이 밤 시작마다 풀린다
+
+`bInteractionCompleted`가 한 번 서면 되돌아오지 않아, **게임 오버 후 재시작하면
+스캔을 다시 할 수 없어 밤을 클리어할 방법이 없었다.** 진행도는 초기화되는데
+액터가 잠긴 채 남았기 때문이다.
+
+`AAeternaInteractableActor`가 `OnScenarioStarted`를 구독해 되돌린다. BP가 숨긴
+메시는 BP가 되살려야 하므로 `Interaction Reset` 이벤트를 함께 둔다.
+
+### 13-3. 조준 보정
+
+`InteractionBounds`보다 가까이 가면 카메라가 박스 안에 들어가 라인트레이스가
+대상을 놓친다. 트레이스가 실패했을 때만 카메라 주변을 구체로 한 번 더 훑는다
+(`InsideBoundsProbeRadius`, 기본 25cm).
+
+### 13-4. 사운드
+
+| 대상 | 에셋 |
+|---|---|
+| 밤1 BGM | `BGM3` (`AScenarioLoopStarterActor`가 `ScenarioId`로 자동 선택) |
+| 전시물·알림판 스캔 | `SW_Scan` |
+| 배터리 회수 | `SW_Battery_PickUp` |
+| 발소리 | `SW_Footstep_L` / `SW_Footstep_R` — 보폭마다 좌우 교대 |
+| 헤드램프 | `SW_Headlamp_On` / `_Off` (토글) + `SW_Headlamp_Loop` (켜져 있는 동안) |
+
+### 13-5. 미구현
+
+- 수첩 액터 `BP_S01_Notebook`, 상태머신(`Boot`~`ReadNotebook`), 부팅 시퀀스
+- 경비실 문 잠금 게이트
+- §10 #15 (밤1 05:00 도달 처리) — 여전히 미정
