@@ -30,6 +30,14 @@ public:
 	UFUNCTION(BlueprintPure, Category="Clock")
 	int32 GetClockMinutes() const { return CurrentClockMinutes; }
 
+	/** 시계 자리에 남은 시간을 띄웁니다. 밤3의 도주 제한 시간이 씁니다. */
+	UFUNCTION(BlueprintCallable, Category="Clock|Countdown")
+	void SetCountdownSeconds(float RemainingSeconds);
+
+	/** 카운트다운을 끄고 시계로 돌아갑니다. */
+	UFUNCTION(BlueprintCallable, Category="Clock|Countdown")
+	void ClearCountdown();
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Clock", meta=(ClampMin="0"))
 	int32 StartClockMinutes = 60;

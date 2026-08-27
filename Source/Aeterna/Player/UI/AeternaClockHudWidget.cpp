@@ -115,10 +115,54 @@ void UAeternaClockHudWidget::NativeConstruct()
 
 void UAeternaClockHudWidget::SetClockMinutes(int32 InClockMinutes)
 {
+	LastShownClockMinutes = InClockMinutes;
+
+	// 카운트다운 중에는 클럭이 표시를 덮지 않습니다.
+	if (bCountdownActive || !ClockTextWidget)
+	{
+		return;
+	}
+
+	ClockTextWidget->SetText(BuildClockText(InClockMinutes));
+}
+
+void UAeternaClockHudWidget::SetCountdownSeconds(float RemainingSeconds)
+{
+	if (!ClockTextWidget)
+	{
+		return;
+	}
+
+	if (!bCountdownActive)
+	{
+		bCountdownActive = true;
+		ClockTextWidget->SetColorAndOpacity(FSlateColor(CountdownDigitColor));
+	}
+
+	ClockTextWidget->SetText(BuildCountdownText(RemainingSeconds));
+}
+
+void UAeternaClockHudWidget::ClearCountdown()
+{
+	if (!bCountdownActive)
+	{
+		return;
+	}
+
+	bCountdownActive = false;
+
 	if (ClockTextWidget)
 	{
-		ClockTextWidget->SetText(BuildClockText(InClockMinutes));
+		ClockTextWidget->SetColorAndOpacity(FSlateColor(DigitColor));
+		ClockTextWidget->SetText(BuildClockText(LastShownClockMinutes));
 	}
+}
+
+FText UAeternaClockHudWidget::BuildCountdownText(float RemainingSeconds) const
+{
+	// 0.4초가 남았는데 00:00으로 보이면 이미 끝난 것처럼 읽힙니다. 올림으로 표시합니다.
+	const int32 TotalSeconds = FMath::Max(0, FMath::CeilToInt(RemainingSeconds));
+	return FText::FromString(FString::Printf(TEXT("%02d:%02d"), TotalSeconds / 60, TotalSeconds % 60));
 }
 
 FText UAeternaClockHudWidget::BuildClockText(int32 InClockMinutes) const

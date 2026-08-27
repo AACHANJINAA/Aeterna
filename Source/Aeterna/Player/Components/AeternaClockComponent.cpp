@@ -53,6 +53,22 @@ void UAeternaClockComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+void UAeternaClockComponent::SetCountdownSeconds(float RemainingSeconds)
+{
+	if (UAeternaClockHudWidget* ClockWidget = Cast<UAeternaClockHudWidget>(ClockHudWidget))
+	{
+		ClockWidget->SetCountdownSeconds(RemainingSeconds);
+	}
+}
+
+void UAeternaClockComponent::ClearCountdown()
+{
+	if (UAeternaClockHudWidget* ClockWidget = Cast<UAeternaClockHudWidget>(ClockHudWidget))
+	{
+		ClockWidget->ClearCountdown();
+	}
+}
+
 void UAeternaClockComponent::InitializePlayerComponent(AAeternaCharacter* InPlayerCharacter)
 {
 	Super::InitializePlayerComponent(InPlayerCharacter);
