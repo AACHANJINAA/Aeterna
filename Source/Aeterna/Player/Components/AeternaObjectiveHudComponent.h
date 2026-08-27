@@ -34,6 +34,14 @@ struct FAeternaScenarioObjectiveHudDefinition
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Objective|HUD")
 	TArray<FAeternaScenarioObjectiveHudItem> Items;
+
+	/**
+	 *  항목마다 한 줄씩 0/1로 세우지 않고, 첫 항목 문구 하나에 진행도를
+	 *  N/M으로 합쳐 표시합니다. 같은 종류를 여러 개 처리하는 밤에 씁니다.
+	 *  M은 시나리오 스타터의 RequiredScanCount를 따릅니다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Objective|HUD")
+	bool bAggregateProgress = false;
 };
 
 UCLASS(ClassGroup=(Aeterna), meta=(BlueprintSpawnableComponent))

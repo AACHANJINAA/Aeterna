@@ -352,6 +352,23 @@ void UAeternaObjectiveHudComponent::BuildCurrentObjectiveItems()
 		return;
 	}
 
+	// 같은 종류를 여러 개 처리하는 밤은 한 줄에 N/M으로 합칩니다.
+	if (ObjectiveDefinition->bAggregateProgress)
+	{
+		const int32 ObjectiveRequiredCount = RequiredCount > 0 ? RequiredCount : FMath::Max(ObjectiveDefinition->Items.Num(), 1);
+		const int32 ObjectiveCurrentCount = FMath::Clamp(ScanProgressComponent ? ScanProgressComponent->GetCompletedScanCount() : CurrentCount, 0, ObjectiveRequiredCount);
+
+		const FText AggregateText = ObjectiveDefinition->Items.Num() > 0
+			? ObjectiveDefinition->Items[0].ItemText
+			: FText::GetEmpty();
+
+		CurrentItemTexts.Add(AggregateText);
+		CurrentItemCompleted.Add(ObjectiveCurrentCount >= ObjectiveRequiredCount);
+		CurrentItemCurrentCounts.Add(ObjectiveCurrentCount);
+		CurrentItemRequiredCounts.Add(ObjectiveRequiredCount);
+		return;
+	}
+
 	for (int32 Index = 0; Index < ObjectiveDefinition->Items.Num(); ++Index)
 	{
 		const FAeternaScenarioObjectiveHudItem& Item = ObjectiveDefinition->Items[Index];
