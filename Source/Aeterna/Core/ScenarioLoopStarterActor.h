@@ -98,6 +98,18 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Start Card")
 	FLinearColor StartDayCardFadeColor = FLinearColor::Black;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Title Logo", meta=(ClampMin="0.01"))
+	float TitleLogoTextureScale = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Title Logo", meta=(ClampMin="0.0"))
+	float TitleLogoFadeInSeconds = 0.75f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Title Logo", meta=(ClampMin="0.0"))
+	float TitleLogoHoldSeconds = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Title Logo", meta=(ClampMin="0.0"))
+	float TitleLogoFadeOutSeconds = 0.75f;
+
 	/** 밤이 시작될 때 배경음을 켭니다. 같은 곡이면 재시작해도 끊기지 않습니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|BGM")
 	bool bPlayBgmOnStart = true;
@@ -194,6 +206,7 @@ private:
 	void SetPlayerInputLocked(bool bLocked);
 	void StartScenarioLoopInternal();
 	bool PlayStartDayCard();
+	void FadeOutTitleLogoIntro();
 	void ShowStartDayCardAfterLogoIntro();
 	void FinishStartDayCard();
 	FText BuildStartDayCardText() const;
@@ -225,5 +238,6 @@ private:
 	bool bPlayedStartDayCardLastStart = false;
 	bool bStartScenarioAfterDayCardPending = false;
 	FTimerHandle StartLogoIntroTimerHandle;
+	FTimerHandle StartLogoFadeOutTimerHandle;
 	FTimerHandle StartDayCardTimerHandle;
 };
