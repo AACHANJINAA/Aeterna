@@ -91,11 +91,14 @@ public:
 
 	/** 상호작용을 아직 쓰지 않은 상태로 되돌립니다. */
 	UFUNCTION(BlueprintCallable, Category="Interaction")
-	void ResetInteraction();
+	virtual void ResetInteraction();
 
 	/** 되돌릴 때 BP에서 숨겨둔 메시를 다시 보이게 하는 등 연출을 복구합니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Interaction", meta=(DisplayName="Interaction Reset"))
 	void BP_InteractionReset();
+
+	/** 상호작용이 실제로 처리된 직후 자식 클래스가 끼어드는 자리입니다. */
+	virtual void OnInteractionPerformed(AActor* Interactor) {}
 
 	/** BP에서 추가 연출이나 로그를 연결합니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Interaction", meta=(DisplayName="Interacted"))

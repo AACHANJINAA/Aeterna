@@ -103,6 +103,7 @@ bool AAeternaInteractableActor::PerformInteraction(AActor* Interactor)
 
 	if (bHandledInteraction)
 	{
+		OnInteractionPerformed(Interactor);
 		PlayInteractionSound();
 		BP_Interacted(Interactor);
 		return true;
