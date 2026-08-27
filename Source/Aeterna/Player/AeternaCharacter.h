@@ -307,6 +307,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Clock|Debug")
 	virtual void AdvanceDebugClock();
 
+	/** 개발 테스트용으로 화면 시계를 04:59로 맞춥니다. */
+	UFUNCTION(BlueprintCallable, Category="Clock|Debug")
+	virtual void DebugSetClockTo0459();
+
 	UFUNCTION(BlueprintCallable, Category="Scenario|Debug")
 	virtual void DebugStartScenarioDay1();
 

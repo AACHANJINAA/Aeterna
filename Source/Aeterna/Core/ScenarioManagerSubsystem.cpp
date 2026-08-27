@@ -42,6 +42,7 @@ void UScenarioManagerSubsystem::Deinitialize()
 void UScenarioManagerSubsystem::Tick(float DeltaTime)
 {
 	(void)DeltaTime;
+	CheckScenarioTimeExpired();
 	UpdateLoopTimeDebugLog();
 }
 
@@ -52,7 +53,7 @@ TStatId UScenarioManagerSubsystem::GetStatId() const
 
 bool UScenarioManagerSubsystem::IsTickable() const
 {
-	return !IsTemplate() && bShowLoopDebugLog && HasCurrentScenario();
+	return !IsTemplate() && HasCurrentScenario();
 }
 
 void UScenarioManagerSubsystem::StartScenario(FName ScenarioId)
@@ -199,6 +200,22 @@ void UScenarioManagerSubsystem::FailCurrentScenario(EScenarioFailureReason Failu
 	ShowLoopDebugLog();
 }
 
+void UScenarioManagerSubsystem::CheckScenarioTimeExpired()
+{
+	if (!HasCurrentScenario() || RunState != EScenarioRunState::Running)
+	{
+		return;
+	}
+
+	const UGameClockSubsystem* GameClockSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UGameClockSubsystem>() : nullptr;
+	if (!GameClockSubsystem || GameClockSubsystem->GetClockMinutes() < GameClockSubsystem->GetEndClockMinutes())
+	{
+		return;
+	}
+
+	FailCurrentScenarioByTimeExpired();
+}
+
 void UScenarioManagerSubsystem::HandleClockFinished(int32 ClockMinutes)
 {
 	(void)ClockMinutes;
@@ -209,6 +226,7 @@ void UScenarioManagerSubsystem::HandleClockFinished(int32 ClockMinutes)
 	}
 
 	OnScenarioTimeExpired.Broadcast(CurrentScenarioId);
+	FailCurrentScenarioByTimeExpired();
 	ShowLoopDebugLog();
 }
 

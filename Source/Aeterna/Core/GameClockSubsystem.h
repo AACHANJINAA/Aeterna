@@ -51,8 +51,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Clock")
 	void AdvanceClockMinutes(int32 MinutesToAdvance);
 
+	UFUNCTION(BlueprintCallable, Category="Clock")
+	void SetClockMinutes(int32 NewClockMinutes);
+
 	UFUNCTION(BlueprintPure, Category="Clock")
 	int32 GetClockMinutes() const { return CurrentClockMinutes; }
+
+	UFUNCTION(BlueprintPure, Category="Clock")
+	int32 GetEndClockMinutes() const { return EndClockMinutes; }
 
 	UFUNCTION(BlueprintPure, Category="Clock")
 	bool IsClockRunning() const { return bClockRunning; }

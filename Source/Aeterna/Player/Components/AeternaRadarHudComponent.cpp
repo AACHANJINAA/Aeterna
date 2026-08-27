@@ -239,7 +239,8 @@ bool UAeternaRadarHudComponent::ShouldTrackActor(AActor* Actor) const
 		}
 
 		const EAeternaInteractionType InteractionType = InteractableActor->GetInteractionType();
-		return InteractionType == EAeternaInteractionType::Scan
+		return InteractableActor->CountsAsScanPoint()
+			|| InteractionType == EAeternaInteractionType::Scan
 			|| InteractionType == EAeternaInteractionType::Charge
 			|| InteractionType == EAeternaInteractionType::Install
 			|| InteractionType == EAeternaInteractionType::Pickup;

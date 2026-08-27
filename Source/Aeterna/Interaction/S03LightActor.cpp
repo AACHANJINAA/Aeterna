@@ -4,6 +4,7 @@
 
 #include "Aeterna.h"
 #include "Components/BoxComponent.h"
+#include "Components/MeshComponent.h"
 #include "Components/PointLightComponent.h"
 #include "Core/GameClockSubsystem.h"
 #include "Core/ScenarioManagerSubsystem.h"
@@ -20,8 +21,7 @@ AS03LightActor::AS03LightActor()
 
 	LightComponent = CreateDefaultSubobject<UPointLightComponent>(TEXT("Light"));
 	LightComponent->SetupAttachment(InteractionBounds);
-	LightComponent->SetIntensity(3000.0f);
-	LightComponent->SetAttenuationRadius(600.0f);
+	ApplyLightDefaults();
 	LightComponent->SetVisibility(false);
 
 	// 소등은 스캔·충전 어느 쪽도 아닙니다. 프롬프트 문구로 무엇인지 알립니다.
@@ -38,6 +38,24 @@ AS03LightActor::AS03LightActor()
 	ActiveScenarioIds.Add(TEXT("S03_ForbiddenLight"));
 }
 
+void AS03LightActor::PostLoad()
+{
+	Super::PostLoad();
+
+	if (FMath::IsNearlyEqual(ActiveLightIntensity, 5500.0f))
+	{
+		ActiveLightIntensity = 9000.0f;
+	}
+	if (FMath::IsNearlyEqual(ActiveLightAttenuationRadius, 1200.0f))
+	{
+		ActiveLightAttenuationRadius = 1600.0f;
+	}
+	if (FMath::IsNearlyEqual(ActiveMeshEmissiveStrength, 8.0f))
+	{
+		ActiveMeshEmissiveStrength = 30.0f;
+	}
+}
+
 void AS03LightActor::BeginPlay()
 {
 	Super::BeginPlay();
@@ -50,6 +68,7 @@ void AS03LightActor::BeginPlay()
 
 	// 밤 시작 브로드캐스트(ResetInteraction)가 켤 때까지 꺼둡니다.
 	// 여기서 켜면 밤1·밤2에서도 불이 들어옵니다.
+	ApplyLightDefaults();
 	SetLightOn(false);
 	ApplyScenarioVisibility();
 }
@@ -90,10 +109,13 @@ void AS03LightActor::SetLightOn(bool bOn)
 {
 	if (bLightOn == bOn)
 	{
+		ApplyLightDefaults();
+		ApplyMeshEmissive();
 		return;
 	}
 
 	bLightOn = bOn;
+	ApplyLightDefaults();
 
 	if (LightComponent)
 	{
@@ -105,6 +127,7 @@ void AS03LightActor::SetLightOn(bool bOn)
 		TurnOnWorldTimeSeconds = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.0f;
 	}
 
+	ApplyMeshEmissive();
 	BP_LightStateChanged(bLightOn);
 }
 
@@ -163,6 +186,50 @@ void AS03LightActor::ApplyScenarioVisibility()
 	if (!bActiveInScenario)
 	{
 		SetLightOn(false);
+	}
+}
+
+void AS03LightActor::ApplyLightDefaults()
+{
+	if (!LightComponent)
+	{
+		return;
+	}
+
+	LightComponent->SetLightColor(ActiveLightColor);
+	LightComponent->SetIntensity(ActiveLightIntensity);
+	LightComponent->SetAttenuationRadius(ActiveLightAttenuationRadius);
+}
+
+void AS03LightActor::ApplyMeshEmissive()
+{
+	TArray<UMeshComponent*> MeshComponents;
+	GetComponents<UMeshComponent>(MeshComponents);
+
+	const FLinearColor EmissiveColor = bLightOn ? ActiveLightColor * ActiveMeshEmissiveStrength : FLinearColor::Black;
+	const float EmissiveStrength = bLightOn ? ActiveMeshEmissiveStrength : 0.0f;
+	for (UMeshComponent* MeshComponent : MeshComponents)
+	{
+		if (!MeshComponent)
+		{
+			continue;
+		}
+
+		for (const FName& ParameterName : MeshEmissiveColorParameterNames)
+		{
+			if (!ParameterName.IsNone())
+			{
+				MeshComponent->SetVectorParameterValueOnMaterials(ParameterName, FVector(EmissiveColor.R, EmissiveColor.G, EmissiveColor.B));
+			}
+		}
+
+		for (const FName& ParameterName : MeshEmissiveStrengthParameterNames)
+		{
+			if (!ParameterName.IsNone())
+			{
+				MeshComponent->SetScalarParameterValueOnMaterials(ParameterName, EmissiveStrength);
+			}
+		}
 	}
 }
 

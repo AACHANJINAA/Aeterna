@@ -26,6 +26,7 @@ class AETERNA_API AS03LightActor : public AAeternaInteractableActor
 public:
 	AS03LightActor();
 
+	virtual void PostLoad() override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
@@ -49,6 +50,24 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	TObjectPtr<UPointLightComponent> LightComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="S03 Light|Style")
+	FLinearColor ActiveLightColor = FLinearColor(0.04f, 0.72f, 1.0f, 1.0f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="S03 Light|Style", meta=(ClampMin="0.0"))
+	float ActiveLightIntensity = 9000.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="S03 Light|Style", meta=(ClampMin="0.0", Units="cm"))
+	float ActiveLightAttenuationRadius = 1600.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="S03 Light|Style", meta=(ClampMin="0.0"))
+	float ActiveMeshEmissiveStrength = 30.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="S03 Light|Style")
+	TArray<FName> MeshEmissiveColorParameterNames = { TEXT("EmissiveColor"), TEXT("Emissive"), TEXT("GlowColor"), TEXT("BaseColor") };
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="S03 Light|Style")
+	TArray<FName> MeshEmissiveStrengthParameterNames = { TEXT("EmissiveStrength"), TEXT("GlowStrength") };
 
 	/**
 	 *  이 게임 시각(분)이 되면 저절로 켜집니다. 01:00이 60입니다.
@@ -76,6 +95,8 @@ private:
 	/** 지금 돌고 있는 밤이 이 조명이 속한 밤인지. 다른 밤에서는 꺼져 있어야 합니다. */
 	bool IsActiveInCurrentScenario() const;
 	void ApplyScenarioVisibility();
+	void ApplyLightDefaults();
+	void ApplyMeshEmissive();
 
 	FString GetZoneLogName() const;
 

@@ -23,6 +23,7 @@ Plugins/**/DerivedDataCache/
 /Content/HistoricalMueseum/
 /Content/Mabushii/
 /Content/QuestSystem/
+/Content/QuestSystem_Notebook/
 
 # Build folder: ignore generated build content, but keep useful project metadata/icons/blacklists
 # 하위 폴더를 먼저 되살려야(!/Build/**/) git이 안쪽까지 내려가서 아래 예외가 동작한다

@@ -156,24 +156,13 @@ void AScenarioLoopStarterActor::HandleScenarioCompleted(FName CompletedScenarioI
 	ScreenFadeSubsystem->StartFadeOut(ScenarioCompleteFadeDurationSeconds, ScenarioCompleteFadeDelaySeconds);
 }
 
-void AScenarioLoopStarterActor::HandleScenarioTimeExpired(FName ExpiredScenarioId)
-{
-	if (ExpiredScenarioId != ScenarioId || bTransitionPending)
-	{
-		return;
-	}
-
-	if (UScenarioManagerSubsystem* ScenarioManager = GetWorld() ? GetWorld()->GetSubsystem<UScenarioManagerSubsystem>() : nullptr)
-	{
-		ScenarioManager->FailCurrentScenarioByTimeExpired();
-	}
-}
-
 void AScenarioLoopStarterActor::HandleScenarioFailed(FName FailedScenarioId, EScenarioFailureReason FailureReason)
 {
-	(void)FailureReason;
-
-	if (!bRestartOnRuleViolation || FailedScenarioId != ScenarioId || bTransitionPending)
+	const bool bShouldRestart =
+		FailureReason == EScenarioFailureReason::TimeExpired
+		|| FailureReason == EScenarioFailureReason::BatteryDepleted
+		|| bRestartOnRuleViolation;
+	if (!bShouldRestart || FailedScenarioId != ScenarioId || bTransitionPending)
 	{
 		return;
 	}
@@ -191,7 +180,8 @@ void AScenarioLoopStarterActor::HandleScenarioFailed(FName FailedScenarioId, ESc
 	// 유예 시간 동안 위반 연출(눈구멍 등장 등)이 진행되고, 그 뒤 페이드아웃이 시작됩니다.
 	BindFadeFinished();
 	ScreenFadeSubsystem->SetFadeColor(ScenarioCompleteFadeColor);
-	ScreenFadeSubsystem->StartFadeOut(ScenarioCompleteFadeDurationSeconds, FailureFadeDelaySeconds);
+	const float RestartFadeDelaySeconds = FailureReason == EScenarioFailureReason::RuleViolation ? FailureFadeDelaySeconds : 0.0f;
+	ScreenFadeSubsystem->StartFadeOut(ScenarioCompleteFadeDurationSeconds, RestartFadeDelaySeconds);
 }
 
 void AScenarioLoopStarterActor::HandleFadeFinished(float TargetAlpha)
@@ -633,7 +623,6 @@ void AScenarioLoopStarterActor::BindScenarioCompletion()
 	BoundScenarioManager = ScenarioManager;
 	ScenarioManager->OnScenarioCompleted.AddUniqueDynamic(this, &AScenarioLoopStarterActor::HandleScenarioCompleted);
 	ScenarioManager->OnScenarioFailed.AddUniqueDynamic(this, &AScenarioLoopStarterActor::HandleScenarioFailed);
-	ScenarioManager->OnScenarioTimeExpired.AddUniqueDynamic(this, &AScenarioLoopStarterActor::HandleScenarioTimeExpired);
 }
 
 void AScenarioLoopStarterActor::UnbindScenarioCompletion()
@@ -642,7 +631,6 @@ void AScenarioLoopStarterActor::UnbindScenarioCompletion()
 	{
 		ScenarioManager->OnScenarioCompleted.RemoveDynamic(this, &AScenarioLoopStarterActor::HandleScenarioCompleted);
 		ScenarioManager->OnScenarioFailed.RemoveDynamic(this, &AScenarioLoopStarterActor::HandleScenarioFailed);
-		ScenarioManager->OnScenarioTimeExpired.RemoveDynamic(this, &AScenarioLoopStarterActor::HandleScenarioTimeExpired);
 	}
 	BoundScenarioManager.Reset();
 }

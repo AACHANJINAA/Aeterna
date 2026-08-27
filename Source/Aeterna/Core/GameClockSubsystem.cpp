@@ -92,6 +92,16 @@ void UGameClockSubsystem::AdvanceClockMinutes(int32 MinutesToAdvance)
 	SetClockMinutesInternal(CurrentClockMinutes + MinutesToAdvance);
 }
 
+void UGameClockSubsystem::SetClockMinutes(int32 NewClockMinutes)
+{
+	if (bFinished)
+	{
+		return;
+	}
+
+	SetClockMinutesInternal(NewClockMinutes);
+}
+
 void UGameClockSubsystem::SetClockMinutesInternal(int32 NewClockMinutes)
 {
 	const int32 PreviousClockMinutes = CurrentClockMinutes;

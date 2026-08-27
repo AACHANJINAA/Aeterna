@@ -117,6 +117,9 @@ public:
 	UFUNCTION(BlueprintPure, Category="Scan")
 	FName GetResolvedScanPointId() const { return ScanPointId.IsNone() ? GetFName() : ScanPointId; }
 
+	UFUNCTION(BlueprintPure, Category="Scan")
+	bool CountsAsScanPoint() const { return bCountsAsScanPoint; }
+
 	UFUNCTION(BlueprintPure, Category="Scenario")
 	bool IsActiveForScenario(FName ScenarioId) const { return ActiveScenarioIds.Num() == 0 || ActiveScenarioIds.Contains(ScenarioId); }
 

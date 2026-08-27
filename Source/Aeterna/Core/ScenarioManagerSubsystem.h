@@ -106,6 +106,7 @@ public:
 private:
 	void SetRunState(EScenarioRunState NewRunState);
 	void FailCurrentScenario(EScenarioFailureReason FailureReason);
+	void CheckScenarioTimeExpired();
 	void ShowLoopDebugLog() const;
 	void UpdateLoopTimeDebugLog() const;
 	FString BuildLoopDebugLogText() const;

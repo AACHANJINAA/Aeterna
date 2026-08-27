@@ -3,6 +3,7 @@
 #include "Player/AeternaCharacter.h"
 
 #include "Aeterna.h"
+#include "Core/GameClockSubsystem.h"
 #include "Core/ScenarioManagerSubsystem.h"
 #include "Core/ScenarioLoopStarterActor.h"
 #include "Interaction/AeternaCarryInteractableActor.h"
@@ -332,6 +333,7 @@ void AAeternaCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindKey(EKeys::One, IE_Pressed, this, &AAeternaCharacter::DebugStartScenarioDay1);
 	PlayerInputComponent->BindKey(EKeys::Two, IE_Pressed, this, &AAeternaCharacter::DebugStartScenarioDay2);
 	PlayerInputComponent->BindKey(EKeys::Three, IE_Pressed, this, &AAeternaCharacter::DebugStartScenarioDay3);
+	PlayerInputComponent->BindKey(EKeys::Four, IE_Pressed, this, &AAeternaCharacter::DebugSetClockTo0459);
 #endif
 }
 
@@ -672,6 +674,16 @@ void AAeternaCharacter::AdvanceDebugClock()
 	{
 		ClockComponent->AdvanceDebugClockStep();
 	}
+}
+
+void AAeternaCharacter::DebugSetClockTo0459()
+{
+#if !UE_BUILD_SHIPPING
+	if (UGameClockSubsystem* GameClockSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UGameClockSubsystem>() : nullptr)
+	{
+		GameClockSubsystem->SetClockMinutes(299);
+	}
+#endif
 }
 
 void AAeternaCharacter::DebugStartScenarioDay1()
