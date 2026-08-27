@@ -22,36 +22,24 @@ UAeternaNotebookHudComponent::UAeternaNotebookHudComponent()
 
 	JournalTextSlots =
 	{
-		{ EAeternaNotebookPage::Todo, TEXT("NotebookDate"), FText::FromString(TEXT("NIGHT 01 / TO DO")), FText::FromString(TEXT("NIGHT 02 / TO DO")), FText::FromString(TEXT("NIGHT 03 / TO DO")) },
-		{ EAeternaNotebookPage::Warnings, TEXT("NotebookDate"), FText::FromString(TEXT("NIGHT 01 / WARNINGS")), FText::FromString(TEXT("NIGHT 02 / WARNINGS")), FText::FromString(TEXT("NIGHT 03 / WARNINGS")) },
-		{ EAeternaNotebookPage::Controls, TEXT("NotebookDate"), FText::FromString(TEXT("NIGHT 01 / CONTROLS")), FText::FromString(TEXT("NIGHT 02 / CONTROLS")), FText::FromString(TEXT("NIGHT 03 / CONTROLS")) },
-		{ EAeternaNotebookPage::Todo, TEXT("QuestName"), FText::FromString(TEXT("M-05 MAINTENANCE LOG / TO DO")), FText::FromString(TEXT("M-05 MAINTENANCE LOG / TO DO")), FText::FromString(TEXT("M-05 MAINTENANCE LOG / TO DO")) },
-		{ EAeternaNotebookPage::Warnings, TEXT("QuestName"), FText::FromString(TEXT("M-05 MAINTENANCE LOG / WARNINGS")), FText::FromString(TEXT("M-05 MAINTENANCE LOG / WARNINGS")), FText::FromString(TEXT("M-05 MAINTENANCE LOG / WARNINGS")) },
-		{ EAeternaNotebookPage::Controls, TEXT("QuestName"), FText::FromString(TEXT("M-05 MAINTENANCE LOG / CONTROLS")), FText::FromString(TEXT("M-05 MAINTENANCE LOG / CONTROLS")), FText::FromString(TEXT("M-05 MAINTENANCE LOG / CONTROLS")) },
+		{ EAeternaNotebookPage::Todo, TEXT("QuestName"), FText::FromString(TEXT("M-05 MAINTENANCE LOG")), FText::FromString(TEXT("M-05 RESTORATION LOG")), FText::FromString(TEXT("M-05 LIGHTING LOG")) },
+		{ EAeternaNotebookPage::Warnings, TEXT("QuestName"), FText::FromString(TEXT("M-05 RISK NOTICE")), FText::FromString(TEXT("M-05 HANDLING NOTICE")), FText::FromString(TEXT("M-05 ELECTRICAL NOTICE")) },
+		{ EAeternaNotebookPage::Controls, TEXT("QuestName"), FText::FromString(TEXT("M-05 OPERATOR GUIDE")), FText::FromString(TEXT("M-05 OPERATOR GUIDE")), FText::FromString(TEXT("M-05 OPERATOR GUIDE")) },
 		{ EAeternaNotebookPage::Todo, TEXT("QuestCategory"), FText::FromString(TEXT("TO DO")), FText::FromString(TEXT("TO DO")), FText::FromString(TEXT("TO DO")) },
 		{ EAeternaNotebookPage::Warnings, TEXT("QuestCategory"), FText::FromString(TEXT("WARNINGS")), FText::FromString(TEXT("WARNINGS")), FText::FromString(TEXT("WARNINGS")) },
 		{ EAeternaNotebookPage::Controls, TEXT("QuestCategory"), FText::FromString(TEXT("CONTROLS")), FText::FromString(TEXT("CONTROLS")), FText::FromString(TEXT("CONTROLS")) },
-		{ EAeternaNotebookPage::Todo, TEXT("QuestRegion"), FText::FromString(TEXT("NIGHT 01")), FText::FromString(TEXT("NIGHT 02")), FText::FromString(TEXT("NIGHT 03")) },
-		{ EAeternaNotebookPage::Warnings, TEXT("QuestRegion"), FText::FromString(TEXT("NIGHT 01")), FText::FromString(TEXT("NIGHT 02")), FText::FromString(TEXT("NIGHT 03")) },
-		{ EAeternaNotebookPage::Controls, TEXT("QuestRegion"), FText::FromString(TEXT("NIGHT 01")), FText::FromString(TEXT("NIGHT 02")), FText::FromString(TEXT("NIGHT 03")) },
-		{ EAeternaNotebookPage::Todo, TEXT("TXT_SelectGuide"), FText::FromString(TEXT("Select a log category with W/S.")), FText::FromString(TEXT("Select a log category with W/S.")), FText::FromString(TEXT("Select a log category with W/S.")) },
-		{ EAeternaNotebookPage::Warnings, TEXT("TXT_SelectGuide"), FText::FromString(TEXT("Select a log category with W/S.")), FText::FromString(TEXT("Select a log category with W/S.")), FText::FromString(TEXT("Select a log category with W/S.")) },
-		{ EAeternaNotebookPage::Controls, TEXT("TXT_SelectGuide"), FText::FromString(TEXT("Select a log category with W/S.")), FText::FromString(TEXT("Select a log category with W/S.")), FText::FromString(TEXT("Select a log category with W/S.")) },
-		{ EAeternaNotebookPage::Todo, TEXT("RuleTitle01"), FText::FromString(TEXT("Primary Objective")), FText::FromString(TEXT("Primary Objective")), FText::FromString(TEXT("Primary Objective")) },
-		{ EAeternaNotebookPage::Todo, TEXT("RuleBody01"), FText::FromString(TEXT("Review the current maintenance task.")), FText::FromString(TEXT("Restore the displaced remains.")), FText::FromString(TEXT("Find and shut down the forbidden lights.")) },
-		{ EAeternaNotebookPage::Todo, TEXT("Description"), FText::FromString(TEXT("Task Details")), FText::FromString(TEXT("Task Details")), FText::FromString(TEXT("Task Details")) },
-		{ EAeternaNotebookPage::Todo, TEXT("Descriptions"), FText::FromString(TEXT("Review the current maintenance task.")), FText::FromString(TEXT("Restore the displaced remains.")), FText::FromString(TEXT("Find and shut down the forbidden lights.")) },
-		{ EAeternaNotebookPage::Todo, TEXT("QuestSection"), FText::FromString(TEXT("Review the current maintenance task.")), FText::FromString(TEXT("Restore the displaced remains.")), FText::FromString(TEXT("Find and shut down the forbidden lights.")) },
-		{ EAeternaNotebookPage::Warnings, TEXT("RuleTitle01"), FText::FromString(TEXT("Night Warning")), FText::FromString(TEXT("Night Warning")), FText::FromString(TEXT("Night Warning")) },
-		{ EAeternaNotebookPage::Warnings, TEXT("RuleBody01"), FText::FromString(TEXT("Do not ignore deviations from the maintenance log.")), FText::FromString(TEXT("Return each item to its proper place before moving on.")), FText::FromString(TEXT("Keep watch for lights that should not be active.")) },
-		{ EAeternaNotebookPage::Warnings, TEXT("Description"), FText::FromString(TEXT("Warning Notes")), FText::FromString(TEXT("Warning Notes")), FText::FromString(TEXT("Warning Notes")) },
-		{ EAeternaNotebookPage::Warnings, TEXT("Descriptions"), FText::FromString(TEXT("Do not ignore deviations from the maintenance log.")), FText::FromString(TEXT("Return each item to its proper place before moving on.")), FText::FromString(TEXT("Keep watch for lights that should not be active.")) },
-		{ EAeternaNotebookPage::Warnings, TEXT("QuestSection"), FText::FromString(TEXT("Do not ignore deviations from the maintenance log.")), FText::FromString(TEXT("Return each item to its proper place before moving on.")), FText::FromString(TEXT("Keep watch for lights that should not be active.")) },
-		{ EAeternaNotebookPage::Controls, TEXT("RuleTitle01"), FText::FromString(TEXT("Notebook Control")), FText::FromString(TEXT("Notebook Control")), FText::FromString(TEXT("Notebook Control")) },
-		{ EAeternaNotebookPage::Controls, TEXT("RuleBody01"), FText::FromString(TEXT("Press W or S to change pages. Press TAB to close the notebook.")), FText::FromString(TEXT("Press W or S to change pages. Press TAB to close the notebook.")), FText::FromString(TEXT("Press W or S to change pages. Press TAB to close the notebook.")) },
-		{ EAeternaNotebookPage::Controls, TEXT("Description"), FText::FromString(TEXT("Control Guide")), FText::FromString(TEXT("Control Guide")), FText::FromString(TEXT("Control Guide")) },
-		{ EAeternaNotebookPage::Controls, TEXT("Descriptions"), FText::FromString(TEXT("W/S: change notebook page\nTAB: close notebook\nE: interact\nF: toggle headlamp")), FText::FromString(TEXT("W/S: change notebook page\nTAB: close notebook\nE: interact\nF: toggle headlamp")), FText::FromString(TEXT("W/S: change notebook page\nTAB: close notebook\nE: interact\nF: toggle headlamp")) },
-		{ EAeternaNotebookPage::Controls, TEXT("QuestSection"), FText::FromString(TEXT("Press W or S to change pages. Press TAB to close the notebook.")), FText::FromString(TEXT("Press W or S to change pages. Press TAB to close the notebook.")), FText::FromString(TEXT("Press W or S to change pages. Press TAB to close the notebook.")) }
+		{ EAeternaNotebookPage::Todo, TEXT("QuestRegion"), FText::FromString(TEXT("DAY 01")), FText::FromString(TEXT("DAY 02")), FText::FromString(TEXT("DAY 03")) },
+		{ EAeternaNotebookPage::Warnings, TEXT("QuestRegion"), FText::FromString(TEXT("DAY 01")), FText::FromString(TEXT("DAY 02")), FText::FromString(TEXT("DAY 03")) },
+		{ EAeternaNotebookPage::Controls, TEXT("QuestRegion"), FText::FromString(TEXT("CONTROLS")), FText::FromString(TEXT("CONTROLS")), FText::FromString(TEXT("CONTROLS")) },
+		{ EAeternaNotebookPage::Todo, TEXT("TXT_SelectGuide"), FText::FromString(TEXT("A/D: Day  |  W/S: Category")), FText::FromString(TEXT("A/D: Day  |  W/S: Category")), FText::FromString(TEXT("A/D: Day  |  W/S: Category")) },
+		{ EAeternaNotebookPage::Warnings, TEXT("TXT_SelectGuide"), FText::FromString(TEXT("A/D: Day  |  W/S: Category")), FText::FromString(TEXT("A/D: Day  |  W/S: Category")), FText::FromString(TEXT("A/D: Day  |  W/S: Category")) },
+		{ EAeternaNotebookPage::Controls, TEXT("TXT_SelectGuide"), FText::FromString(TEXT("W/S: Category")), FText::FromString(TEXT("W/S: Category")), FText::FromString(TEXT("W/S: Category")) },
+		{ EAeternaNotebookPage::Todo, TEXT("Description"), FText::FromString(TEXT("Assigned Work")), FText::FromString(TEXT("Assigned Work")), FText::FromString(TEXT("Assigned Work")) },
+		{ EAeternaNotebookPage::Todo, TEXT("Descriptions"), FText::FromString(TEXT("Scan the display case fossil.\nRecover one battery pack.\nScan the Tirano information board.")), FText::FromString(TEXT("Restore twelve displaced bones.\nPlace each remain at the fossil restoration area.\nConfirm progress before leaving the hall.")), FText::FromString(TEXT("Find the abnormal blue lamps.\nTurn off every forbidden light.\nReturn to the office after the circuit is stable.")) },
+		{ EAeternaNotebookPage::Warnings, TEXT("Description"), FText::FromString(TEXT("Operational Caution")), FText::FromString(TEXT("Operational Caution")), FText::FromString(TEXT("Operational Caution")) },
+		{ EAeternaNotebookPage::Warnings, TEXT("Descriptions"), FText::FromString(TEXT("Do not scan unrelated exhibits.\nKeep headlamp usage brief.\nIf the log differs from the room, trust the log first.")), FText::FromString(TEXT("Do not carry remains outside the restoration route.\nDo not place bones on unmarked furniture.\nCheck the radar before moving to the next remain.")), FText::FromString(TEXT("Do not ignore active blue light.\nDo not stay under unstable lamps.\nUse the radar to confirm forbidden light targets.")) },
+		{ EAeternaNotebookPage::Controls, TEXT("Description"), FText::FromString(TEXT("Input Reference")), FText::FromString(TEXT("Input Reference")), FText::FromString(TEXT("Input Reference")) },
+		{ EAeternaNotebookPage::Controls, TEXT("Descriptions"), FText::FromString(TEXT("WASD: Move\nMouse Movement: Adjust View / FOV\nE: Interact\nF: Headlamp On/Off\nShift: Sprint")), FText::FromString(TEXT("WASD: Move\nMouse Movement: Adjust View / FOV\nE: Interact\nF: Headlamp On/Off\nShift: Sprint")), FText::FromString(TEXT("WASD: Move\nMouse Movement: Adjust View / FOV\nE: Interact\nF: Headlamp On/Off\nShift: Sprint")) }
 	};
 
 	JournalTextBlockNames =
@@ -135,6 +123,7 @@ void UAeternaNotebookHudComponent::SetNotebookOpen(bool bOpen)
 	if (bOpen)
 	{
 		CurrentNotebookPage = EAeternaNotebookPage::Todo;
+		CurrentNotebookDayIndex = GetCurrentScenarioNotebookDayIndex();
 		ApplyNotebookJournalText();
 		UpdateNotebookJournalPosition();
 		NotebookJournalWidget->SetRenderOpacity(FMath::Clamp(JournalRenderOpacity, 0.0f, 1.0f));
@@ -143,6 +132,7 @@ void UAeternaNotebookHudComponent::SetNotebookOpen(bool bOpen)
 	else
 	{
 		bNotebookPageInputHeld = false;
+		bNotebookDayInputHeld = false;
 		NotebookJournalWidget->SetVisibility(ESlateVisibility::Collapsed);
 	}
 }
@@ -165,6 +155,26 @@ void UAeternaNotebookHudComponent::ShowNextNotebookPage()
 	const int32 CurrentPageIndex = static_cast<int32>(CurrentNotebookPage);
 	const int32 NextPageIndex = (CurrentPageIndex + 1) % 3;
 	SetNotebookPage(static_cast<EAeternaNotebookPage>(NextPageIndex));
+}
+
+void UAeternaNotebookHudComponent::ShowPreviousNotebookDay()
+{
+	const int32 PreviousDayIndex = FMath::Max(0, CurrentNotebookDayIndex - 1);
+	if (PreviousDayIndex != CurrentNotebookDayIndex)
+	{
+		CurrentNotebookDayIndex = PreviousDayIndex;
+		ApplyNotebookJournalText();
+	}
+}
+
+void UAeternaNotebookHudComponent::ShowNextNotebookDay()
+{
+	const int32 NextDayIndex = FMath::Min(2, CurrentNotebookDayIndex + 1);
+	if (NextDayIndex != CurrentNotebookDayIndex)
+	{
+		CurrentNotebookDayIndex = NextDayIndex;
+		ApplyNotebookJournalText();
+	}
 }
 
 void UAeternaNotebookHudComponent::CreateNotebookHudWidget()
@@ -326,6 +336,7 @@ void UAeternaNotebookHudComponent::ApplyNotebookJournalText()
 	const FText NotebookText = ResolveNotebookText();
 	bool bAppliedText = false;
 
+	ApplyNotebookSectionVisibility();
 	ApplyNotebookNavigationText();
 
 	for (const FAeternaNotebookTextSlot& TextSlot : JournalTextSlots)
@@ -403,12 +414,30 @@ void UAeternaNotebookHudComponent::ApplyNotebookNavigationText()
 			: FText::FromString(TEXT("  CONTROLS")));
 }
 
+void UAeternaNotebookHudComponent::ApplyNotebookSectionVisibility()
+{
+	SetNamedWidgetVisibility(TEXT("BasicRuleBox"), ESlateVisibility::Collapsed);
+	SetNamedWidgetVisibility(TEXT("RewardBox_1"), ESlateVisibility::Collapsed);
+	SetNamedWidgetVisibility(TEXT("DescriptionBox_1"), ESlateVisibility::Collapsed);
+
+	SetNamedWidgetVisibility(TEXT("QuestDetailBox"), ESlateVisibility::HitTestInvisible);
+	SetNamedWidgetVisibility(TEXT("DescriptionBox"), ESlateVisibility::HitTestInvisible);
+	SetNamedWidgetVisibility(TEXT("VerticalBox_129"), ESlateVisibility::HitTestInvisible);
+
+	SetNamedWidgetVisibility(TEXT("RewardBox"), ESlateVisibility::Collapsed);
+	SetNamedWidgetVisibility(TEXT("QuestGoalsBox"), ESlateVisibility::Collapsed);
+	SetNamedWidgetVisibility(TEXT("ObservationBox"), ESlateVisibility::Collapsed);
+	SetNamedWidgetVisibility(TEXT("Status_Complete_Box"), ESlateVisibility::Collapsed);
+	SetNamedWidgetVisibility(TEXT("Status_InProgress_Box"), ESlateVisibility::Collapsed);
+}
+
 void UAeternaNotebookHudComponent::ProcessNotebookPageInput()
 {
 	const AAeternaCharacter* AeternaCharacter = GetAeternaCharacter();
 	if (!AeternaCharacter || !AeternaCharacter->IsNotebookOpen())
 	{
 		bNotebookPageInputHeld = false;
+		bNotebookDayInputHeld = false;
 		return;
 	}
 
@@ -425,25 +454,40 @@ void UAeternaNotebookHudComponent::ProcessNotebookPageInput()
 
 	const bool bWDown = PlayerController->IsInputKeyDown(EKeys::W);
 	const bool bSDown = PlayerController->IsInputKeyDown(EKeys::S);
+	const bool bADown = PlayerController->IsInputKeyDown(EKeys::A);
+	const bool bDDown = PlayerController->IsInputKeyDown(EKeys::D);
 	if (!bWDown && !bSDown)
 	{
 		bNotebookPageInputHeld = false;
-		return;
+	}
+	else if (!bNotebookPageInputHeld)
+	{
+		bNotebookPageInputHeld = true;
+		if (bWDown)
+		{
+			ShowPreviousNotebookPage();
+		}
+		else
+		{
+			ShowNextNotebookPage();
+		}
 	}
 
-	if (bNotebookPageInputHeld)
+	if (!bADown && !bDDown)
 	{
-		return;
+		bNotebookDayInputHeld = false;
 	}
-
-	bNotebookPageInputHeld = true;
-	if (bWDown)
+	else if (!bNotebookDayInputHeld)
 	{
-		ShowPreviousNotebookPage();
-	}
-	else
-	{
-		ShowNextNotebookPage();
+		bNotebookDayInputHeld = true;
+		if (bADown)
+		{
+			ShowPreviousNotebookDay();
+		}
+		else
+		{
+			ShowNextNotebookDay();
+		}
 	}
 }
 
@@ -457,6 +501,23 @@ bool UAeternaNotebookHudComponent::SetNamedTextBlock(FName TextBlockName, const 
 	if (UTextBlock* TextBlock = FindTextBlockWithinWidget(NotebookJournalWidget->WidgetTree->FindWidget(TextBlockName)))
 	{
 		TextBlock->SetText(Text);
+		TextBlock->SetRenderOpacity(1.0f);
+		return true;
+	}
+
+	return false;
+}
+
+bool UAeternaNotebookHudComponent::SetNamedWidgetVisibility(FName WidgetName, ESlateVisibility Visibility)
+{
+	if (WidgetName.IsNone() || !NotebookJournalWidget || !NotebookJournalWidget->WidgetTree)
+	{
+		return false;
+	}
+
+	if (UWidget* Widget = NotebookJournalWidget->WidgetTree->FindWidget(WidgetName))
+	{
+		Widget->SetVisibility(Visibility);
 		return true;
 	}
 
@@ -518,40 +579,70 @@ UTextBlock* UAeternaNotebookHudComponent::FindTextBlockWithinWidget(UWidget* Roo
 	return nullptr;
 }
 
-FText UAeternaNotebookHudComponent::ResolveNotebookSlotText(const FAeternaNotebookTextSlot& TextSlot) const
+int32 UAeternaNotebookHudComponent::GetCurrentScenarioNotebookDayIndex() const
 {
 	const UScenarioManagerSubsystem* ScenarioManager = GetWorld() ? GetWorld()->GetSubsystem<UScenarioManagerSubsystem>() : nullptr;
 	const FName CurrentScenarioId = ScenarioManager ? ScenarioManager->GetCurrentScenarioId() : NAME_None;
 
 	if (CurrentScenarioId == TEXT("S02_GrandHallFossil"))
 	{
-		return TextSlot.Scenario2Text;
+		return 1;
 	}
 
 	if (CurrentScenarioId == TEXT("S03_ForbiddenLight"))
 	{
-		return TextSlot.Scenario3Text;
+		return 2;
 	}
 
-	return TextSlot.Scenario1Text;
+	return 0;
+}
+
+int32 UAeternaNotebookHudComponent::GetUnlockedNotebookDayIndex() const
+{
+	return GetCurrentScenarioNotebookDayIndex();
+}
+
+bool UAeternaNotebookHudComponent::IsNotebookDayLocked() const
+{
+	if (CurrentNotebookPage == EAeternaNotebookPage::Controls)
+	{
+		return false;
+	}
+
+	return CurrentNotebookDayIndex > GetUnlockedNotebookDayIndex();
+}
+
+FText UAeternaNotebookHudComponent::ResolveNotebookSlotText(const FAeternaNotebookTextSlot& TextSlot) const
+{
+	if (IsNotebookDayLocked()
+		&& TextSlot.TextBlockName != FName(TEXT("QuestRegion"))
+		&& TextSlot.TextBlockName != FName(TEXT("TXT_SelectGuide")))
+	{
+		return FText::FromString(TEXT("???"));
+	}
+
+	switch (FMath::Clamp(CurrentNotebookDayIndex, 0, 2))
+	{
+	case 1:
+		return TextSlot.Scenario2Text;
+	case 2:
+		return TextSlot.Scenario3Text;
+	default:
+		return TextSlot.Scenario1Text;
+	}
 }
 
 FText UAeternaNotebookHudComponent::ResolveNotebookText() const
 {
-	const UScenarioManagerSubsystem* ScenarioManager = GetWorld() ? GetWorld()->GetSubsystem<UScenarioManagerSubsystem>() : nullptr;
-	const FName CurrentScenarioId = ScenarioManager ? ScenarioManager->GetCurrentScenarioId() : NAME_None;
-
-	if (CurrentScenarioId == TEXT("S02_GrandHallFossil"))
+	switch (FMath::Clamp(CurrentNotebookDayIndex, 0, 2))
 	{
+	case 1:
 		return Scenario2NotebookText;
-	}
-
-	if (CurrentScenarioId == TEXT("S03_ForbiddenLight"))
-	{
+	case 2:
 		return Scenario3NotebookText;
+	default:
+		return Scenario1NotebookText;
 	}
-
-	return Scenario1NotebookText;
 }
 
 UTexture2D* UAeternaNotebookHudComponent::ResolveNotebookIconTexture() const

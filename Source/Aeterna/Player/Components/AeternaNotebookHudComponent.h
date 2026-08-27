@@ -78,6 +78,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Notebook|HUD")
 	void ShowNextNotebookPage();
 
+	UFUNCTION(BlueprintCallable, Category="Notebook|HUD")
+	void ShowPreviousNotebookDay();
+
+	UFUNCTION(BlueprintCallable, Category="Notebook|HUD")
+	void ShowNextNotebookDay();
+
 	UFUNCTION(BlueprintPure, Category="Notebook|HUD")
 	EAeternaNotebookPage GetNotebookPage() const { return CurrentNotebookPage; }
 
@@ -126,7 +132,7 @@ protected:
 	float JournalViewportHeightRatio = 0.5f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Notebook|Journal", meta=(ClampMin="0.0", ClampMax="1.0"))
-	float JournalRenderOpacity = 0.86f;
+	float JournalRenderOpacity = 1.0f;
 
 	/** Designer에 배치된 TextBlock 이름별로, 노트가 열릴 때 C++이 넣어줄 문구입니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Notebook|Journal")
@@ -143,10 +149,15 @@ private:
 	void UpdateNotebookJournalPosition();
 	void ApplyNotebookJournalText();
 	void ApplyNotebookNavigationText();
+	void ApplyNotebookSectionVisibility();
 	void ProcessNotebookPageInput();
 	bool SetNamedTextBlock(FName TextBlockName, const FText& Text);
 	void SetFirstMatchingTextBlock(const TArray<FName>& TextBlockNames, const FText& Text);
+	bool SetNamedWidgetVisibility(FName WidgetName, ESlateVisibility Visibility);
 	UTextBlock* FindTextBlockWithinWidget(UWidget* RootWidget) const;
+	int32 GetCurrentScenarioNotebookDayIndex() const;
+	int32 GetUnlockedNotebookDayIndex() const;
+	bool IsNotebookDayLocked() const;
 	FText ResolveNotebookSlotText(const FAeternaNotebookTextSlot& TextSlot) const;
 	FText ResolveNotebookText() const;
 	UTexture2D* ResolveNotebookIconTexture() const;
@@ -160,5 +171,7 @@ private:
 	TObjectPtr<UUserWidget> NotebookJournalWidget;
 
 	EAeternaNotebookPage CurrentNotebookPage = EAeternaNotebookPage::Todo;
+	int32 CurrentNotebookDayIndex = 0;
 	bool bNotebookPageInputHeld = false;
+	bool bNotebookDayInputHeld = false;
 };
