@@ -20,6 +20,7 @@ class UAeternaClockComponent;
 class UAeternaHeadBobComponent;
 class UAeternaInteractionComponent;
 class UAeternaInteractionPromptComponent;
+class UAeternaNotebookHudComponent;
 class UAeternaObjectiveHudComponent;
 class UAeternaRadarHudComponent;
 class UAeternaScanProgressComponent;
@@ -91,6 +92,10 @@ class AAeternaCharacter : public ACharacter
 	/** 현재 시나리오 목표 HUD 표시 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UAeternaObjectiveHudComponent* ObjectiveHudComponent;
+
+	/** 노트 획득 뒤 좌상단 수첩 아이콘 표시 처리 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaNotebookHudComponent* NotebookHudComponent;
 
 	/** 목표 위치를 기계식 레이더 HUD로 표시합니다. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
@@ -174,6 +179,32 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Notebook", meta = (AllowPrivateAccess = "true"))
 	bool bNotebookOpen = false;
 
+	/** 테스트/디버그용으로 시작부터 수첩을 가진 상태로 둘지 여부입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Notebook", meta = (AllowPrivateAccess = "true"))
+	bool bStartWithNotebook = false;
+
+	/** 노트 픽업을 통해 수첩 UI 사용 권한을 얻었는지 여부입니다. */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Notebook", meta = (AllowPrivateAccess = "true"))
+	bool bNotebookAcquired = false;
+
+	/** QuestSystem_Notebook 레퍼런스 위젯의 기존 그래프 호환용 관찰 완료 플래그입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="QuestSystem|Compatibility")
+	bool Observation01Complete = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="QuestSystem|Compatibility")
+	bool Observation02Complete = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="QuestSystem|Compatibility")
+	bool Observation03Complete = false;
+
+	/** QuestSystem_Notebook 레퍼런스 위젯의 기존 그래프 호환용 스캔 개수입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="QuestSystem|Compatibility")
+	int32 ScanCount = 0;
+
+	/** 노트가 열려 있을 때 W/S 페이지 넘김이 반복 입력되지 않도록 막습니다. */
+	UPROPERTY(Transient)
+	bool bNotebookNavigationInputHeld = false;
+
 	/** 현재 헤드램프가 켜져 있는지 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Headlamp", meta = (AllowPrivateAccess = "true"))
 	bool bHeadlampOn = false;
@@ -238,6 +269,22 @@ public:
 	/** Tab 입력 시 수첩 열림 상태를 전환합니다. */
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void ToggleNotebook();
+
+	/** 노트 픽업 등에서 수첩 UI 사용 가능 상태를 바꿉니다. */
+	UFUNCTION(BlueprintCallable, Category="Notebook")
+	virtual void SetNotebookAcquired(bool bAcquired);
+
+	/** 노트 획득 처리를 수행합니다. */
+	UFUNCTION(BlueprintCallable, Category="Notebook")
+	virtual void AcquireNotebook();
+
+	/** 수첩 열림 상태를 직접 지정합니다. 노트를 얻기 전에는 열 수 없습니다. */
+	UFUNCTION(BlueprintCallable, Category="Notebook")
+	virtual void SetNotebookOpen(bool bOpen);
+
+	/** 노트가 열린 동안 이동축 입력을 페이지 전환으로 소비합니다. */
+	UFUNCTION(BlueprintCallable, Category="Notebook")
+	virtual bool HandleNotebookNavigationInput(float ForwardAxis);
 
 	/** E 입력 시 시야 전방의 상호작용 대상을 호출합니다. */
 	UFUNCTION(BlueprintCallable, Category="Input")
@@ -326,6 +373,14 @@ public:
 	/** 수첩 상태가 바뀔 때 BP에서 UI 표시를 연결합니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Notebook", meta = (DisplayName = "Notebook State Changed"))
 	void BP_NotebookStateChanged(bool bOpen);
+
+	/** 노트를 획득하거나 잃어 수첩 UI 사용 가능 상태가 바뀔 때 BP에서 토글 아이콘 표시를 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Notebook", meta = (DisplayName = "Notebook Acquired Changed"))
+	void BP_NotebookAcquiredChanged(bool bAcquired);
+
+	/** 좌상단 노트 아이콘을 배치할 기본 뷰포트 위치입니다. */
+	UFUNCTION(BlueprintPure, Category="Notebook")
+	FVector2D GetNotebookIconViewportPosition() const { return FVector2D(32.0f, 32.0f); }
 
 	/** 헤드램프 상태가 바뀔 때 BP에서 조명 표시를 연결합니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Headlamp", meta = (DisplayName = "Headlamp State Changed"))
@@ -424,6 +479,10 @@ public:
 	/** Returns whether the notebook is currently open. **/
 	UFUNCTION(BlueprintPure, Category="Notebook")
 	bool IsNotebookOpen() const;
+
+	/** Returns whether the notebook UI has been unlocked by picking up the note. **/
+	UFUNCTION(BlueprintPure, Category="Notebook")
+	bool HasNotebook() const;
 
 	/** Returns whether the headlamp is currently on. **/
 	UFUNCTION(BlueprintPure, Category="Headlamp")

@@ -15,6 +15,7 @@
 #include "Player/Components/AeternaHeadBobComponent.h"
 #include "Player/Components/AeternaInteractionComponent.h"
 #include "Player/Components/AeternaInteractionPromptComponent.h"
+#include "Player/Components/AeternaNotebookHudComponent.h"
 #include "Player/Components/AeternaObjectiveHudComponent.h"
 #include "Player/Components/AeternaRadarHudComponent.h"
 #include "Player/Components/AeternaScanProgressComponent.h"
@@ -83,6 +84,7 @@ AAeternaCharacter::AAeternaCharacter()
 	InteractionComponent = CreateDefaultSubobject<UAeternaInteractionComponent>(TEXT("InteractionComponent"));
 	InteractionPromptComponent = CreateDefaultSubobject<UAeternaInteractionPromptComponent>(TEXT("InteractionPromptComponent"));
 	ObjectiveHudComponent = CreateDefaultSubobject<UAeternaObjectiveHudComponent>(TEXT("ObjectiveHudComponent"));
+	NotebookHudComponent = CreateDefaultSubobject<UAeternaNotebookHudComponent>(TEXT("NotebookHudComponent"));
 	RadarHudComponent = CreateDefaultSubobject<UAeternaRadarHudComponent>(TEXT("RadarHudComponent"));
 	ScanProgressComponent = CreateDefaultSubobject<UAeternaScanProgressComponent>(TEXT("ScanProgressComponent"));
 	CarryComponent = CreateDefaultSubobject<UAeternaCarryComponent>(TEXT("CarryComponent"));
@@ -106,6 +108,13 @@ AAeternaCharacter::AAeternaCharacter()
 void AAeternaCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	bNotebookAcquired = bStartWithNotebook;
+	if (!bNotebookAcquired)
+	{
+		bNotebookOpen = false;
+	}
+	BP_NotebookAcquiredChanged(bNotebookAcquired);
 
 	GetCharacterMovement()->MaxWalkSpeed = BasicWalkSpeed;
 	if (HeadBobComponent)
@@ -227,6 +236,16 @@ void AAeternaCharacter::BeginPlay()
 	ObjectiveHudComponent->InitializePlayerComponent(this);
 	ObjectiveHudComponent->RefreshObjectiveHud();
 
+	if (!NotebookHudComponent || NotebookHudComponent->GetOwner() != this)
+	{
+		NotebookHudComponent = NewObject<UAeternaNotebookHudComponent>(this, UAeternaNotebookHudComponent::StaticClass(), TEXT("NotebookHudComponentRuntime"));
+		NotebookHudComponent->RegisterComponent();
+		UE_LOG(LogAeterna, Warning, TEXT("[NotebookHUD] 런타임에 생성했습니다. BP_Player를 열어 Compile 후 Save 하십시오."));
+	}
+
+	NotebookHudComponent->InitializePlayerComponent(this);
+	NotebookHudComponent->UpdateNotebookHud();
+
 	if (!RadarHudComponent || RadarHudComponent->GetOwner() != this)
 	{
 		RadarHudComponent = NewObject<UAeternaRadarHudComponent>(this, UAeternaRadarHudComponent::StaticClass(), TEXT("RadarHudComponentRuntime"));
@@ -343,6 +362,11 @@ void AAeternaCharacter::MoveInput(const FInputActionValue& Value)
 	// get the Vector2D move axis
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
+	if (bNotebookOpen)
+	{
+		return;
+	}
+
 	// pass the axis values to the move input
 	DoMove(MovementVector.X, MovementVector.Y);
 
@@ -370,6 +394,11 @@ void AAeternaCharacter::DoAim(float Yaw, float Pitch)
 
 void AAeternaCharacter::DoMove(float Right, float Forward)
 {
+	if (bNotebookOpen)
+	{
+		return;
+	}
+
 	if (GetController())
 	{
 		// pass the move inputs
@@ -402,6 +431,11 @@ void AAeternaCharacter::DoJumpEnd()
 
 void AAeternaCharacter::StartBasicSprint()
 {
+	if (bNotebookOpen)
+	{
+		return;
+	}
+
 	bBasicSprinting = true;
 	GetCharacterMovement()->MaxWalkSpeed = BasicSprintSpeed;
 }
@@ -419,8 +453,95 @@ bool AAeternaCharacter::IsSprinting() const
 
 void AAeternaCharacter::ToggleNotebook()
 {
-	bNotebookOpen = !bNotebookOpen;
+	SetNotebookOpen(!bNotebookOpen);
+}
+
+void AAeternaCharacter::SetNotebookAcquired(bool bAcquired)
+{
+	if (bNotebookAcquired == bAcquired)
+	{
+		return;
+	}
+
+	bNotebookAcquired = bAcquired;
+
+	if (!bNotebookAcquired && bNotebookOpen)
+	{
+		bNotebookOpen = false;
+		BP_NotebookStateChanged(false);
+		if (NotebookHudComponent)
+		{
+			NotebookHudComponent->SetNotebookOpen(false);
+		}
+	}
+
+	BP_NotebookAcquiredChanged(bNotebookAcquired);
+
+	if (NotebookHudComponent)
+	{
+		NotebookHudComponent->UpdateNotebookHud();
+	}
+}
+
+void AAeternaCharacter::AcquireNotebook()
+{
+	SetNotebookAcquired(true);
+	SetNotebookOpen(true);
+}
+
+void AAeternaCharacter::SetNotebookOpen(bool bOpen)
+{
+	if (bOpen && !bNotebookAcquired)
+	{
+		BP_InteractionFailed();
+		return;
+	}
+
+	if (bNotebookOpen == bOpen)
+	{
+		return;
+	}
+
+	bNotebookOpen = bOpen;
+	bNotebookNavigationInputHeld = false;
+	if (NotebookHudComponent)
+	{
+		NotebookHudComponent->SetNotebookOpen(bNotebookOpen);
+	}
 	BP_NotebookStateChanged(bNotebookOpen);
+}
+
+bool AAeternaCharacter::HandleNotebookNavigationInput(float ForwardAxis)
+{
+	if (!bNotebookOpen || !NotebookHudComponent)
+	{
+		bNotebookNavigationInputHeld = false;
+		return false;
+	}
+
+	constexpr float PageInputThreshold = 0.5f;
+	if (FMath::Abs(ForwardAxis) < PageInputThreshold)
+	{
+		bNotebookNavigationInputHeld = false;
+		return true;
+	}
+
+	if (bNotebookNavigationInputHeld)
+	{
+		return true;
+	}
+
+	bNotebookNavigationInputHeld = true;
+	if (ForwardAxis > 0.0f)
+	{
+		NotebookHudComponent->ShowPreviousNotebookPage();
+	}
+	else
+	{
+		NotebookHudComponent->ShowNextNotebookPage();
+	}
+
+	return true;
 }
 
 void AAeternaCharacter::TryInteract()
@@ -614,6 +735,10 @@ bool AAeternaCharacter::RegisterScanPoint(FName ScanPointId)
 
 	const int32 CurrentCount = ScanProgressComponent->GetCompletedScanCount();
 	const int32 RequiredCount = ScanProgressComponent->GetRequiredScanCount();
+	ScanCount = CurrentCount;
+	Observation01Complete = CurrentCount >= 1;
+	Observation02Complete = CurrentCount >= 2;
+	Observation03Complete = CurrentCount >= 3;
 	BP_ScanProgressChanged(CurrentCount, RequiredCount);
 
 	if (RequiredCount > 0 && CurrentCount >= RequiredCount)
@@ -648,6 +773,10 @@ void AAeternaCharacter::ResetScanProgress()
 	if (ScanProgressComponent)
 	{
 		ScanProgressComponent->ResetScanProgress();
+		ScanCount = 0;
+		Observation01Complete = false;
+		Observation02Complete = false;
+		Observation03Complete = false;
 		BP_ScanProgressChanged(ScanProgressComponent->GetCompletedScanCount(), ScanProgressComponent->GetRequiredScanCount());
 	}
 }
@@ -729,6 +858,11 @@ void AAeternaCharacter::DebugStartScenarioById(FName ScenarioId)
 bool AAeternaCharacter::IsNotebookOpen() const
 {
 	return bNotebookOpen;
+}
+
+bool AAeternaCharacter::HasNotebook() const
+{
+	return bNotebookAcquired;
 }
 
 bool AAeternaCharacter::IsHeadlampOn() const
