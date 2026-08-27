@@ -3,8 +3,10 @@
 #include "Player/Components/AeternaRedLightRuleComponent.h"
 
 #include "Aeterna.h"
+#include "Core/BgmSubsystem.h"
 #include "Core/GameClockSubsystem.h"
 #include "Core/ScenarioManagerSubsystem.h"
+#include "Components/LightComponent.h"
 #include "EngineUtils.h"
 #include "Player/AeternaCharacter.h"
 #include "Player/Components/AeternaClockComponent.h"
@@ -54,7 +56,7 @@ void UAeternaRedLightRuleComponent::HandleScenarioStarted(FName ScenarioId)
 
 	if (bRuleActive)
 	{
-		RollTriggerMinutes();
+		ArmTriggerSchedule();
 	}
 }
 
@@ -92,14 +94,13 @@ void UAeternaRedLightRuleComponent::CacheLevelActors()
 	}
 }
 
-void UAeternaRedLightRuleComponent::RollTriggerMinutes()
+void UAeternaRedLightRuleComponent::ArmTriggerSchedule()
 {
 	// 배치가 아직 안 됐으면 무장하지 않습니다. 빨간 불도 경비실도 없는데
 	// 발동시키면 도망칠 곳이 없는 채로 제한 시간만 흘러 밤이 실패합니다.
 	if (RedLightActors.Num() == 0 || SafeZoneActors.Num() == 0)
 	{
 		RedLightState = EAeternaRedLightState::Done;
-		TriggerClockMinutes = 0;
 
 		UE_LOG(LogAeterna, Warning,
 			TEXT("[S03] 빨간 불 규칙을 건너뜁니다 — RedLight 액터 %d개, SafeZone 액터 %d개. 둘 다 하나 이상 배치해야 발동합니다."),
@@ -107,23 +108,54 @@ void UAeternaRedLightRuleComponent::RollTriggerMinutes()
 		return;
 	}
 
-	const int32 MinMinutes = FMath::Min(TriggerWindowMinMinutes, TriggerWindowMaxMinutes);
-	const int32 MaxMinutes = FMath::Max(TriggerWindowMinMinutes, TriggerWindowMaxMinutes);
-	TriggerClockMinutes = FMath::RandRange(MinMinutes, MaxMinutes);
+	if (TriggerClockMinutesSchedule.Num() == 0)
+	{
+		RedLightState = EAeternaRedLightState::Done;
+		UE_LOG(LogAeterna, Warning, TEXT("[S03] 빨간 불 발동 시각이 하나도 없습니다."));
+		return;
+	}
 
-	UE_LOG(LogAeterna, Log, TEXT("[S03] 적색 광원 발동 예정 시각 %02d:%02d"), TriggerClockMinutes / 60, TriggerClockMinutes % 60);
+	// 시각 순서가 뒤섞여 있어도 앞에서부터 차례로 보게 정렬합니다.
+	TriggerClockMinutesSchedule.Sort();
+	NextTriggerIndex = 0;
+
+	FString ScheduleText;
+	for (const int32 TriggerMinutes : TriggerClockMinutesSchedule)
+	{
+		ScheduleText += FString::Printf(TEXT("%02d:%02d "), TriggerMinutes / 60, TriggerMinutes % 60);
+	}
+	UE_LOG(LogAeterna, Log, TEXT("[S03] 적색 광원 발동 예정 %d회 — %s"), TriggerClockMinutesSchedule.Num(), *ScheduleText);
+}
+
+int32 UAeternaRedLightRuleComponent::GetNextTriggerClockMinutes() const
+{
+	return TriggerClockMinutesSchedule.IsValidIndex(NextTriggerIndex)
+		? TriggerClockMinutesSchedule[NextTriggerIndex]
+		: INDEX_NONE;
+}
+
+void UAeternaRedLightRuleComponent::SkipElapsedTriggers(int32 CurrentClockMinutes)
+{
+	// 도주 중에 다음 예정 시각이 지나갔으면 그것은 넘깁니다.
+	// 안 그러면 경비실에서 나오자마자 곧바로 다시 발동합니다.
+	while (TriggerClockMinutesSchedule.IsValidIndex(NextTriggerIndex)
+		&& TriggerClockMinutesSchedule[NextTriggerIndex] <= CurrentClockMinutes)
+	{
+		++NextTriggerIndex;
+	}
 }
 
 void UAeternaRedLightRuleComponent::ResetRedLightRule()
 {
 	SetRedLightsVisible(false);
 	ClearCountdownFromHud();
+	RestorePreviousBgm();
 
 	ActiveRedLightActor = nullptr;
 	RedLightState = EAeternaRedLightState::Waiting;
 	FleeRemainingSeconds = 0.0f;
 	SafeHoldRemainingSeconds = 0.0f;
-	TriggerClockMinutes = 0;
+	NextTriggerIndex = 0;
 }
 
 void UAeternaRedLightRuleComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -140,8 +172,10 @@ void UAeternaRedLightRuleComponent::TickComponent(float DeltaTime, ELevelTick Ti
 	case EAeternaRedLightState::Waiting:
 	{
 		const UGameClockSubsystem* GameClock = GetWorld() ? GetWorld()->GetSubsystem<UGameClockSubsystem>() : nullptr;
-		if (GameClock && TriggerClockMinutes > 0 && GameClock->GetClockMinutes() >= TriggerClockMinutes)
+		const int32 NextTriggerMinutes = GetNextTriggerClockMinutes();
+		if (GameClock && NextTriggerMinutes != INDEX_NONE && GameClock->GetClockMinutes() >= NextTriggerMinutes)
 		{
+			++NextTriggerIndex;
 			BeginFlee();
 		}
 		return;
@@ -196,13 +230,11 @@ void UAeternaRedLightRuleComponent::BeginFlee()
 	if (RedLightActors.Num() > 0)
 	{
 		ActiveRedLightActor = RedLightActors[FMath::RandRange(0, RedLightActors.Num() - 1)];
-		if (ActiveRedLightActor)
-		{
-			ActiveRedLightActor->SetActorHiddenInGame(false);
-		}
+		SetRedLightVisible(ActiveRedLightActor, true);
 	}
 
 	PushCountdownToHud(FleeRemainingSeconds);
+	StartRedLightBgm();
 
 	UE_LOG(LogAeterna, Log, TEXT("[S03] 비정상 점등 감지: 적색"));
 
@@ -214,12 +246,23 @@ void UAeternaRedLightRuleComponent::BeginFlee()
 
 void UAeternaRedLightRuleComponent::SurviveFlee()
 {
-	RedLightState = EAeternaRedLightState::Done;
 	FleeRemainingSeconds = 0.0f;
+
+	// 도주하는 동안 지나간 예정 시각은 넘깁니다.
+	if (const UGameClockSubsystem* GameClock = GetWorld() ? GetWorld()->GetSubsystem<UGameClockSubsystem>() : nullptr)
+	{
+		SkipElapsedTriggers(GameClock->GetClockMinutes());
+	}
+
+	// 남은 발동이 있으면 다시 기다립니다.
+	RedLightState = TriggerClockMinutesSchedule.IsValidIndex(NextTriggerIndex)
+		? EAeternaRedLightState::Waiting
+		: EAeternaRedLightState::Done;
 
 	SetRedLightsVisible(false);
 	ActiveRedLightActor = nullptr;
 	ClearCountdownFromHud();
+	RestorePreviousBgm();
 
 	UE_LOG(LogAeterna, Log, TEXT("[S03] 적색 광원 소멸 — 업무를 재개하십시오"));
 
@@ -234,6 +277,7 @@ void UAeternaRedLightRuleComponent::FailFlee()
 	RedLightState = EAeternaRedLightState::Done;
 	FleeRemainingSeconds = 0.0f;
 	ClearCountdownFromHud();
+	RestorePreviousBgm();
 
 	UE_LOG(LogAeterna, Log, TEXT("[S03] 경비실 미도달 — 규칙 위반"));
 
@@ -252,9 +296,28 @@ void UAeternaRedLightRuleComponent::SetRedLightsVisible(bool bVisible)
 {
 	for (AActor* RedLightActor : RedLightActors)
 	{
-		if (RedLightActor)
+		SetRedLightVisible(RedLightActor, bVisible);
+	}
+}
+
+void UAeternaRedLightRuleComponent::SetRedLightVisible(AActor* RedLightActor, bool bVisible)
+{
+	if (!RedLightActor)
+	{
+		return;
+	}
+
+	RedLightActor->SetActorHiddenInGame(!bVisible);
+
+	// 액터를 숨기는 것만으로 라이트가 꺼진다고 믿지 않습니다. 구성에 따라
+	// 빛이 남으면 밤1·밤2에서 빨간 불이 켜진 채로 보입니다.
+	TArray<ULightComponent*> LightComponents;
+	RedLightActor->GetComponents<ULightComponent>(LightComponents);
+	for (ULightComponent* LightComponent : LightComponents)
+	{
+		if (LightComponent)
 		{
-			RedLightActor->SetActorHiddenInGame(!bVisible);
+			LightComponent->SetVisibility(bVisible);
 		}
 	}
 }
@@ -313,4 +376,43 @@ void UAeternaRedLightRuleComponent::ClearCountdownFromHud()
 			ClockComponent->ClearCountdown();
 		}
 	}
+}
+
+void UAeternaRedLightRuleComponent::StartRedLightBgm()
+{
+	if (!RedLightBgm)
+	{
+		return;
+	}
+
+	UBgmSubsystem* BgmSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UBgmSubsystem>() : nullptr;
+	if (!BgmSubsystem)
+	{
+		return;
+	}
+
+	// 돌아갈 곡을 먼저 기억합니다. 이미 빨간 불 곡이면 덮어쓰지 않습니다.
+	USoundBase* CurrentBgm = BgmSubsystem->GetCurrentBgm();
+	if (CurrentBgm != RedLightBgm)
+	{
+		BgmBeforeRedLight = CurrentBgm;
+	}
+
+	BgmSubsystem->PlayBgm(RedLightBgm, RedLightBgmVolume, RedLightBgmFadeSeconds, RedLightBgmFadeSeconds);
+}
+
+void UAeternaRedLightRuleComponent::RestorePreviousBgm()
+{
+	if (!BgmBeforeRedLight)
+	{
+		return;
+	}
+
+	if (UBgmSubsystem* BgmSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UBgmSubsystem>() : nullptr)
+	{
+		// 밤 배경음의 크기는 시나리오 스타터가 정합니다. 여기서는 곡만 되돌립니다.
+		BgmSubsystem->PlayBgm(BgmBeforeRedLight, 0.5f, RedLightBgmFadeSeconds, RedLightBgmFadeSeconds);
+	}
+
+	BgmBeforeRedLight = nullptr;
 }

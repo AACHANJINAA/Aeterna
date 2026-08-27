@@ -7,6 +7,7 @@
 #include "AeternaRedLightRuleComponent.generated.h"
 
 class UScenarioManagerSubsystem;
+class USoundBase;
 
 UENUM(BlueprintType)
 enum class EAeternaRedLightState : uint8
@@ -65,12 +66,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Red Light Rule")
 	FName RuleScenarioId = TEXT("S03_ForbiddenLight");
 
-	/** 발동 시각을 뽑는 구간입니다. 게임 분 단위이며 01:00이 60입니다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Red Light Rule", meta=(ClampMin="0"))
-	int32 TriggerWindowMinMinutes = 120;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Red Light Rule", meta=(ClampMin="0"))
-	int32 TriggerWindowMaxMinutes = 270;
+	/**
+	 *  빨간 불이 켜지는 게임 시각들입니다. 01:00이 60분이므로
+	 *  01:32=92 / 02:12=132 / 03:00=180 / 04:30=270 입니다.
+	 *  한 밤에 이 횟수만큼 발동하며, 매번 경비실까지 가야 합니다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Red Light Rule")
+	TArray<int32> TriggerClockMinutesSchedule = { 92, 132, 180, 270 };
 
 	/** 경비실까지 가야 하는 실시간 제한입니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Red Light Rule", meta=(ClampMin="1.0", Units="s"))
@@ -79,6 +81,19 @@ protected:
 	/** 경비실에 닿은 뒤 빨간 불이 꺼지기까지의 여유입니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Red Light Rule", meta=(ClampMin="0.0", Units="s"))
 	float SafeHoldSeconds = 2.0f;
+
+	/**
+	 *  빨간 불이 켜져 있는 동안 흐르는 BGM입니다. Looping이 켜진 에셋을 넣으십시오.
+	 *  비워두면 배경음을 바꾸지 않습니다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Red Light Rule|Audio")
+	TObjectPtr<USoundBase> RedLightBgm;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Red Light Rule|Audio", meta=(ClampMin="0.0"))
+	float RedLightBgmVolume = 0.7f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Red Light Rule|Audio", meta=(ClampMin="0.0", Units="s"))
+	float RedLightBgmFadeSeconds = 0.5f;
 
 	/** SafeZone 액터의 경계에 이만큼 여유를 줍니다. 문턱에서 아슬아슬하게 죽는 것을 막습니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Red Light Rule", meta=(ClampMin="0.0", Units="cm"))
@@ -89,15 +104,23 @@ private:
 	void HandleScenarioStarted(FName ScenarioId);
 
 	void CacheLevelActors();
-	void RollTriggerMinutes();
+	void ArmTriggerSchedule();
+	int32 GetNextTriggerClockMinutes() const;
+	void SkipElapsedTriggers(int32 CurrentClockMinutes);
 	void BeginFlee();
 	void SurviveFlee();
 	void FailFlee();
 
 	void SetRedLightsVisible(bool bVisible);
+
+	/** 액터를 숨기고 안에 있는 라이트 컴포넌트도 직접 끕니다. */
+	static void SetRedLightVisible(AActor* RedLightActor, bool bVisible);
 	bool IsPlayerInSafeZone() const;
 	void PushCountdownToHud(float RemainingSeconds);
 	void ClearCountdownFromHud();
+
+	void StartRedLightBgm();
+	void RestorePreviousBgm();
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<AActor>> RedLightActors;
@@ -110,9 +133,14 @@ private:
 
 	TWeakObjectPtr<UScenarioManagerSubsystem> BoundScenarioManager;
 
+	/** 빨간 불이 켜지기 직전에 흐르던 곡입니다. 살아남으면 여기로 돌아갑니다. */
+	UPROPERTY(Transient)
+	TObjectPtr<USoundBase> BgmBeforeRedLight;
+
 	EAeternaRedLightState RedLightState = EAeternaRedLightState::Waiting;
 
-	int32 TriggerClockMinutes = 0;
+	/** 스케줄에서 다음에 볼 항목입니다. */
+	int32 NextTriggerIndex = 0;
 	float FleeRemainingSeconds = 0.0f;
 	float SafeHoldRemainingSeconds = 0.0f;
 
