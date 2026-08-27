@@ -59,7 +59,7 @@ protected:
 	float LastBatteryChargeAmount = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Battery", meta=(ClampMin="0.0"))
-	float HeadlampBatteryDrainPerSecond = 2.5f;
+	float HeadlampBatteryDrainPerSecond = 1.25f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Battery|Debug")
 	FString BatteryDebugString;

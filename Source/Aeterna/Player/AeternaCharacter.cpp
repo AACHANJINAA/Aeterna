@@ -3,6 +3,7 @@
 #include "Player/AeternaCharacter.h"
 
 #include "Aeterna.h"
+#include "Core/ScenarioManagerSubsystem.h"
 #include "Core/ScenarioLoopStarterActor.h"
 #include "Interaction/AeternaCarryInteractableActor.h"
 #include "Interaction/AeternaInteractableActor.h"
@@ -266,6 +267,11 @@ void AAeternaCharacter::Tick(float DeltaSeconds)
 			}
 			UpdateHeadlampLoopAudio();
 			BP_HeadlampStateChanged(false);
+
+			if (UScenarioManagerSubsystem* ScenarioManager = GetWorld() ? GetWorld()->GetSubsystem<UScenarioManagerSubsystem>() : nullptr)
+			{
+				ScenarioManager->FailCurrentScenarioByBatteryDepleted();
+			}
 		}
 	}
 }

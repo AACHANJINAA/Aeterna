@@ -75,6 +75,7 @@ private:
 
 	/** 지금 돌고 있는 밤이 이 조명이 속한 밤인지. 다른 밤에서는 꺼져 있어야 합니다. */
 	bool IsActiveInCurrentScenario() const;
+	void ApplyScenarioVisibility();
 
 	FString GetZoneLogName() const;
 

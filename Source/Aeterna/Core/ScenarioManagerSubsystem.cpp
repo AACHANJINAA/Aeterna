@@ -117,6 +117,16 @@ void UScenarioManagerSubsystem::FailCurrentScenarioByRuleViolation()
 	FailCurrentScenario(EScenarioFailureReason::RuleViolation);
 }
 
+void UScenarioManagerSubsystem::FailCurrentScenarioByTimeExpired()
+{
+	FailCurrentScenario(EScenarioFailureReason::TimeExpired);
+}
+
+void UScenarioManagerSubsystem::FailCurrentScenarioByBatteryDepleted()
+{
+	FailCurrentScenario(EScenarioFailureReason::BatteryDepleted);
+}
+
 void UScenarioManagerSubsystem::CompleteCurrentScenario()
 {
 	if (!HasCurrentScenario())
@@ -169,7 +179,11 @@ void UScenarioManagerSubsystem::SetRunState(EScenarioRunState NewRunState)
 
 void UScenarioManagerSubsystem::FailCurrentScenario(EScenarioFailureReason FailureReason)
 {
-	if (!HasCurrentScenario() || FailureReason == EScenarioFailureReason::None)
+	if (!HasCurrentScenario()
+		|| FailureReason == EScenarioFailureReason::None
+		|| RunState == EScenarioRunState::Completed
+		|| RunState == EScenarioRunState::Failed
+		|| RunState == EScenarioRunState::Restarting)
 	{
 		return;
 	}

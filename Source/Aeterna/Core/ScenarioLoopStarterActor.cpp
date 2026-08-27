@@ -156,6 +156,19 @@ void AScenarioLoopStarterActor::HandleScenarioCompleted(FName CompletedScenarioI
 	ScreenFadeSubsystem->StartFadeOut(ScenarioCompleteFadeDurationSeconds, ScenarioCompleteFadeDelaySeconds);
 }
 
+void AScenarioLoopStarterActor::HandleScenarioTimeExpired(FName ExpiredScenarioId)
+{
+	if (ExpiredScenarioId != ScenarioId || bTransitionPending)
+	{
+		return;
+	}
+
+	if (UScenarioManagerSubsystem* ScenarioManager = GetWorld() ? GetWorld()->GetSubsystem<UScenarioManagerSubsystem>() : nullptr)
+	{
+		ScenarioManager->FailCurrentScenarioByTimeExpired();
+	}
+}
+
 void AScenarioLoopStarterActor::HandleScenarioFailed(FName FailedScenarioId, EScenarioFailureReason FailureReason)
 {
 	(void)FailureReason;
@@ -620,6 +633,7 @@ void AScenarioLoopStarterActor::BindScenarioCompletion()
 	BoundScenarioManager = ScenarioManager;
 	ScenarioManager->OnScenarioCompleted.AddUniqueDynamic(this, &AScenarioLoopStarterActor::HandleScenarioCompleted);
 	ScenarioManager->OnScenarioFailed.AddUniqueDynamic(this, &AScenarioLoopStarterActor::HandleScenarioFailed);
+	ScenarioManager->OnScenarioTimeExpired.AddUniqueDynamic(this, &AScenarioLoopStarterActor::HandleScenarioTimeExpired);
 }
 
 void AScenarioLoopStarterActor::UnbindScenarioCompletion()
@@ -628,6 +642,7 @@ void AScenarioLoopStarterActor::UnbindScenarioCompletion()
 	{
 		ScenarioManager->OnScenarioCompleted.RemoveDynamic(this, &AScenarioLoopStarterActor::HandleScenarioCompleted);
 		ScenarioManager->OnScenarioFailed.RemoveDynamic(this, &AScenarioLoopStarterActor::HandleScenarioFailed);
+		ScenarioManager->OnScenarioTimeExpired.RemoveDynamic(this, &AScenarioLoopStarterActor::HandleScenarioTimeExpired);
 	}
 	BoundScenarioManager.Reset();
 }

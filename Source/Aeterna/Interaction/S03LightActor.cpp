@@ -51,6 +51,7 @@ void AS03LightActor::BeginPlay()
 	// 밤 시작 브로드캐스트(ResetInteraction)가 켤 때까지 꺼둡니다.
 	// 여기서 켜면 밤1·밤2에서도 불이 들어옵니다.
 	SetLightOn(false);
+	ApplyScenarioVisibility();
 }
 
 void AS03LightActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -74,6 +75,7 @@ void AS03LightActor::HandleClockMinuteChanged(int32 ClockMinutes)
 
 	if (!IsActiveInCurrentScenario())
 	{
+		ApplyScenarioVisibility();
 		return;
 	}
 
@@ -141,6 +143,7 @@ void AS03LightActor::ResetInteraction()
 
 	// 자기 밤에서만 켭니다. 다른 밤이 시작될 때는 꺼진 채로 남습니다.
 	SetLightOn(IsActiveInCurrentScenario() && TurnOnClockMinutes <= 0);
+	ApplyScenarioVisibility();
 }
 
 bool AS03LightActor::IsActiveInCurrentScenario() const
@@ -149,6 +152,18 @@ bool AS03LightActor::IsActiveInCurrentScenario() const
 	const FName CurrentScenarioId = ScenarioManager ? ScenarioManager->GetCurrentScenarioId() : NAME_None;
 
 	return IsActiveForScenario(CurrentScenarioId);
+}
+
+void AS03LightActor::ApplyScenarioVisibility()
+{
+	const bool bActiveInScenario = IsActiveInCurrentScenario();
+	SetActorHiddenInGame(!bActiveInScenario);
+	SetActorEnableCollision(bActiveInScenario);
+
+	if (!bActiveInScenario)
+	{
+		SetLightOn(false);
+	}
 }
 
 FString AS03LightActor::GetZoneLogName() const

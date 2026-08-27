@@ -185,6 +185,9 @@ private:
 	void HandleScenarioCompleted(FName CompletedScenarioId);
 
 	UFUNCTION()
+	void HandleScenarioTimeExpired(FName ExpiredScenarioId);
+
+	UFUNCTION()
 	void HandleFadeFinished(float TargetAlpha);
 
 	void StartNextScenario();

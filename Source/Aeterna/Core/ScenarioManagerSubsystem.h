@@ -22,7 +22,9 @@ UENUM(BlueprintType)
 enum class EScenarioFailureReason : uint8
 {
 	None,
-	RuleViolation
+	RuleViolation,
+	TimeExpired,
+	BatteryDepleted
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FScenarioChangedSignature, FName, ScenarioId);
@@ -55,6 +57,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="Scenario|Failure")
 	void FailCurrentScenarioByRuleViolation();
+
+	UFUNCTION(BlueprintCallable, Category="Scenario|Failure")
+	void FailCurrentScenarioByTimeExpired();
+
+	UFUNCTION(BlueprintCallable, Category="Scenario|Failure")
+	void FailCurrentScenarioByBatteryDepleted();
 
 	UFUNCTION(BlueprintCallable, Category="Scenario")
 	void CompleteCurrentScenario();

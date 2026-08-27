@@ -34,6 +34,10 @@ void UAeternaBatteryComponent::InitializeBattery(USpotLightComponent* InHeadlamp
 		FullBatteryOuterConeAngle = 65.0f;
 		LowBatteryOuterConeAngle = 29.0f;
 	}
+	if (FMath::IsNearlyEqual(HeadlampBatteryDrainPerSecond, 2.5f))
+	{
+		HeadlampBatteryDrainPerSecond = 1.25f;
+	}
 	CurrentBattery = FMath::Clamp(CurrentBattery, 0.0f, MaxBattery);
 	UpdateHeadlampBrightness();
 	UpdateBatteryDebugString(false);
