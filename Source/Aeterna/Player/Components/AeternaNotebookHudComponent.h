@@ -6,6 +6,7 @@
 #include "Player/Components/AeternaPlayerComponent.h"
 #include "AeternaNotebookHudComponent.generated.h"
 
+class USoundBase;
 class UTexture2D;
 class UTextBlock;
 class UWidget;
@@ -134,6 +135,18 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Notebook|Journal", meta=(ClampMin="0.0", ClampMax="1.0"))
 	float JournalRenderOpacity = 1.0f;
 
+	/** 노트 위젯 안 텍스트를 세로로 므어줍니다. 키 = 위젯 이름, 값 = 픽셀(양수 = 아래로). */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Notebook|Journal")
+	TMap<FName, float> JournalTextVerticalOffsets;
+
+	/** W/S로 페이지를, A/D로 Day를 넘길 때 나는 소리입니다. 비워두면 Page_turn_1을 찾아 씁니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Notebook|Journal")
+	TObjectPtr<USoundBase> PageTurnSound;
+
+	/** 페이지 넘기는 소리 크기입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Notebook|Journal", meta=(ClampMin="0.0"))
+	float PageTurnVolume = 1.0f;
+
 	/** Designer에 배치된 TextBlock 이름별로, 노트가 열릴 때 C++이 넣어줄 문구입니다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Notebook|Journal")
 	TArray<FAeternaNotebookTextSlot> JournalTextSlots;
@@ -150,19 +163,26 @@ private:
 	void ApplyNotebookJournalText();
 	void ApplyNotebookNavigationText();
 	void ApplyNotebookSectionVisibility();
+	void ApplyNotebookTextOffsets();
+	void PlayPageTurnSound();
 	void ProcessNotebookPageInput();
 	bool SetNamedTextBlock(FName TextBlockName, const FText& Text);
 	void SetFirstMatchingTextBlock(const TArray<FName>& TextBlockNames, const FText& Text);
 	bool SetNamedWidgetVisibility(FName WidgetName, ESlateVisibility Visibility);
+	bool SetNamedWidgetRenderTranslation(FName WidgetName, FVector2D Translation);
 	UTextBlock* FindTextBlockWithinWidget(UWidget* RootWidget) const;
 	int32 GetCurrentScenarioNotebookDayIndex() const;
 	int32 GetUnlockedNotebookDayIndex() const;
 	bool IsNotebookDayLocked() const;
 	FText ResolveNotebookSlotText(const FAeternaNotebookTextSlot& TextSlot) const;
 	FText ResolveNotebookText() const;
+	USoundBase* ResolvePageTurnSound() const;
 	UTexture2D* ResolveNotebookIconTexture() const;
 	UTexture2D* ResolveNotebookJournalBackgroundTexture() const;
 	TSubclassOf<UUserWidget> ResolveNotebookJournalWidgetClass() const;
+
+	UPROPERTY(Transient)
+	TObjectPtr<USoundBase> CachedPageTurnSound;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UUserWidget> NotebookHudWidget;

@@ -8,10 +8,12 @@
 #include "Engine/Texture2D.h"
 #include "GameFramework/PlayerController.h"
 #include "InputCoreTypes.h"
+#include "Kismet/GameplayStatics.h"
 #include "Player/AeternaCharacter.h"
 #include "Player/UI/AeternaHudLayoutUtils.h"
 #include "Player/UI/AeternaNotebookJournalWidget.h"
 #include "Player/UI/AeternaNotebookHudWidget.h"
+#include "Sound/SoundBase.h"
 #include "Blueprint/WidgetTree.h"
 
 UAeternaNotebookHudComponent::UAeternaNotebookHudComponent()
@@ -34,12 +36,19 @@ UAeternaNotebookHudComponent::UAeternaNotebookHudComponent()
 		{ EAeternaNotebookPage::Todo, TEXT("TXT_SelectGuide"), FText::GetEmpty(), FText::GetEmpty(), FText::GetEmpty() },
 		{ EAeternaNotebookPage::Warnings, TEXT("TXT_SelectGuide"), FText::GetEmpty(), FText::GetEmpty(), FText::GetEmpty() },
 		{ EAeternaNotebookPage::Controls, TEXT("TXT_SelectGuide"), FText::GetEmpty(), FText::GetEmpty(), FText::GetEmpty() },
-		{ EAeternaNotebookPage::Todo, TEXT("Description"), FText::FromString(TEXT("Assigned Work")), FText::FromString(TEXT("Assigned Work")), FText::FromString(TEXT("Assigned Work")) },
-		{ EAeternaNotebookPage::Todo, TEXT("Descriptions"), FText::FromString(TEXT("Scan the display case fossil.\nRecover one battery pack.\nScan the Tirano information board.")), FText::FromString(TEXT("Restore twelve displaced bones.\nPlace each remain at the fossil restoration area.\nConfirm progress before leaving the hall.")), FText::FromString(TEXT("Find the abnormal blue lamps.\nTurn off every forbidden light.\nReturn to the office after the circuit is stable.")) },
-		{ EAeternaNotebookPage::Warnings, TEXT("Description"), FText::FromString(TEXT("Operational Caution")), FText::FromString(TEXT("Operational Caution")), FText::FromString(TEXT("Operational Caution")) },
-		{ EAeternaNotebookPage::Warnings, TEXT("Descriptions"), FText::FromString(TEXT("Do not scan unrelated exhibits.\nKeep headlamp usage brief.\nIf the log differs from the room, trust the log first.")), FText::FromString(TEXT("Do not carry remains outside the restoration route.\nDo not place bones on unmarked furniture.\nCheck the radar before moving to the next remain.")), FText::FromString(TEXT("Do not ignore active blue light.\nDo not stay under unstable lamps.\nUse the radar to confirm forbidden light targets.")) },
-		{ EAeternaNotebookPage::Controls, TEXT("Description"), FText::FromString(TEXT("Input Reference")), FText::FromString(TEXT("Input Reference")), FText::FromString(TEXT("Input Reference")) },
-		{ EAeternaNotebookPage::Controls, TEXT("Descriptions"), FText::FromString(TEXT("WASD: Move\nMouse Movement: Adjust View / FOV\nE: Interact\nF: Headlamp On/Off\nShift: Sprint")), FText::FromString(TEXT("WASD: Move\nMouse Movement: Adjust View / FOV\nE: Interact\nF: Headlamp On/Off\nShift: Sprint")), FText::FromString(TEXT("WASD: Move\nMouse Movement: Adjust View / FOV\nE: Interact\nF: Headlamp On/Off\nShift: Sprint")) }
+		{ EAeternaNotebookPage::Todo, TEXT("Descriptions"), FText::FromString(TEXT("진열장의 화석을 스캔하십시오.\n배터리 팩 1개를 회수하십시오.\n티라노사우루스 알림판을 스캔하십시오.")), FText::FromString(TEXT("떨어진 뼈 12개를 회수하십시오.\n회수한 뼈는 화석 복원 구역에 두십시오.\n홀을 떠나기 전에 진행 상황을 확인하십시오.")), FText::FromString(TEXT("비정상 점등된 조명을 찾으십시오.\n켜져 있으면 안 되는 불을 모두 끄십시오.\n회로가 안정되면 경비실로 복귀하십시오.")) },
+		{ EAeternaNotebookPage::Warnings, TEXT("Descriptions"), FText::FromString(TEXT("업무와 무관한 전시물은 스캔하지 마십시오.\n헤드램프 사용은 짧게 하십시오.\n기록과 현장이 다르다면, 기록을 먼저 믿으십시오.")), FText::FromString(TEXT("떨어진 뼈는 모두 회수해서 제자리에 두십시오.\n화석의 눈구멍은 비추지 마십시오. 비어 있는지 확인하는 순간 비어 있지 않게 됩니다.\n화석이 눈앞에서 사라졌다면 움직이지 마십시오.\n매시 22분에는 움직이지 마십시오.")), FText::FromString(TEXT("1시 이후 켜져 있는 불은 끄십시오. 박물관에 다른 근무자는 없습니다.\n빨간색 불이 켜지는 걸 목격하셨다면 즉시 경비실로 도망치십시오.")) },
+		{ EAeternaNotebookPage::Controls, TEXT("Descriptions"), FText::FromString(TEXT("WASD: 이동\n마우스: 시점 조작\nE: 상호작용\nF: 헤드램프 켜기/끄기\nShift: 달리기")), FText::FromString(TEXT("WASD: 이동\n마우스: 시점 조작\nE: 상호작용\nF: 헤드램프 켜기/끄기\nShift: 달리기")), FText::FromString(TEXT("WASD: 이동\n마우스: 시점 조작\nE: 상호작용\nF: 헤드램프 켜기/끄기\nShift: 달리기")) }
+	};
+
+	JournalTextVerticalOffsets =
+	{
+		{ TEXT("QuestName"), 30.0f },
+		{ TEXT("QuestCategory"), 0.0f },
+		{ TEXT("QuestRegion"), 0.0f },
+		{ TEXT("TXT_SelectGuide"), 0.0f },
+		{ TEXT("Description"), 0.0f },
+		{ TEXT("Descriptions"), 0.0f }
 	};
 
 	JournalTextBlockNames =
@@ -148,6 +157,7 @@ void UAeternaNotebookHudComponent::ShowPreviousNotebookPage()
 	const int32 CurrentPageIndex = static_cast<int32>(CurrentNotebookPage);
 	const int32 PreviousPageIndex = (CurrentPageIndex + 2) % 3;
 	SetNotebookPage(static_cast<EAeternaNotebookPage>(PreviousPageIndex));
+	PlayPageTurnSound();
 }
 
 void UAeternaNotebookHudComponent::ShowNextNotebookPage()
@@ -155,6 +165,7 @@ void UAeternaNotebookHudComponent::ShowNextNotebookPage()
 	const int32 CurrentPageIndex = static_cast<int32>(CurrentNotebookPage);
 	const int32 NextPageIndex = (CurrentPageIndex + 1) % 3;
 	SetNotebookPage(static_cast<EAeternaNotebookPage>(NextPageIndex));
+	PlayPageTurnSound();
 }
 
 void UAeternaNotebookHudComponent::ShowPreviousNotebookDay()
@@ -164,6 +175,7 @@ void UAeternaNotebookHudComponent::ShowPreviousNotebookDay()
 	{
 		CurrentNotebookDayIndex = PreviousDayIndex;
 		ApplyNotebookJournalText();
+		PlayPageTurnSound();
 	}
 }
 
@@ -174,6 +186,7 @@ void UAeternaNotebookHudComponent::ShowNextNotebookDay()
 	{
 		CurrentNotebookDayIndex = NextDayIndex;
 		ApplyNotebookJournalText();
+		PlayPageTurnSound();
 	}
 }
 
@@ -338,6 +351,7 @@ void UAeternaNotebookHudComponent::ApplyNotebookJournalText()
 
 	ApplyNotebookSectionVisibility();
 	ApplyNotebookNavigationText();
+	ApplyNotebookTextOffsets();
 
 	for (const FAeternaNotebookTextSlot& TextSlot : JournalTextSlots)
 	{
@@ -431,6 +445,29 @@ void UAeternaNotebookHudComponent::ApplyNotebookSectionVisibility()
 	SetNamedWidgetVisibility(TEXT("Status_InProgress_Box"), ESlateVisibility::Collapsed);
 }
 
+void UAeternaNotebookHudComponent::ApplyNotebookTextOffsets()
+{
+	for (const TPair<FName, float>& TextOffset : JournalTextVerticalOffsets)
+	{
+		SetNamedWidgetRenderTranslation(TextOffset.Key, FVector2D(0.0f, TextOffset.Value));
+	}
+}
+
+void UAeternaNotebookHudComponent::PlayPageTurnSound()
+{
+	if (!CachedPageTurnSound)
+	{
+		CachedPageTurnSound = ResolvePageTurnSound();
+	}
+
+	if (!CachedPageTurnSound)
+	{
+		return;
+	}
+
+	UGameplayStatics::PlaySound2D(this, CachedPageTurnSound, PageTurnVolume);
+}
+
 void UAeternaNotebookHudComponent::ProcessNotebookPageInput()
 {
 	const AAeternaCharacter* AeternaCharacter = GetAeternaCharacter();
@@ -502,6 +539,22 @@ bool UAeternaNotebookHudComponent::SetNamedTextBlock(FName TextBlockName, const 
 	{
 		TextBlock->SetText(Text);
 		TextBlock->SetRenderOpacity(1.0f);
+		return true;
+	}
+
+	return false;
+}
+
+bool UAeternaNotebookHudComponent::SetNamedWidgetRenderTranslation(FName WidgetName, FVector2D Translation)
+{
+	if (WidgetName.IsNone() || !NotebookJournalWidget || !NotebookJournalWidget->WidgetTree)
+	{
+		return false;
+	}
+
+	if (UWidget* Widget = NotebookJournalWidget->WidgetTree->FindWidget(WidgetName))
+	{
+		Widget->SetRenderTranslation(Translation);
 		return true;
 	}
 
@@ -643,6 +696,30 @@ FText UAeternaNotebookHudComponent::ResolveNotebookText() const
 	default:
 		return Scenario1NotebookText;
 	}
+}
+
+USoundBase* UAeternaNotebookHudComponent::ResolvePageTurnSound() const
+{
+	if (PageTurnSound)
+	{
+		return PageTurnSound;
+	}
+
+	const TCHAR* SoundPaths[] =
+	{
+		TEXT("/Game/Resource/Audio/Page_turn_1.Page_turn_1"),
+		TEXT("/Game/Resource/Audio/Page_turn_1")
+	};
+
+	for (const TCHAR* SoundPath : SoundPaths)
+	{
+		if (USoundBase* Sound = LoadObject<USoundBase>(nullptr, SoundPath))
+		{
+			return Sound;
+		}
+	}
+
+	return nullptr;
 }
 
 UTexture2D* UAeternaNotebookHudComponent::ResolveNotebookIconTexture() const
