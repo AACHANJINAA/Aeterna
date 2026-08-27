@@ -67,6 +67,7 @@ private:
 	void UpdateRadarState();
 	bool ShouldTrackActor(AActor* Actor) const;
 	bool IsCarryObjectiveActor(const AActor* Actor) const;
+	bool IsActorTaggedForCurrentScenario(const AActor* Actor, FName CurrentScenarioId) const;
 	FName GetCurrentScenarioId() const;
 
 	UPROPERTY(Transient)

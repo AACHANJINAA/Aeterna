@@ -65,16 +65,16 @@ protected:
 	FString BatteryDebugString;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta=(ClampMin="0.0"))
-	float FullBatteryLightIntensity = 8000.0f;
+	float FullBatteryLightIntensity = 12300.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta=(ClampMin="0.0"))
-	float LowBatteryLightIntensity = 600.0f;
+	float LowBatteryLightIntensity = 4300.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta=(ClampMin="0.0", Units="cm"))
-	float FullBatteryAttenuationRadius = 1600.0f;
+	float FullBatteryAttenuationRadius = 2575.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta=(ClampMin="0.0", Units="cm"))
-	float LowBatteryAttenuationRadius = 350.0f;
+	float LowBatteryAttenuationRadius = 975.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Color")
 	FLinearColor FullBatteryLightColor = FLinearColor(1.0f, 0.95f, 0.82f, 1.0f);
@@ -89,16 +89,16 @@ protected:
 	float LowBatteryTemperature = 2600.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Shape", meta=(ClampMin="0.0", ClampMax="80.0", Units="deg"))
-	float FullBatteryInnerConeAngle = 18.0f;
+	float FullBatteryInnerConeAngle = 32.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Shape", meta=(ClampMin="0.0", ClampMax="80.0", Units="deg"))
-	float LowBatteryInnerConeAngle = 10.0f;
+	float LowBatteryInnerConeAngle = 14.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Shape", meta=(ClampMin="1.0", ClampMax="80.0", Units="deg"))
-	float FullBatteryOuterConeAngle = 36.0f;
+	float FullBatteryOuterConeAngle = 65.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Shape", meta=(ClampMin="1.0", ClampMax="80.0", Units="deg"))
-	float LowBatteryOuterConeAngle = 22.0f;
+	float LowBatteryOuterConeAngle = 29.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Headlamp|Brightness", meta=(ClampMin="0.1"))
 	float BatteryBrightnessExponent = 1.8f;

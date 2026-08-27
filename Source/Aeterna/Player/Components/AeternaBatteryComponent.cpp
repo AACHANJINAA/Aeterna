@@ -14,6 +14,26 @@ UAeternaBatteryComponent::UAeternaBatteryComponent()
 void UAeternaBatteryComponent::InitializeBattery(USpotLightComponent* InHeadlampComponent)
 {
 	HeadlampComponent = InHeadlampComponent;
+	if (FMath::IsNearlyEqual(FullBatteryLightIntensity, 8000.0f) && FMath::IsNearlyEqual(LowBatteryLightIntensity, 600.0f))
+	{
+		FullBatteryLightIntensity = 12300.0f;
+		LowBatteryLightIntensity = 4300.0f;
+	}
+	if (FMath::IsNearlyEqual(FullBatteryAttenuationRadius, 1600.0f) && FMath::IsNearlyEqual(LowBatteryAttenuationRadius, 350.0f))
+	{
+		FullBatteryAttenuationRadius = 2575.0f;
+		LowBatteryAttenuationRadius = 975.0f;
+	}
+	if (FMath::IsNearlyEqual(FullBatteryInnerConeAngle, 18.0f) && FMath::IsNearlyEqual(LowBatteryInnerConeAngle, 10.0f))
+	{
+		FullBatteryInnerConeAngle = 32.0f;
+		LowBatteryInnerConeAngle = 14.0f;
+	}
+	if (FMath::IsNearlyEqual(FullBatteryOuterConeAngle, 36.0f) && FMath::IsNearlyEqual(LowBatteryOuterConeAngle, 22.0f))
+	{
+		FullBatteryOuterConeAngle = 65.0f;
+		LowBatteryOuterConeAngle = 29.0f;
+	}
 	CurrentBattery = FMath::Clamp(CurrentBattery, 0.0f, MaxBattery);
 	UpdateHeadlampBrightness();
 	UpdateBatteryDebugString(false);
@@ -74,14 +94,11 @@ void UAeternaBatteryComponent::UpdateHeadlampBrightness()
 	}
 
 	HeadlampComponent->SetIntensity(FMath::Lerp(LowBatteryLightIntensity, FullBatteryLightIntensity, WeightedAlpha));
-	HeadlampComponent->SetAttenuationRadius(FMath::Lerp(LowBatteryAttenuationRadius, FullBatteryAttenuationRadius, WeightedAlpha));
+	HeadlampComponent->SetAttenuationRadius(FullBatteryAttenuationRadius);
 	HeadlampComponent->SetLightColor(FMath::Lerp(LowBatteryLightColor, FullBatteryLightColor, WeightedAlpha));
 	HeadlampComponent->SetTemperature(FMath::Lerp(LowBatteryTemperature, FullBatteryTemperature, WeightedAlpha));
-
-	const float InnerConeAngle = FMath::Lerp(LowBatteryInnerConeAngle, FullBatteryInnerConeAngle, WeightedAlpha);
-	const float OuterConeAngle = FMath::Max(FMath::Lerp(LowBatteryOuterConeAngle, FullBatteryOuterConeAngle, WeightedAlpha), InnerConeAngle);
-	HeadlampComponent->SetInnerConeAngle(InnerConeAngle);
-	HeadlampComponent->SetOuterConeAngle(OuterConeAngle);
+	HeadlampComponent->SetInnerConeAngle(FullBatteryInnerConeAngle);
+	HeadlampComponent->SetOuterConeAngle(FMath::Max(FullBatteryOuterConeAngle, FullBatteryInnerConeAngle));
 }
 
 void UAeternaBatteryComponent::UpdateBatteryDebugString(bool bHeadlampOn)

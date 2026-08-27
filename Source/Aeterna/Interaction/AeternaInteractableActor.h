@@ -120,6 +120,9 @@ public:
 	UFUNCTION(BlueprintPure, Category="Scenario")
 	bool IsActiveForScenario(FName ScenarioId) const { return ActiveScenarioIds.Num() == 0 || ActiveScenarioIds.Contains(ScenarioId); }
 
+	UFUNCTION(BlueprintPure, Category="Scenario")
+	bool HasActiveScenarioRestrictions() const { return ActiveScenarioIds.Num() > 0; }
+
 private:
 	UFUNCTION()
 	void HandleScenarioStarted(FName ScenarioId);

@@ -306,9 +306,11 @@ void UAeternaInteractionPromptComponent::UpdatePromptScreenPosition()
 	if (UWidgetLayoutLibrary::ProjectWorldLocationToWidgetPosition(PlayerController, PromptWorldLocation, ScreenPosition, true))
 	{
 		PromptWidget->ForceLayoutPrepass();
-		PromptWidget->SetDesiredSizeInViewport(GetPromptContentDesiredSize());
+		const FVector2D PromptContentSize = GetPromptContentDesiredSize();
+		PromptWidget->SetDesiredSizeInViewport(PromptContentSize);
 		PromptWidget->SetAlignmentInViewport(FVector2D(0.5f, 0.5f));
-		PromptWidget->SetPositionInViewport(ScreenPosition + PromptScreenOffset, true);
+		const FVector2D TextCenterOffset(PromptContentSize.X * 0.5f, 0.0f);
+		PromptWidget->SetPositionInViewport(ScreenPosition + TextCenterOffset + PromptScreenOffset, true);
 	}
 }
 

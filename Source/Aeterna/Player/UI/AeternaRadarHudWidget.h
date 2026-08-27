@@ -18,6 +18,9 @@ struct FAeternaRadarBlip
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Radar")
 	bool bClampedToEdge = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Radar")
+	FLinearColor Color = FLinearColor(0.42f, 1.0f, 0.82f, 1.0f);
 };
 
 UCLASS()

@@ -6,6 +6,7 @@
 #include "Core/ScenarioManagerSubsystem.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
+#include "Interaction/AeternaBatteryPickupActor.h"
 #include "Interaction/AeternaInteractableActor.h"
 #include "Player/AeternaCharacter.h"
 #include "Player/Components/AeternaScanProgressComponent.h"
@@ -191,6 +192,17 @@ void UAeternaRadarHudComponent::UpdateRadarState()
 		const float NormalizedDistance = FMath::Clamp(Distance / RadarRange, 0.0f, 1.0f);
 		Blip.bClampedToEdge = Distance > RadarRange;
 		Blip.Position = FVector2D(LocalDirection.Y, -LocalDirection.X) * NormalizedDistance;
+		if (const AAeternaInteractableActor* InteractableActor = Cast<AAeternaInteractableActor>(TargetActor))
+		{
+			if (TargetActor->IsA<AAeternaBatteryPickupActor>())
+			{
+				Blip.Color = FLinearColor(1.0f, 0.82f, 0.12f, 1.0f);
+			}
+			else if (InteractableActor->GetInteractionType() == EAeternaInteractionType::Charge)
+			{
+				Blip.Color = FLinearColor(0.18f, 0.54f, 1.0f, 1.0f);
+			}
+		}
 		QuestBlips.Add(Blip);
 	}
 
@@ -204,32 +216,43 @@ bool UAeternaRadarHudComponent::ShouldTrackActor(AActor* Actor) const
 		return false;
 	}
 
-	if (!QuestTargetTag.IsNone() && Actor->ActorHasTag(QuestTargetTag))
+	const FName CurrentScenarioId = GetCurrentScenarioId();
+	const AAeternaInteractableActor* InteractableActor = Cast<AAeternaInteractableActor>(Actor);
+	if (InteractableActor)
+	{
+		const bool bBatteryPickup = Actor->IsA<AAeternaBatteryPickupActor>();
+		const bool bTaggedForCurrentScenario = IsActorTaggedForCurrentScenario(Actor, CurrentScenarioId);
+		const bool bHasScenarioScope = InteractableActor->HasActiveScenarioRestrictions() || bTaggedForCurrentScenario;
+		if ((!bHasScenarioScope && !bBatteryPickup) || !InteractableActor->IsActiveForScenario(CurrentScenarioId) || InteractableActor->IsInteractionCompleted())
+		{
+			return false;
+		}
+
+		if (!bTrackInteractableObjectives)
+		{
+			return bTrackCarryObjectives && IsCarryObjectiveActor(Actor);
+		}
+
+		if (!QuestTargetTag.IsNone() && Actor->ActorHasTag(QuestTargetTag))
+		{
+			return true;
+		}
+
+		const EAeternaInteractionType InteractionType = InteractableActor->GetInteractionType();
+		return InteractionType == EAeternaInteractionType::Scan
+			|| InteractionType == EAeternaInteractionType::Charge
+			|| InteractionType == EAeternaInteractionType::Install
+			|| InteractionType == EAeternaInteractionType::Pickup;
+	}
+
+	if (bTrackCarryObjectives && IsCarryObjectiveActor(Actor))
 	{
 		return true;
 	}
 
-	if (!bTrackInteractableObjectives)
-	{
-		return bTrackCarryObjectives && IsCarryObjectiveActor(Actor);
-	}
-
-	const AAeternaInteractableActor* InteractableActor = Cast<AAeternaInteractableActor>(Actor);
-	if (!InteractableActor || InteractableActor->IsInteractionCompleted())
-	{
-		return bTrackCarryObjectives && IsCarryObjectiveActor(Actor);
-	}
-
-	if (!InteractableActor->IsActiveForScenario(GetCurrentScenarioId()))
-	{
-		return false;
-	}
-
-	const EAeternaInteractionType InteractionType = InteractableActor->GetInteractionType();
-	return InteractionType == EAeternaInteractionType::Scan
-		|| InteractionType == EAeternaInteractionType::Charge
-		|| InteractionType == EAeternaInteractionType::Install
-		|| InteractionType == EAeternaInteractionType::Pickup;
+	return !QuestTargetTag.IsNone()
+		&& Actor->ActorHasTag(QuestTargetTag)
+		&& IsActorTaggedForCurrentScenario(Actor, CurrentScenarioId);
 }
 
 bool UAeternaRadarHudComponent::IsCarryObjectiveActor(const AActor* Actor) const
@@ -265,6 +288,32 @@ bool UAeternaRadarHudComponent::IsCarryObjectiveActor(const AActor* Actor) const
 		? AeternaCharacter->FindComponentByClass<UAeternaScanProgressComponent>()
 		: nullptr;
 	return !ScanProgressComponent || !ScanProgressComponent->HasScannedPoint(Actor->GetFName());
+}
+
+bool UAeternaRadarHudComponent::IsActorTaggedForCurrentScenario(const AActor* Actor, FName CurrentScenarioId) const
+{
+	if (!Actor || CurrentScenarioId.IsNone())
+	{
+		return false;
+	}
+
+	if (Actor->ActorHasTag(CurrentScenarioId))
+	{
+		return true;
+	}
+
+	const FString ScenarioString = CurrentScenarioId.ToString();
+	const FString ScenarioPrefix = ScenarioString.Left(3);
+	for (const FName& Tag : Actor->Tags)
+	{
+		const FString TagString = Tag.ToString();
+		if (TagString == ScenarioPrefix || TagString.StartsWith(ScenarioPrefix + TEXT("_"), ESearchCase::CaseSensitive))
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 FName UAeternaRadarHudComponent::GetCurrentScenarioId() const

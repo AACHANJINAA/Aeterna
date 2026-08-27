@@ -95,8 +95,9 @@ int32 UAeternaRadarHudWidget::NativePaint(const FPaintArgs& Args, const FGeometr
 	{
 		const FVector2D BlipPosition = Center + Blip.Position * PaintRadius;
 		const float Pulse = 0.5f + 0.5f * FMath::Sin(FPlatformTime::Seconds() * 6.0);
-		DrawCircle(OutDrawElements, BaseLayer + 5, AllottedGeometry, BlipPosition, BlipRadius + Pulse * 2.0f, QuestColor.CopyWithNewOpacity(Blip.bClampedToEdge ? 0.95f : 0.8f), 2.0f);
-		DrawCircle(OutDrawElements, BaseLayer + 5, AllottedGeometry, BlipPosition, BlipRadius * 0.55f, QuestColor, 2.0f);
+		const FLinearColor BlipColor = Blip.Color.A > 0.0f ? Blip.Color : QuestColor;
+		DrawCircle(OutDrawElements, BaseLayer + 5, AllottedGeometry, BlipPosition, BlipRadius + Pulse * 2.0f, BlipColor.CopyWithNewOpacity(Blip.bClampedToEdge ? 0.95f : 0.8f), 2.0f);
+		DrawCircle(OutDrawElements, BaseLayer + 5, AllottedGeometry, BlipPosition, BlipRadius * 0.55f, BlipColor, 2.0f);
 	}
 
 	TArray<FVector2D> NorthTick;
