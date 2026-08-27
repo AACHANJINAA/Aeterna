@@ -12,8 +12,10 @@ public class Aeterna : ModuleRules
 			"Core",
 			"CoreUObject",
 			"Engine",
+			"AudioMixer",
 			"InputCore",
 			"EnhancedInput",
+			"MediaAssets",
 			"UMG",
 			"Slate",
 			"SlateCore"
