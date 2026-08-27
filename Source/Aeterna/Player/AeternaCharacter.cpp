@@ -22,6 +22,7 @@
 #include "Player/Components/AeternaClockFreezeRuleComponent.h"
 #include "Player/Components/AeternaCameraFallComponent.h"
 #include "Player/Components/AeternaFootstepComponent.h"
+#include "Player/Components/AeternaRedLightRuleComponent.h"
 
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraComponent.h"
@@ -73,6 +74,7 @@ AAeternaCharacter::AAeternaCharacter()
 
 	HeadBobComponent = CreateDefaultSubobject<UAeternaHeadBobComponent>(TEXT("HeadBobComponent"));
 	FootstepComponent = CreateDefaultSubobject<UAeternaFootstepComponent>(TEXT("FootstepComponent"));
+	RedLightRuleComponent = CreateDefaultSubobject<UAeternaRedLightRuleComponent>(TEXT("RedLightRuleComponent"));
 	BatteryComponent = CreateDefaultSubobject<UAeternaBatteryComponent>(TEXT("BatteryComponent"));
 	BatteryHudComponent = CreateDefaultSubobject<UAeternaBatteryHudComponent>(TEXT("BatteryHudComponent"));
 	ClockComponent = CreateDefaultSubobject<UAeternaClockComponent>(TEXT("ClockComponent"));
@@ -142,6 +144,15 @@ void AAeternaCharacter::BeginPlay()
 	}
 
 	FootstepComponent->InitializePlayerComponent(this);
+
+	if (!RedLightRuleComponent || RedLightRuleComponent->GetOwner() != this)
+	{
+		RedLightRuleComponent = NewObject<UAeternaRedLightRuleComponent>(this, UAeternaRedLightRuleComponent::StaticClass(), TEXT("RedLightRuleComponentRuntime"));
+		RedLightRuleComponent->RegisterComponent();
+		UE_LOG(LogAeterna, Warning, TEXT("[RedLight] RedLightRuleComponent를 런타임에 생성했습니다. BP_Player를 열어 Compile 후 Save 하십시오."));
+	}
+
+	RedLightRuleComponent->InitializePlayerComponent(this);
 	// BP가 이 컴포넌트보다 먼저 컴파일됐으면 인스턴싱이 갱신되지 않아,
 	// 인스턴스가 CDO 아키타입의 컴포넌트를 그대로 가리킬 수 있습니다.
 	// 그 컴포넌트는 월드에 속하지 않아 트레이스가 불가능하므로 여기서 갈아끼웁니다.

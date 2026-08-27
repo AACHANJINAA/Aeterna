@@ -29,6 +29,7 @@ class UAeternaVanishRuleComponent;
 class UAeternaClockFreezeRuleComponent;
 class UAeternaCameraFallComponent;
 class UAeternaFootstepComponent;
+class UAeternaRedLightRuleComponent;
 class UAudioComponent;
 class USoundBase;
 struct FInputActionValue;
@@ -62,6 +63,10 @@ class AAeternaCharacter : public ACharacter
 	/** 걸음마다 좌우 발소리 재생 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UAeternaFootstepComponent* FootstepComponent;
+
+	/** 밤3 빨간 불 이벤트와 도주 제한 시간 판정 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UAeternaRedLightRuleComponent* RedLightRuleComponent;
 
 	/** 플레이어 배터리와 헤드램프 밝기 처리 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
@@ -369,6 +374,18 @@ public:
 	/** 정지 구간을 버텨 화석이 돌아올 때 BP에서 연출을 연결합니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Vanish Rule", meta = (DisplayName = "Vanish Rule Survived"))
 	void BP_VanishRuleSurvived();
+
+	/** 빨간 불이 켜져 도주가 시작될 때 BP에서 연출을 연결합니다. 드론 사운드를 여기 붙입니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Red Light Rule", meta = (DisplayName = "Red Light Started"))
+	void BP_RedLightStarted(AActor* RedLightActor, float TimeLimitSeconds);
+
+	/** 경비실에 닿아 살아남았을 때 BP에서 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Red Light Rule", meta = (DisplayName = "Red Light Survived"))
+	void BP_RedLightSurvived();
+
+	/** 제한 시간 안에 못 갔을 때 BP에서 연출을 연결합니다. */
+	UFUNCTION(BlueprintImplementableEvent, Category="Red Light Rule", meta = (DisplayName = "Red Light Violated"))
+	void BP_RedLightViolated();
 
 	/** 정지 구간에서 움직여 위반했을 때 BP에서 연출을 연결합니다. 턱 닫히는 소리를 여기 붙입니다. */
 	UFUNCTION(BlueprintImplementableEvent, Category="Vanish Rule", meta = (DisplayName = "Vanish Rule Violated"))
