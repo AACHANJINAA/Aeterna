@@ -52,6 +52,9 @@ public:
 	void SetTitleTexture(UTexture2D* InTitleTexture);
 
 	UFUNCTION(BlueprintCallable, Category="Fade|Title")
+	void SetTitleTextureScale(float InTitleTextureScale);
+
+	UFUNCTION(BlueprintCallable, Category="Fade|Title")
 	void SetTitleAlphaImmediate(float InTitleAlpha);
 
 	UFUNCTION(BlueprintCallable, Category="Fade|Title")
@@ -90,7 +93,11 @@ private:
 
 	FLinearColor FadeColor = FLinearColor::Black;
 	FText TitleText;
+
+	UPROPERTY(Transient)
 	TObjectPtr<UTexture2D> TitleTexture;
+
+	float TitleTextureScale = 1.0f;
 
 	bool bFadeActive = false;
 	bool bTitleFadeActive = false;

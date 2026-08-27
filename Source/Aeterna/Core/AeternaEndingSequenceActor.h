@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "TimerManager.h"
 #include "AeternaEndingSequenceActor.generated.h"
 
 class UAeternaOpeningMovieWidget;
@@ -52,6 +53,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ending", meta=(ClampMin="0.0"))
 	float MovieVolumeMultiplier = 3.0f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ending|Fade", meta=(ClampMin="0.0"))
+	float PreMovieFadeOutSeconds = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ending|Fade", meta=(ClampMin="0.0"))
+	float MovieFadeInSeconds = 1.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ending|Fade", meta=(ClampMin="0.0"))
+	float MovieFadeOutSeconds = 1.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ending")
 	TSubclassOf<UAeternaOpeningMovieWidget> EndingWidgetClass;
 
@@ -59,6 +69,8 @@ private:
 	UFUNCTION()
 	void HandleScenarioCompleted(FName ScenarioId);
 
+	void PlayEndingMovieAfterPreFade();
+	void RemoveEndingWidgetAfterFade();
 	void BindScenarioEvents();
 	void UnbindScenarioEvents();
 	void SetPlayerInputLocked(bool bLocked) const;
@@ -67,5 +79,8 @@ private:
 	TObjectPtr<UAeternaOpeningMovieWidget> EndingWidget;
 
 	TWeakObjectPtr<UScenarioManagerSubsystem> BoundScenarioManager;
+	FTimerHandle PreMovieFadeTimerHandle;
+	FTimerHandle RemoveWidgetTimerHandle;
 	bool bEndingFinished = false;
+	bool bEndingMovieStarted = false;
 };

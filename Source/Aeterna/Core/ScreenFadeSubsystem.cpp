@@ -166,6 +166,15 @@ void UScreenFadeSubsystem::SetTitleTexture(UTexture2D* InTitleTexture)
 	}
 }
 
+void UScreenFadeSubsystem::SetTitleTextureScale(float InTitleTextureScale)
+{
+	TitleTextureScale = FMath::Max(0.01f, InTitleTextureScale);
+	if (UScreenFadeWidget* Widget = EnsureFadeWidget())
+	{
+		Widget->SetTitleTextureScale(TitleTextureScale);
+	}
+}
+
 void UScreenFadeSubsystem::SetTitleAlphaImmediate(float InTitleAlpha)
 {
 	bTitleFadeActive = false;
@@ -295,6 +304,7 @@ UScreenFadeWidget* UScreenFadeSubsystem::EnsureFadeWidget()
 
 	FadeWidget->SetFadeColor(FadeColor);
 	FadeWidget->SetTitleText(TitleText);
+	FadeWidget->SetTitleTextureScale(TitleTextureScale);
 	FadeWidget->SetTitleTexture(TitleTexture);
 	FadeWidget->SetTitleAlpha(CurrentTitleAlpha);
 	FadeWidget->SetFadeAlpha(CurrentAlpha);

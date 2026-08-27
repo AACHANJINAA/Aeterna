@@ -26,17 +26,29 @@ void UAeternaOpeningMovieWidget::SetOpeningSequenceActor(AAeternaOpeningSequence
 	OpeningSequenceActor = InOpeningSequenceActor;
 }
 
-void UAeternaOpeningMovieWidget::SetOpeningMovieSource(UMediaSource* InMediaSource, const FString& InVideoContentPath, float InSkipHoldSeconds, float InMovieVolumeMultiplier)
+void UAeternaOpeningMovieWidget::SetOpeningMovieSource(
+	UMediaSource* InMediaSource,
+	const FString& InVideoContentPath,
+	float InSkipHoldSeconds,
+	float InMovieVolumeMultiplier,
+	float InMovieFadeInSeconds,
+	float InMovieFadeOutSeconds)
 {
 	OpeningMediaSource = InMediaSource;
 	OpeningVideoContentPath = InVideoContentPath;
 	SkipHoldSeconds = FMath::Max(0.1f, InSkipHoldSeconds);
 	MovieVolumeMultiplier = FMath::Max(0.0f, InMovieVolumeMultiplier);
+	MovieFadeInSeconds = FMath::Max(0.0f, InMovieFadeInSeconds);
+	MovieFadeOutSeconds = FMath::Max(0.0f, InMovieFadeOutSeconds);
 }
 
 void UAeternaOpeningMovieWidget::PlayOpeningMovie()
 {
 	bMovieFinishing = false;
+	bMovieFadeOutActive = false;
+	bMovieFadeInActive = MovieFadeInSeconds > 0.0f;
+	MovieFadeElapsedSeconds = 0.0f;
+	SetVideoAlpha(bMovieFadeInActive ? 0.0f : 1.0f);
 	CurrentSkipHoldSeconds = 0.0f;
 	RefreshSkipPrompt();
 
@@ -58,7 +70,9 @@ void UAeternaOpeningMovieWidget::PlayOpeningMovie()
 	MediaPlayer->SetLooping(false);
 	MediaPlayer->NativeAudioOut = false;
 	MediaPlayer->SetNativeVolume(MovieVolumeMultiplier);
-	MediaPlayer->PlayOnOpen = true;
+	MediaPlayer->PlayOnOpen = false;
+	MediaPlayer->OnMediaOpened.AddUniqueDynamic(this, &UAeternaOpeningMovieWidget::HandleMediaOpened);
+	MediaPlayer->OnMediaOpenFailed.AddUniqueDynamic(this, &UAeternaOpeningMovieWidget::HandleMediaOpenFailed);
 	MediaPlayer->OnEndReached.AddUniqueDynamic(this, &UAeternaOpeningMovieWidget::HandleMediaEndReached);
 
 	MediaSoundComponent = NewObject<UMediaSoundComponent>(this);
@@ -80,14 +94,23 @@ void UAeternaOpeningMovieWidget::PlayOpeningMovie()
 	}
 
 	bool bOpened = false;
-	if (OpeningMediaSource)
-	{
-		bOpened = MediaPlayer->OpenSource(OpeningMediaSource);
-	}
-	else
+	if (!OpeningVideoContentPath.IsEmpty())
 	{
 		const FString AbsoluteVideoPath = BuildContentVideoPath();
-		bOpened = FPaths::FileExists(AbsoluteVideoPath) && MediaPlayer->OpenFile(AbsoluteVideoPath);
+		if (!FPaths::FileExists(AbsoluteVideoPath))
+		{
+			UE_LOG(LogAeterna, Warning, TEXT("[Opening] 영상 파일이 없습니다: %s"), *AbsoluteVideoPath);
+		}
+		else
+		{
+			UE_LOG(LogAeterna, Log, TEXT("[Opening] 영상 파일을 엽니다: %s"), *AbsoluteVideoPath);
+			bOpened = MediaPlayer->OpenFile(AbsoluteVideoPath);
+		}
+	}
+
+	if (!bOpened && OpeningMediaSource)
+	{
+		bOpened = MediaPlayer->OpenSource(OpeningMediaSource);
 	}
 
 	if (!bOpened)
@@ -105,6 +128,20 @@ void UAeternaOpeningMovieWidget::FinishOpeningMovie()
 	}
 
 	bMovieFinishing = true;
+	bMovieFadeInActive = false;
+
+	if (MovieFadeOutSeconds > 0.0f)
+	{
+		bMovieFadeOutActive = true;
+		MovieFadeElapsedSeconds = 0.0f;
+		return;
+	}
+
+	CompleteOpeningMovie();
+}
+
+void UAeternaOpeningMovieWidget::CompleteOpeningMovie()
+{
 	StopMovie();
 	OnMovieFinished.Broadcast();
 
@@ -149,7 +186,7 @@ TSharedRef<SWidget> UAeternaOpeningMovieWidget::RebuildWidget()
 				.Padding(FMargin(0.0f, 0.0f, 0.0f, 8.0f))
 				[
 					SAssignNew(SkipTextBlock, STextBlock)
-					.Text(NSLOCTEXT("Aeterna", "OpeningHoldEscToSkip", "Hold ESC to skip"))
+					.Text(NSLOCTEXT("Aeterna", "OpeningHoldQToSkip", "Hold Q to skip"))
 					.Justification(ETextJustify::Right)
 					.ColorAndOpacity(FLinearColor(0.92f, 0.98f, 1.0f, 0.72f))
 					.ShadowOffset(FVector2D(1.0f, 1.0f))
@@ -178,11 +215,35 @@ void UAeternaOpeningMovieWidget::NativeTick(const FGeometry& MyGeometry, float I
 
 	if (!MediaPlayer || bMovieFinishing)
 	{
+		if (bMovieFadeOutActive)
+		{
+			MovieFadeElapsedSeconds += InDeltaTime;
+			const float Progress = FMath::Clamp(MovieFadeElapsedSeconds / MovieFadeOutSeconds, 0.0f, 1.0f);
+			SetVideoAlpha(FMath::Lerp(1.0f, 0.0f, Progress));
+
+			if (Progress >= 1.0f)
+			{
+				bMovieFadeOutActive = false;
+				CompleteOpeningMovie();
+			}
+		}
 		return;
 	}
 
+	if (bMovieFadeInActive)
+	{
+		MovieFadeElapsedSeconds += InDeltaTime;
+		const float Progress = FMath::Clamp(MovieFadeElapsedSeconds / MovieFadeInSeconds, 0.0f, 1.0f);
+		SetVideoAlpha(Progress);
+
+		if (Progress >= 1.0f)
+		{
+			bMovieFadeInActive = false;
+		}
+	}
+
 	APlayerController* PlayerController = GetOwningPlayer();
-	const bool bHoldingSkip = PlayerController && PlayerController->IsInputKeyDown(EKeys::Escape);
+	const bool bHoldingSkip = PlayerController && PlayerController->IsInputKeyDown(EKeys::Q);
 	CurrentSkipHoldSeconds = bHoldingSkip ? CurrentSkipHoldSeconds + InDeltaTime : 0.0f;
 	RefreshSkipPrompt();
 
@@ -194,6 +255,23 @@ void UAeternaOpeningMovieWidget::NativeTick(const FGeometry& MyGeometry, float I
 
 void UAeternaOpeningMovieWidget::HandleMediaEndReached()
 {
+	FinishOpeningMovie();
+}
+
+void UAeternaOpeningMovieWidget::HandleMediaOpened(FString OpenedUrl)
+{
+	UE_LOG(LogAeterna, Log, TEXT("[Opening] 영상 열기 성공: %s"), *OpenedUrl);
+
+	if (MediaPlayer)
+	{
+		MediaPlayer->Rewind();
+		MediaPlayer->Play();
+	}
+}
+
+void UAeternaOpeningMovieWidget::HandleMediaOpenFailed(FString FailedUrl)
+{
+	UE_LOG(LogAeterna, Warning, TEXT("[Opening] 영상 열기 실패: %s"), *FailedUrl);
 	FinishOpeningMovie();
 }
 
@@ -209,15 +287,6 @@ FString UAeternaOpeningMovieWidget::BuildContentVideoPath() const
 
 void UAeternaOpeningMovieWidget::StopMovie()
 {
-	if (MediaPlayer)
-	{
-		MediaPlayer->OnEndReached.RemoveDynamic(this, &UAeternaOpeningMovieWidget::HandleMediaEndReached);
-		MediaPlayer->Close();
-		MediaPlayer = nullptr;
-	}
-
-	MediaTexture = nullptr;
-
 	if (MediaSoundComponent)
 	{
 		MediaSoundComponent->SetMediaPlayer(nullptr);
@@ -225,6 +294,17 @@ void UAeternaOpeningMovieWidget::StopMovie()
 		MediaSoundComponent->UnregisterComponent();
 		MediaSoundComponent = nullptr;
 	}
+
+	if (MediaPlayer)
+	{
+		MediaPlayer->OnMediaOpened.RemoveDynamic(this, &UAeternaOpeningMovieWidget::HandleMediaOpened);
+		MediaPlayer->OnMediaOpenFailed.RemoveDynamic(this, &UAeternaOpeningMovieWidget::HandleMediaOpenFailed);
+		MediaPlayer->OnEndReached.RemoveDynamic(this, &UAeternaOpeningMovieWidget::HandleMediaEndReached);
+		MediaPlayer->Close();
+		MediaPlayer = nullptr;
+	}
+
+	MediaTexture = nullptr;
 }
 
 void UAeternaOpeningMovieWidget::RefreshVideoBrush()
@@ -235,7 +315,7 @@ void UAeternaOpeningMovieWidget::RefreshVideoBrush()
 	VideoBrush.Tiling = ESlateBrushTileType::NoTile;
 	VideoBrush.Mirroring = ESlateBrushMirrorType::NoMirror;
 	VideoBrush.ImageSize = FVector2D(1920.0f, 1080.0f);
-	VideoBrush.TintColor = FSlateColor(FLinearColor::White);
+	VideoBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, VideoAlpha));
 }
 
 void UAeternaOpeningMovieWidget::RefreshSkipPrompt()
@@ -251,5 +331,16 @@ void UAeternaOpeningMovieWidget::RefreshSkipPrompt()
 	{
 		const float Alpha = SkipProgress > 0.0f ? 1.0f : 0.72f;
 		SkipTextBlock->SetColorAndOpacity(FSlateColor(FLinearColor(0.92f, 0.98f, 1.0f, Alpha)));
+	}
+}
+
+void UAeternaOpeningMovieWidget::SetVideoAlpha(float InAlpha)
+{
+	VideoAlpha = FMath::Clamp(InAlpha, 0.0f, 1.0f);
+	VideoBrush.TintColor = FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, VideoAlpha));
+
+	if (VideoImage.IsValid())
+	{
+		VideoImage->SetImage(&VideoBrush);
 	}
 }

@@ -73,11 +73,13 @@ void UScreenFadeWidget::SetTitleText(const FText& InTitleText)
 
 void UScreenFadeWidget::SetTitleTexture(UTexture2D* InTitleTexture)
 {
-	if (InTitleTexture)
+	TitleTexture = InTitleTexture;
+
+	if (TitleTexture)
 	{
 		TitleImageBrush.DrawAs = ESlateBrushDrawType::Image;
-		TitleImageBrush.SetResourceObject(InTitleTexture);
-		TitleImageBrush.ImageSize = FVector2D(InTitleTexture->GetSizeX(), InTitleTexture->GetSizeY());
+		TitleImageBrush.SetResourceObject(TitleTexture);
+		TitleImageBrush.ImageSize = FVector2D(TitleTexture->GetSizeX(), TitleTexture->GetSizeY()) * TitleTextureScale;
 	}
 	else
 	{
@@ -87,6 +89,16 @@ void UScreenFadeWidget::SetTitleTexture(UTexture2D* InTitleTexture)
 	}
 
 	ApplyTitleTexture();
+}
+
+void UScreenFadeWidget::SetTitleTextureScale(float InTitleTextureScale)
+{
+	TitleTextureScale = FMath::Max(0.01f, InTitleTextureScale);
+	if (TitleTexture)
+	{
+		TitleImageBrush.ImageSize = FVector2D(TitleTexture->GetSizeX(), TitleTexture->GetSizeY()) * TitleTextureScale;
+		ApplyTitleTexture();
+	}
 }
 
 void UScreenFadeWidget::SetTitleAlpha(float InTitleAlpha)

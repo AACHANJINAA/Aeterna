@@ -3,6 +3,7 @@
 #include "Core/AeternaEndingSequenceActor.h"
 
 #include "Core/ScenarioManagerSubsystem.h"
+#include "Core/ScreenFadeSubsystem.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "UI/AeternaOpeningMovieWidget.h"
@@ -20,13 +21,15 @@ void AAeternaEndingSequenceActor::BeginPlay()
 
 void AAeternaEndingSequenceActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
+	GetWorldTimerManager().ClearTimer(PreMovieFadeTimerHandle);
+	GetWorldTimerManager().ClearTimer(RemoveWidgetTimerHandle);
 	UnbindScenarioEvents();
 	Super::EndPlay(EndPlayReason);
 }
 
 void AAeternaEndingSequenceActor::PlayEndingSequence()
 {
-	if (bEndingFinished)
+	if (bEndingFinished || bEndingMovieStarted)
 	{
 		return;
 	}
@@ -39,6 +42,41 @@ void AAeternaEndingSequenceActor::PlayEndingSequence()
 	}
 
 	SetPlayerInputLocked(true);
+
+	if (UScreenFadeSubsystem* ScreenFadeSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScreenFadeSubsystem>() : nullptr)
+	{
+		ScreenFadeSubsystem->SetFadeColor(FLinearColor::Black);
+		ScreenFadeSubsystem->StartFadeOut(PreMovieFadeOutSeconds, 0.0f);
+	}
+
+	GetWorldTimerManager().ClearTimer(PreMovieFadeTimerHandle);
+	if (PreMovieFadeOutSeconds <= 0.0f)
+	{
+		PlayEndingMovieAfterPreFade();
+		return;
+	}
+
+	GetWorldTimerManager().SetTimer(
+		PreMovieFadeTimerHandle,
+		this,
+		&AAeternaEndingSequenceActor::PlayEndingMovieAfterPreFade,
+		PreMovieFadeOutSeconds,
+		false);
+}
+
+void AAeternaEndingSequenceActor::PlayEndingMovieAfterPreFade()
+{
+	if (bEndingFinished || bEndingMovieStarted)
+	{
+		return;
+	}
+
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	if (!PlayerController)
+	{
+		FinishEndingSequence();
+		return;
+	}
 
 	UClass* WidgetClass = EndingWidgetClass.Get();
 	if (!WidgetClass)
@@ -53,9 +91,16 @@ void AAeternaEndingSequenceActor::PlayEndingSequence()
 		return;
 	}
 
-	EndingWidget->SetOpeningMovieSource(EndingMediaSource, EndingVideoContentPath, SkipHoldSeconds, MovieVolumeMultiplier);
+	bEndingMovieStarted = true;
+	EndingWidget->SetOpeningMovieSource(EndingMediaSource, EndingVideoContentPath, SkipHoldSeconds, MovieVolumeMultiplier, MovieFadeInSeconds, MovieFadeOutSeconds);
 	EndingWidget->OnMovieFinished.AddUObject(this, &AAeternaEndingSequenceActor::FinishEndingSequence);
 	EndingWidget->AddToViewport(EndingWidgetZOrder);
+
+	if (UScreenFadeSubsystem* ScreenFadeSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScreenFadeSubsystem>() : nullptr)
+	{
+		ScreenFadeSubsystem->ClearFade();
+	}
+
 	EndingWidget->PlayOpeningMovie();
 }
 
@@ -67,7 +112,26 @@ void AAeternaEndingSequenceActor::FinishEndingSequence()
 	}
 
 	bEndingFinished = true;
+	bEndingMovieStarted = false;
+	GetWorldTimerManager().ClearTimer(PreMovieFadeTimerHandle);
+	GetWorldTimerManager().ClearTimer(RemoveWidgetTimerHandle);
 
+	if (UScreenFadeSubsystem* ScreenFadeSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScreenFadeSubsystem>() : nullptr)
+	{
+		ScreenFadeSubsystem->SetFadeColor(FLinearColor::Black);
+		ScreenFadeSubsystem->SetFadeAlphaImmediate(1.0f);
+	}
+
+	GetWorldTimerManager().SetTimer(
+		RemoveWidgetTimerHandle,
+		this,
+		&AAeternaEndingSequenceActor::RemoveEndingWidgetAfterFade,
+		0.05f,
+		false);
+}
+
+void AAeternaEndingSequenceActor::RemoveEndingWidgetAfterFade()
+{
 	if (EndingWidget)
 	{
 		EndingWidget->OnMovieFinished.RemoveAll(this);

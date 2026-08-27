@@ -41,6 +41,9 @@ public:
 	void SetTitleTexture(UTexture2D* InTitleTexture);
 
 	UFUNCTION(BlueprintCallable, Category="Fade|Title")
+	void SetTitleTextureScale(float InTitleTextureScale);
+
+	UFUNCTION(BlueprintCallable, Category="Fade|Title")
 	void SetTitleAlpha(float InTitleAlpha);
 
 	UFUNCTION(BlueprintPure, Category="Fade")
@@ -74,5 +77,10 @@ private:
 	TSharedPtr<SBorder> FadeBorder;
 	TSharedPtr<SImage> TitleImage;
 	TSharedPtr<STextBlock> TitleTextBlock;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UTexture2D> TitleTexture;
+
 	FSlateBrush TitleImageBrush;
+	float TitleTextureScale = 1.0f;
 };

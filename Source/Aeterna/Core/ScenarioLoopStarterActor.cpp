@@ -38,6 +38,7 @@ void AScenarioLoopStarterActor::BeginPlay()
 void AScenarioLoopStarterActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	GetWorldTimerManager().ClearTimer(StartLogoIntroTimerHandle);
+	GetWorldTimerManager().ClearTimer(StartLogoFadeOutTimerHandle);
 	GetWorldTimerManager().ClearTimer(StartDayCardTimerHandle);
 	UnbindScanCompletion();
 	UnbindScenarioCompletion();
@@ -62,6 +63,8 @@ void AScenarioLoopStarterActor::StartScenarioLoop()
 void AScenarioLoopStarterActor::DebugStartScenarioFromBeginning()
 {
 #if !UE_BUILD_SHIPPING
+	GetWorldTimerManager().ClearTimer(StartLogoIntroTimerHandle);
+	GetWorldTimerManager().ClearTimer(StartLogoFadeOutTimerHandle);
 	GetWorldTimerManager().ClearTimer(StartDayCardTimerHandle);
 	bTransitionPending = false;
 	bRestartPending = false;
@@ -338,6 +341,7 @@ bool AScenarioLoopStarterActor::PlayStartDayCard()
 
 	GetWorldTimerManager().ClearTimer(StartDayCardTimerHandle);
 	GetWorldTimerManager().ClearTimer(StartLogoIntroTimerHandle);
+	GetWorldTimerManager().ClearTimer(StartLogoFadeOutTimerHandle);
 	SetPlayerInputLocked(true);
 	ScreenFadeSubsystem->SetFadeColor(StartDayCardFadeColor);
 	ScreenFadeSubsystem->SetFadeAlphaImmediate(1.0f);
@@ -348,13 +352,18 @@ bool AScenarioLoopStarterActor::PlayStartDayCard()
 	{
 		if (UTexture2D* TitleLogoTexture = ResolveTitleLogoTexture())
 		{
-			constexpr float TitleLogoHoldSeconds = 2.0f;
-			constexpr float TitleLogoFadeOutSeconds = 2.0f;
-			ScreenFadeSubsystem->SetTitleTexture(TitleLogoTexture);
-			ScreenFadeSubsystem->SetTitleAlphaImmediate(1.0f);
-			ScreenFadeSubsystem->StartTitleFadeOut(TitleLogoFadeOutSeconds, TitleLogoHoldSeconds);
+			const float LogoFadeInSeconds = FMath::Max(0.0f, TitleLogoFadeInSeconds);
+			const float LogoHoldSeconds = FMath::Max(0.0f, TitleLogoHoldSeconds);
+			const float LogoFadeOutSeconds = FMath::Max(0.0f, TitleLogoFadeOutSeconds);
+			const float LogoFadeOutDelay = LogoFadeInSeconds + LogoHoldSeconds;
+			const float DayCardStartDelay = LogoFadeOutDelay + LogoFadeOutSeconds;
 
-			const float DayCardStartDelay = TitleLogoHoldSeconds + TitleLogoFadeOutSeconds;
+			ScreenFadeSubsystem->SetTitleTextureScale(TitleLogoTextureScale);
+			ScreenFadeSubsystem->SetTitleTexture(TitleLogoTexture);
+			ScreenFadeSubsystem->SetTitleAlphaImmediate(0.0f);
+			ScreenFadeSubsystem->StartTitleFadeIn(LogoFadeInSeconds, 0.0f);
+
+			GetWorldTimerManager().SetTimer(StartLogoFadeOutTimerHandle, this, &AScenarioLoopStarterActor::FadeOutTitleLogoIntro, LogoFadeOutDelay, false);
 			GetWorldTimerManager().SetTimer(StartLogoIntroTimerHandle, this, &AScenarioLoopStarterActor::ShowStartDayCardAfterLogoIntro, DayCardStartDelay, false);
 
 			const float DayCardFadeInSeconds = 2.0f;
@@ -370,6 +379,7 @@ bool AScenarioLoopStarterActor::PlayStartDayCard()
 	}
 
 	UTexture2D* DayCardTexture = ResolveStartDayCardTexture();
+	ScreenFadeSubsystem->SetTitleTextureScale(1.0f);
 	ScreenFadeSubsystem->SetTitleTexture(DayCardTexture);
 	ScreenFadeSubsystem->SetTitleAlphaImmediate(0.0f);
 	ScreenFadeSubsystem->StartTitleFadeIn(StartDayCardTextureFadeInSeconds, StartDayCardTextureDelaySeconds);
@@ -384,11 +394,20 @@ bool AScenarioLoopStarterActor::PlayStartDayCard()
 	return true;
 }
 
+void AScenarioLoopStarterActor::FadeOutTitleLogoIntro()
+{
+	if (UScreenFadeSubsystem* ScreenFadeSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScreenFadeSubsystem>() : nullptr)
+	{
+		ScreenFadeSubsystem->StartTitleFadeOut(TitleLogoFadeOutSeconds, 0.0f);
+	}
+}
+
 void AScenarioLoopStarterActor::ShowStartDayCardAfterLogoIntro()
 {
 	if (UScreenFadeSubsystem* ScreenFadeSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScreenFadeSubsystem>() : nullptr)
 	{
 		ScreenFadeSubsystem->SetTitleText(FText::GetEmpty());
+		ScreenFadeSubsystem->SetTitleTextureScale(1.0f);
 		ScreenFadeSubsystem->SetTitleTexture(ResolveStartDayCardTexture());
 		ScreenFadeSubsystem->SetTitleAlphaImmediate(0.0f);
 		ScreenFadeSubsystem->StartTitleFadeIn(2.0f, 0.0f);
