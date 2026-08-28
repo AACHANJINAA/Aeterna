@@ -2,6 +2,7 @@
 
 #include "UI/ScreenFadeWidget.h"
 
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Engine/Texture2D.h"
 #include "Styling/CoreStyle.h"
 #include "Widgets/Images/SImage.h"
@@ -22,6 +23,8 @@ TSharedRef<SWidget> UScreenFadeWidget::RebuildWidget()
 			.BorderBackgroundColor(FSlateColor(CurrentColor))
 		]
 		+ SOverlay::Slot()
+		.HAlign(HAlign_Center)
+		.VAlign(VAlign_Center)
 		[
 			SAssignNew(TitleImage, SImage)
 			.Image(&TitleImageBrush)
@@ -48,6 +51,7 @@ void UScreenFadeWidget::NativeConstruct()
 	// 페이드 중에도 아래 UI가 입력을 받을 수 있게 히트 테스트에서 제외합니다.
 	SetVisibility(ESlateVisibility::HitTestInvisible);
 	ApplyFadeColor();
+	UpdateTitleImageSize();
 	ApplyTitleTexture();
 	ApplyTitleText();
 	ApplyTitleAlpha();
@@ -79,7 +83,7 @@ void UScreenFadeWidget::SetTitleTexture(UTexture2D* InTitleTexture)
 	{
 		TitleImageBrush.DrawAs = ESlateBrushDrawType::Image;
 		TitleImageBrush.SetResourceObject(TitleTexture);
-		TitleImageBrush.ImageSize = FVector2D(TitleTexture->GetSizeX(), TitleTexture->GetSizeY()) * TitleTextureScale;
+		UpdateTitleImageSize();
 	}
 	else
 	{
@@ -96,7 +100,7 @@ void UScreenFadeWidget::SetTitleTextureScale(float InTitleTextureScale)
 	TitleTextureScale = FMath::Max(0.01f, InTitleTextureScale);
 	if (TitleTexture)
 	{
-		TitleImageBrush.ImageSize = FVector2D(TitleTexture->GetSizeX(), TitleTexture->GetSizeY()) * TitleTextureScale;
+		UpdateTitleImageSize();
 		ApplyTitleTexture();
 	}
 }
@@ -149,6 +153,39 @@ void UScreenFadeWidget::ApplyTitleTexture()
 	}
 
 	TitleImage->SetImage(&TitleImageBrush);
+}
+
+void UScreenFadeWidget::UpdateTitleImageSize()
+{
+	if (!TitleTexture)
+	{
+		TitleImageBrush.ImageSize = FVector2D::ZeroVector;
+		return;
+	}
+
+	const FVector2D NativeSize(TitleTexture->GetSizeX(), TitleTexture->GetSizeY());
+	if (NativeSize.X <= 0.0f || NativeSize.Y <= 0.0f)
+	{
+		TitleImageBrush.ImageSize = FVector2D::ZeroVector;
+		return;
+	}
+
+	// 위젯이 아직 뷰포트에 없으면 1920x1080을 기준으로 잡고, NativeConstruct에서 다시 계산합니다.
+	FVector2D AvailableSize(1920.0f, 1080.0f);
+	if (GetWorld())
+	{
+		const FVector2D ViewportSize = UWidgetLayoutLibrary::GetViewportSize(this);
+		const float ViewportScale = UWidgetLayoutLibrary::GetViewportScale(this);
+		if (ViewportSize.X > 0.0f && ViewportSize.Y > 0.0f && ViewportScale > 0.0f)
+		{
+			AvailableSize = ViewportSize / ViewportScale;
+		}
+	}
+
+	// 가로·세로 중 더 빡빡한 쪽에 맞춰 줄입니다. 비율이 유지되므로 남는 쪽은 검게 비어둡니다.
+	const float FitScale = FMath::Min(AvailableSize.X / NativeSize.X, AvailableSize.Y / NativeSize.Y);
+	const float FinalScale = FitScale * FMath::Clamp(TitleViewportCoverage, 0.05f, 1.0f) * TitleTextureScale;
+	TitleImageBrush.ImageSize = NativeSize * FinalScale;
 }
 
 void UScreenFadeWidget::ApplyTitleAlpha()
