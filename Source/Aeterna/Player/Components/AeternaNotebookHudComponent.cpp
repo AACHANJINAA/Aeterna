@@ -412,20 +412,20 @@ void UAeternaNotebookHudComponent::ApplyNotebookNavigationText()
 	SetFirstMatchingTextBlock(
 		{ TEXT("LeftObjective01"), TEXT("WB_CatCurrent"), TEXT("CurrentQuest"), TEXT("TabTodo"), TEXT("NotebookTabTodo") },
 		CurrentNotebookPage == EAeternaNotebookPage::Todo
-			? FText::FromString(TEXT("> TO DO"))
-			: FText::FromString(TEXT("  TO DO")));
+			? FText::FromString(TEXT("     > TO DO"))
+			: FText::FromString(TEXT("       TO DO")));
 
 	SetFirstMatchingTextBlock(
 		{ TEXT("LeftObjective02"), TEXT("WB_CatCompleted"), TEXT("CurrentQuest_1"), TEXT("CompletedQuest"), TEXT("TabWarnings"), TEXT("NotebookTabWarnings") },
 		CurrentNotebookPage == EAeternaNotebookPage::Warnings
-			? FText::FromString(TEXT("> WARNINGS"))
-			: FText::FromString(TEXT("  WARNINGS")));
+			? FText::FromString(TEXT("     > WARNINGS"))
+			: FText::FromString(TEXT("       WARNINGS")));
 
 	SetFirstMatchingTextBlock(
 		{ TEXT("LeftObjective03"), TEXT("WB_CatFailed"), TEXT("CurrentQuest_2"), TEXT("FailedQuest"), TEXT("TabControls"), TEXT("NotebookTabControls") },
 		CurrentNotebookPage == EAeternaNotebookPage::Controls
-			? FText::FromString(TEXT("> CONTROLS"))
-			: FText::FromString(TEXT("  CONTROLS")));
+			? FText::FromString(TEXT("     > CONTROLS"))
+			: FText::FromString(TEXT("       CONTROLS")));
 }
 
 void UAeternaNotebookHudComponent::ApplyNotebookSectionVisibility()
