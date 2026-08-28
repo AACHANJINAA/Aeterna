@@ -68,11 +68,19 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Fade|Title", meta=(ClampMin="0.0", ClampMax="1.0"))
 	float TitleAlpha = 1.0f;
 
+	/**
+	 *  타이틀 이미지가 차지하는 화면 비율입니다.
+	 *  비율을 유지한 채 이 값만큼만 채우므로 위아래에 검은 여백이 남습니다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Fade|Title", meta=(ClampMin="0.05", ClampMax="1.0"))
+	float TitleViewportCoverage = 0.6f;
+
 private:
 	void ApplyFadeColor();
 	void ApplyTitleText();
 	void ApplyTitleTexture();
 	void ApplyTitleAlpha();
+	void UpdateTitleImageSize();
 
 	TSharedPtr<SBorder> FadeBorder;
 	TSharedPtr<SImage> TitleImage;
