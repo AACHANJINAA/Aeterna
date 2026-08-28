@@ -2,11 +2,13 @@
 
 #include "Core/AeternaEndingSequenceActor.h"
 
+#include "Core/BgmSubsystem.h"
 #include "Core/ScenarioManagerSubsystem.h"
 #include "Core/ScreenFadeSubsystem.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Sound/SoundBase.h"
 #include "UI/AeternaOpeningMovieWidget.h"
 
 AAeternaEndingSequenceActor::AAeternaEndingSequenceActor()
@@ -97,6 +99,7 @@ void AAeternaEndingSequenceActor::PlayEndingMovieAfterPreFade()
 	EndingWidget->SetOpeningMovieSource(EndingMediaSource, EndingVideoContentPath, SkipHoldSeconds, MovieVolumeMultiplier, MovieFadeInSeconds, MovieFadeOutSeconds);
 	EndingWidget->OnMovieFinished.AddUObject(this, &AAeternaEndingSequenceActor::FinishEndingSequence);
 	EndingWidget->AddToViewport(EndingWidgetZOrder);
+	PlayEndingBgm();
 
 	if (UScreenFadeSubsystem* ScreenFadeSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UScreenFadeSubsystem>() : nullptr)
 	{
@@ -115,6 +118,7 @@ void AAeternaEndingSequenceActor::FinishEndingSequence()
 
 	bEndingFinished = true;
 	bEndingMovieStarted = false;
+	StopEndingBgm();
 	GetWorldTimerManager().ClearTimer(PreMovieFadeTimerHandle);
 	GetWorldTimerManager().ClearTimer(RemoveWidgetTimerHandle);
 	GetWorldTimerManager().ClearTimer(ExitGameTimerHandle);
@@ -191,6 +195,60 @@ void AAeternaEndingSequenceActor::UnbindScenarioEvents()
 		ScenarioManager->OnScenarioCompleted.RemoveDynamic(this, &AAeternaEndingSequenceActor::HandleScenarioCompleted);
 	}
 	BoundScenarioManager.Reset();
+}
+
+void AAeternaEndingSequenceActor::PlayEndingBgm() const
+{
+	UBgmSubsystem* BgmSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UBgmSubsystem>() : nullptr;
+	if (!BgmSubsystem)
+	{
+		return;
+	}
+
+	// 밤 3의 곡에서 넘어옵니다. 곡이 바뀌므로 UBgmSubsystem이 알아서 겹쳐 걷어냅니다.
+	if (USoundBase* Bgm = ResolveEndingBgm())
+	{
+		BgmSubsystem->PlayBgm(Bgm, EndingBgmVolume, EndingBgmFadeInSeconds, EndingBgmFadeOutSeconds);
+	}
+}
+
+void AAeternaEndingSequenceActor::StopEndingBgm() const
+{
+	UBgmSubsystem* BgmSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UBgmSubsystem>() : nullptr;
+	if (!BgmSubsystem)
+	{
+		return;
+	}
+
+	// 엔딩 곡일 때만 끕니다. 영상이 시작되기 전이면 밤 3의 곡이 흐르고 있습니다.
+	if (BgmSubsystem->GetCurrentBgm() == ResolveEndingBgm())
+	{
+		BgmSubsystem->StopBgm(EndingBgmFadeOutSeconds);
+	}
+}
+
+USoundBase* AAeternaEndingSequenceActor::ResolveEndingBgm() const
+{
+	if (EndingBgm)
+	{
+		return EndingBgm;
+	}
+
+	const TCHAR* BgmPaths[] =
+	{
+		TEXT("/Game/Resource/Audio/Gallery_of_light_1.Gallery_of_light_1"),
+		TEXT("/Game/Resource/Audio/Gallery_of_light_1")
+	};
+
+	for (const TCHAR* BgmPath : BgmPaths)
+	{
+		if (USoundBase* Bgm = LoadObject<USoundBase>(nullptr, BgmPath))
+		{
+			return Bgm;
+		}
+	}
+
+	return nullptr;
 }
 
 void AAeternaEndingSequenceActor::SetPlayerInputLocked(bool bLocked) const

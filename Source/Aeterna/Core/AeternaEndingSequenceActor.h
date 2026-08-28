@@ -10,6 +10,7 @@
 class UAeternaOpeningMovieWidget;
 class UMediaSource;
 class UScenarioManagerSubsystem;
+class USoundBase;
 
 UCLASS()
 class AETERNA_API AAeternaEndingSequenceActor : public AActor
@@ -65,6 +66,23 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ending|Exit", meta=(ClampMin="0.0"))
 	float ExitDelayAfterEndingSeconds = 3.0f;
 
+	/**
+	 *  엔딩 영상이 도는 동안 흐르는 배경음입니다.
+	 *  비워두면 /Game/Resource/Audio/Gallery_of_light_1을 찾아 씁니다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ending|BGM")
+	TObjectPtr<USoundBase> EndingBgm;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ending|BGM", meta=(ClampMin="0.0"))
+	float EndingBgmVolume = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ending|BGM", meta=(ClampMin="0.0"))
+	float EndingBgmFadeInSeconds = 1.0f;
+
+	/** 영상이 끝나거나 Q로 건너뛸 때 배경음을 걷어내는 시간입니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ending|BGM", meta=(ClampMin="0.0"))
+	float EndingBgmFadeOutSeconds = 1.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Ending")
 	TSubclassOf<UAeternaOpeningMovieWidget> EndingWidgetClass;
 
@@ -78,6 +96,9 @@ private:
 	void BindScenarioEvents();
 	void UnbindScenarioEvents();
 	void SetPlayerInputLocked(bool bLocked) const;
+	void PlayEndingBgm() const;
+	void StopEndingBgm() const;
+	USoundBase* ResolveEndingBgm() const;
 
 	UPROPERTY()
 	TObjectPtr<UAeternaOpeningMovieWidget> EndingWidget;

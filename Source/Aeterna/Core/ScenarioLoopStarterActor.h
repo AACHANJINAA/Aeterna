@@ -211,6 +211,16 @@ protected:
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="Scenario|Failure")
 	TObjectPtr<AActor> RestartPlayerStart;
 
+	/**
+	 *  M-05가 정지할 때 나는 소리입니다.
+	 *  비워두면 /Game/Resource/Audio/Robot_power_off_1을 찾아 씁니다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Failure")
+	TObjectPtr<USoundBase> FailureSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Failure", meta=(ClampMin="0.0"))
+	float FailureSoundVolume = 1.0f;
+
 private:
 	UFUNCTION()
 	void HandleRequiredScanCountReached(int32 CurrentCount, int32 RequiredCount);
@@ -244,6 +254,9 @@ private:
 
 	void PlayScenarioAmbience();
 	USoundBase* ResolveScenarioAmbience() const;
+
+	void PlayFailureSound() const;
+	USoundBase* ResolveFailureSound() const;
 
 	void ConfigurePlayerScanProgress();
 	void BindScanCompletion();

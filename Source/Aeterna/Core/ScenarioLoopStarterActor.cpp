@@ -180,6 +180,7 @@ void AScenarioLoopStarterActor::HandleScenarioFailed(FName FailedScenarioId, ESc
 	bTransitionPending = true;
 	bRestartPending = true;
 	SetPlayerInputLocked(true);
+	PlayFailureSound();
 
 	// 유예 시간 동안 위반 연출(눈구멍 등장 등)이 진행되고, 그 뒤 페이드아웃이 시작됩니다.
 	BindFadeFinished();
@@ -632,6 +633,38 @@ USoundBase* AScenarioLoopStarterActor::ResolveScenarioAmbience() const
 
 	// 밤마다 다시 뽑으므로 Day 1~3에서 어느 것이 걸릴지 정해져 있지 않습니다.
 	return Candidates[FMath::RandRange(0, Candidates.Num() - 1)];
+}
+
+void AScenarioLoopStarterActor::PlayFailureSound() const
+{
+	if (USoundBase* Sound = ResolveFailureSound())
+	{
+		UGameplayStatics::PlaySound2D(this, Sound, FailureSoundVolume);
+	}
+}
+
+USoundBase* AScenarioLoopStarterActor::ResolveFailureSound() const
+{
+	if (FailureSound)
+	{
+		return FailureSound;
+	}
+
+	const TCHAR* SoundPaths[] =
+	{
+		TEXT("/Game/Resource/Audio/Robot_power_off_1.Robot_power_off_1"),
+		TEXT("/Game/Resource/Audio/Robot_power_off_1")
+	};
+
+	for (const TCHAR* SoundPath : SoundPaths)
+	{
+		if (USoundBase* Sound = LoadObject<USoundBase>(nullptr, SoundPath))
+		{
+			return Sound;
+		}
+	}
+
+	return nullptr;
 }
 
 void AScenarioLoopStarterActor::ConfigurePlayerScanProgress()
