@@ -68,6 +68,9 @@ void UAeternaOpeningMovieWidget::PlayOpeningMovie()
 	}
 
 	MediaPlayer->SetLooping(false);
+	// Route movie audio through a MediaSoundComponent, matching UE's CommonUI
+	// video player path. Marking it as UI sound keeps it audible during the
+	// input-locked opening/ending sequence.
 	MediaPlayer->NativeAudioOut = false;
 	MediaPlayer->SetNativeVolume(MovieVolumeMultiplier);
 	MediaPlayer->PlayOnOpen = false;
@@ -78,9 +81,13 @@ void UAeternaOpeningMovieWidget::PlayOpeningMovie()
 	MediaSoundComponent = NewObject<UMediaSoundComponent>(this);
 	if (MediaSoundComponent)
 	{
+		MediaSoundComponent->Channels = EMediaSoundChannels::Stereo;
+		MediaSoundComponent->bIsUISound = true;
 		MediaSoundComponent->SetMediaPlayer(MediaPlayer);
 		MediaSoundComponent->SetVolumeMultiplier(MovieVolumeMultiplier);
 		MediaSoundComponent->RegisterComponentWithWorld(GetWorld());
+		MediaSoundComponent->Initialize();
+		MediaSoundComponent->UpdatePlayer();
 		MediaSoundComponent->Activate(true);
 	}
 
@@ -264,6 +271,14 @@ void UAeternaOpeningMovieWidget::HandleMediaOpened(FString OpenedUrl)
 
 	if (MediaPlayer)
 	{
+		if (MediaSoundComponent)
+		{
+			MediaSoundComponent->SetMediaPlayer(MediaPlayer);
+			MediaSoundComponent->SetVolumeMultiplier(MovieVolumeMultiplier);
+			MediaSoundComponent->UpdatePlayer();
+			MediaSoundComponent->Activate(true);
+		}
+
 		MediaPlayer->Rewind();
 		MediaPlayer->Play();
 	}
