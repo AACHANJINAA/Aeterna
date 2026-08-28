@@ -132,6 +132,31 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|BGM", meta=(ClampMin="0.0"))
 	float BgmCrossFadeOutSeconds = 2.0f;
 
+	/** 밤이 시작될 때 환경음을 켭니다. BGM 아래에 한 겹 더 깔립니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Ambience")
+	bool bPlayAmbienceOnStart = true;
+
+	/**
+	 *  후보 중 하나를 무작위로 골라 틉니다.
+	 *  비워두면 /Game/Resource/Audio/gamebackground1~3을 후보로 씁니다.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Ambience")
+	TArray<TObjectPtr<USoundBase>> ScenarioAmbienceCandidates;
+
+	/**
+	 *  환경음 크기. BGM(0.5)보다 훨씬 아래에 깔려야 소리로 인식되지 않고 공기로 남습니다.
+	 *  에셋마다 녹음 음량이 다르면 여기 말고 에셋 Volume으로 먼저 맞추십시오.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Ambience", meta=(ClampMin="0.0"))
+	float AmbienceVolume = 0.08f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Ambience", meta=(ClampMin="0.0"))
+	float AmbienceFadeInSeconds = 3.0f;
+
+	/** 이전 밤의 환경음을 걷어내는 시간. 음원이 바뀔 때만 씁니다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Ambience", meta=(ClampMin="0.0"))
+	float AmbienceCrossFadeOutSeconds = 3.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Scenario|Scan")
 	bool bCompleteScenarioOnRequiredScans = false;
 
@@ -216,6 +241,9 @@ private:
 
 	void PlayScenarioBgm();
 	USoundBase* ResolveScenarioBgm() const;
+
+	void PlayScenarioAmbience();
+	USoundBase* ResolveScenarioAmbience() const;
 
 	void ConfigurePlayerScanProgress();
 	void BindScanCompletion();

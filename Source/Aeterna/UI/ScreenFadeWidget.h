@@ -43,6 +43,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Fade|Title")
 	void SetTitleTextureScale(float InTitleTextureScale);
 
+	/**
+	 *  true면 비율을 무시하고 화면을 꽉 채웁니다 (Day 카드).
+	 *  false면 비율을 지킨 채 줄여 위아래에 검은 여백을 남깁니다 (타이틀 로고).
+	 */
+	UFUNCTION(BlueprintCallable, Category="Fade|Title")
+	void SetTitleTextureFillScreen(bool bInFillScreen);
+
 	UFUNCTION(BlueprintCallable, Category="Fade|Title")
 	void SetTitleAlpha(float InTitleAlpha);
 
@@ -91,4 +98,5 @@ private:
 
 	FSlateBrush TitleImageBrush;
 	float TitleTextureScale = 1.0f;
+	bool bTitleTextureFillsScreen = false;
 };

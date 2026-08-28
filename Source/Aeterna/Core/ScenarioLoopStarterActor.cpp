@@ -50,6 +50,7 @@ void AScenarioLoopStarterActor::StartScenarioLoop()
 {
 	// Day 카드보다 먼저 켭니다. 카드가 뜨는 동안 이미 음악이 흐르고 있어야 합니다.
 	PlayScenarioBgm();
+	PlayScenarioAmbience();
 
 	if (PlayStartDayCard())
 	{
@@ -359,6 +360,7 @@ bool AScenarioLoopStarterActor::PlayStartDayCard()
 			const float DayCardStartDelay = LogoFadeOutDelay + LogoFadeOutSeconds;
 
 			ScreenFadeSubsystem->SetTitleTextureScale(TitleLogoTextureScale);
+			ScreenFadeSubsystem->SetTitleTextureFillScreen(false);
 			ScreenFadeSubsystem->SetTitleTexture(TitleLogoTexture);
 			ScreenFadeSubsystem->SetTitleAlphaImmediate(0.0f);
 			ScreenFadeSubsystem->StartTitleFadeIn(LogoFadeInSeconds, 0.0f);
@@ -380,6 +382,7 @@ bool AScenarioLoopStarterActor::PlayStartDayCard()
 
 	UTexture2D* DayCardTexture = ResolveStartDayCardTexture();
 	ScreenFadeSubsystem->SetTitleTextureScale(1.0f);
+	ScreenFadeSubsystem->SetTitleTextureFillScreen(true);
 	ScreenFadeSubsystem->SetTitleTexture(DayCardTexture);
 	ScreenFadeSubsystem->SetTitleAlphaImmediate(0.0f);
 	ScreenFadeSubsystem->StartTitleFadeIn(StartDayCardTextureFadeInSeconds, StartDayCardTextureDelaySeconds);
@@ -408,6 +411,7 @@ void AScenarioLoopStarterActor::ShowStartDayCardAfterLogoIntro()
 	{
 		ScreenFadeSubsystem->SetTitleText(FText::GetEmpty());
 		ScreenFadeSubsystem->SetTitleTextureScale(1.0f);
+		ScreenFadeSubsystem->SetTitleTextureFillScreen(true);
 		ScreenFadeSubsystem->SetTitleTexture(ResolveStartDayCardTexture());
 		ScreenFadeSubsystem->SetTitleAlphaImmediate(0.0f);
 		ScreenFadeSubsystem->StartTitleFadeIn(2.0f, 0.0f);
@@ -568,6 +572,66 @@ USoundBase* AScenarioLoopStarterActor::ResolveScenarioBgm() const
 	}
 
 	return nullptr;
+}
+
+void AScenarioLoopStarterActor::PlayScenarioAmbience()
+{
+	if (!bPlayAmbienceOnStart)
+	{
+		return;
+	}
+
+	UBgmSubsystem* BgmSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UBgmSubsystem>() : nullptr;
+	if (!BgmSubsystem)
+	{
+		return;
+	}
+
+	// 고른 음원이 이미 흐르고 있으면 UBgmSubsystem이 알아서 무시합니다.
+	if (USoundBase* Ambience = ResolveScenarioAmbience())
+	{
+		BgmSubsystem->PlayAmbience(Ambience, AmbienceVolume, AmbienceFadeInSeconds, AmbienceCrossFadeOutSeconds);
+	}
+}
+
+USoundBase* AScenarioLoopStarterActor::ResolveScenarioAmbience() const
+{
+	TArray<USoundBase*> Candidates;
+
+	for (const TObjectPtr<USoundBase>& Candidate : ScenarioAmbienceCandidates)
+	{
+		if (Candidate)
+		{
+			Candidates.Add(Candidate);
+		}
+	}
+
+	// 디테일 패널을 비워두면 기본 세 개를 후보로 씁니다.
+	if (Candidates.Num() == 0)
+	{
+		const TCHAR* AmbiencePaths[] =
+		{
+			TEXT("/Game/Resource/Audio/gamebackground1.gamebackground1"),
+			TEXT("/Game/Resource/Audio/gamebackground2.gamebackground2"),
+			TEXT("/Game/Resource/Audio/gamebackground3.gamebackground3")
+		};
+
+		for (const TCHAR* AmbiencePath : AmbiencePaths)
+		{
+			if (USoundBase* Ambience = LoadObject<USoundBase>(nullptr, AmbiencePath))
+			{
+				Candidates.Add(Ambience);
+			}
+		}
+	}
+
+	if (Candidates.Num() == 0)
+	{
+		return nullptr;
+	}
+
+	// 밤마다 다시 뽑으므로 Day 1~3에서 어느 것이 걸릴지 정해져 있지 않습니다.
+	return Candidates[FMath::RandRange(0, Candidates.Num() - 1)];
 }
 
 void AScenarioLoopStarterActor::ConfigurePlayerScanProgress()

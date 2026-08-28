@@ -54,6 +54,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Fade|Title")
 	void SetTitleTextureScale(float InTitleTextureScale);
 
+	/** true면 타이틀 이미지가 화면을 꽉 채웁니다. Day 카드가 이쪽입니다. */
+	UFUNCTION(BlueprintCallable, Category="Fade|Title")
+	void SetTitleTextureFillScreen(bool bInFillScreen);
+
 	UFUNCTION(BlueprintCallable, Category="Fade|Title")
 	void SetTitleAlphaImmediate(float InTitleAlpha);
 
@@ -98,6 +102,7 @@ private:
 	TObjectPtr<UTexture2D> TitleTexture;
 
 	float TitleTextureScale = 1.0f;
+	bool bTitleTextureFillsScreen = false;
 
 	bool bFadeActive = false;
 	bool bTitleFadeActive = false;

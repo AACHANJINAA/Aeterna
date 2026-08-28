@@ -105,6 +105,16 @@ void UScreenFadeWidget::SetTitleTextureScale(float InTitleTextureScale)
 	}
 }
 
+void UScreenFadeWidget::SetTitleTextureFillScreen(bool bInFillScreen)
+{
+	bTitleTextureFillsScreen = bInFillScreen;
+	if (TitleTexture)
+	{
+		UpdateTitleImageSize();
+		ApplyTitleTexture();
+	}
+}
+
 void UScreenFadeWidget::SetTitleAlpha(float InTitleAlpha)
 {
 	TitleAlpha = FMath::Clamp(InTitleAlpha, 0.0f, 1.0f);
@@ -180,6 +190,13 @@ void UScreenFadeWidget::UpdateTitleImageSize()
 		{
 			AvailableSize = ViewportSize / ViewportScale;
 		}
+	}
+
+	// Day 카드는 화면을 꽉 채웁니다. 비율은 깨지지만 여백 없이 한 장으로 덮는 연출입니다.
+	if (bTitleTextureFillsScreen)
+	{
+		TitleImageBrush.ImageSize = AvailableSize;
+		return;
 	}
 
 	// 가로·세로 중 더 빡빡한 쪽에 맞춰 줄입니다. 비율이 유지되므로 남는 쪽은 검게 비어둡니다.

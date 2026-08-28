@@ -39,11 +39,39 @@ public:
 	UFUNCTION(BlueprintPure, Category="BGM")
 	bool IsPlayingBgm() const;
 
+	/**
+	 *  환경음을 재생합니다. BGM과 다른 채널이라 둘이 겹쳐 흐릅니다.
+	 *  이미 같은 음원이 흐르고 있으면 아무것도 하지 않습니다.
+	 */
+	UFUNCTION(BlueprintCallable, Category="BGM|Ambience")
+	void PlayAmbience(USoundBase* Ambience, float Volume = 0.1f, float FadeInSeconds = 3.0f, float CrossFadeOutSeconds = 3.0f);
+
+	/** 흐르던 환경음을 서서히 걷어냅니다. */
+	UFUNCTION(BlueprintCallable, Category="BGM|Ambience")
+	void StopAmbience(float FadeOutSeconds = 3.0f);
+
+	UFUNCTION(BlueprintPure, Category="BGM|Ambience")
+	USoundBase* GetCurrentAmbience() const { return CurrentAmbience; }
+
+	UFUNCTION(BlueprintPure, Category="BGM|Ambience")
+	bool IsPlayingAmbience() const;
+
 private:
+	/** BGM과 환경음 둘 다 같은 절차로 돕니다. 채널만 바꿔 불러 씁니다. */
+	void PlayOnChannel(TObjectPtr<UAudioComponent>& Component, TObjectPtr<USoundBase>& Current, USoundBase* Sound, float Volume, float FadeInSeconds, float CrossFadeOutSeconds, const TCHAR* ChannelTag);
+	void StopChannel(TObjectPtr<UAudioComponent>& Component, TObjectPtr<USoundBase>& Current, float FadeOutSeconds);
+	void StopChannelImmediately(TObjectPtr<UAudioComponent>& Component, TObjectPtr<USoundBase>& Current);
+
 	/** 지금 흐르는 곡. 페이드아웃에 넘긴 이전 곡은 여기 남지 않습니다. */
 	UPROPERTY(Transient)
 	TObjectPtr<UAudioComponent> BgmComponent;
 
 	UPROPERTY(Transient)
 	TObjectPtr<USoundBase> CurrentBgm;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UAudioComponent> AmbienceComponent;
+
+	UPROPERTY(Transient)
+	TObjectPtr<USoundBase> CurrentAmbience;
 };
