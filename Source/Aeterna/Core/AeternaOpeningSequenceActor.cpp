@@ -2,10 +2,12 @@
 
 #include "Core/AeternaOpeningSequenceActor.h"
 
+#include "Core/BgmSubsystem.h"
 #include "Core/ScenarioLoopStarterActor.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundBase.h"
 #include "UI/AeternaOpeningMovieWidget.h"
 
 AAeternaOpeningSequenceActor::AAeternaOpeningSequenceActor()
@@ -56,6 +58,7 @@ void AAeternaOpeningSequenceActor::PlayOpeningSequence()
 	OpeningWidget->SetOpeningMovieSource(OpeningMediaSource, OpeningVideoContentPath, SkipHoldSeconds, MovieVolumeMultiplier);
 	OpeningWidget->AddToViewport(OpeningWidgetZOrder);
 	OpeningWidget->PlayOpeningMovie();
+	PlayIntroBgm();
 }
 
 void AAeternaOpeningSequenceActor::FinishOpeningSequence()
@@ -66,6 +69,8 @@ void AAeternaOpeningSequenceActor::FinishOpeningSequence()
 	}
 
 	bOpeningFinished = true;
+
+	StopIntroBgm();
 
 	if (OpeningWidget)
 	{
@@ -79,6 +84,59 @@ void AAeternaOpeningSequenceActor::FinishOpeningSequence()
 	{
 		Starter->StartScenarioLoop();
 	}
+}
+
+void AAeternaOpeningSequenceActor::PlayIntroBgm() const
+{
+	UBgmSubsystem* BgmSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UBgmSubsystem>() : nullptr;
+	if (!BgmSubsystem)
+	{
+		return;
+	}
+
+	if (USoundBase* Bgm = ResolveIntroBgm())
+	{
+		BgmSubsystem->PlayBgm(Bgm, IntroBgmVolume, IntroBgmFadeInSeconds, IntroBgmFadeOutSeconds);
+	}
+}
+
+void AAeternaOpeningSequenceActor::StopIntroBgm() const
+{
+	UBgmSubsystem* BgmSubsystem = GetWorld() ? GetWorld()->GetSubsystem<UBgmSubsystem>() : nullptr;
+	if (!BgmSubsystem)
+	{
+		return;
+	}
+
+	// 밤 1의 곡은 곧바로 StartScenarioLoop이 켭니다. 여기서는 오프닝 곡만 걷어냅니다.
+	if (BgmSubsystem->GetCurrentBgm() == ResolveIntroBgm())
+	{
+		BgmSubsystem->StopBgm(IntroBgmFadeOutSeconds);
+	}
+}
+
+USoundBase* AAeternaOpeningSequenceActor::ResolveIntroBgm() const
+{
+	if (IntroBgm)
+	{
+		return IntroBgm;
+	}
+
+	const TCHAR* BgmPaths[] =
+	{
+		TEXT("/Game/Resource/Audio/IntroBGM.IntroBGM"),
+		TEXT("/Game/Resource/Audio/IntroBGM")
+	};
+
+	for (const TCHAR* BgmPath : BgmPaths)
+	{
+		if (USoundBase* Bgm = LoadObject<USoundBase>(nullptr, BgmPath))
+		{
+			return Bgm;
+		}
+	}
+
+	return nullptr;
 }
 
 AScenarioLoopStarterActor* AAeternaOpeningSequenceActor::ResolveScenarioStarter() const
